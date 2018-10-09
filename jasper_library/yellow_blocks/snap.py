@@ -25,6 +25,7 @@ class snap(YellowBlock):
 
     def gen_children(self):
         children = [YellowBlock.make_block({'tag':'xps:sys_block', 'board_id':'12', 'rev_maj':'12', 'rev_min':'0', 'rev_rcs':'32'}, self.platform)]
+        children.append(YellowBlock.make_block({'tag':'xps:pmbus_controller'}, self.platform))
         if self.use_microblaze:
             children.append(YellowBlock.make_block({'tag':'xps:microblaze'}, self.platform))
         else:

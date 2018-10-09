@@ -74,6 +74,15 @@ pins:
   sync_out:
     iostd: LVCMOS25
     loc: H9
+  pmbus_alert:
+    iostd: LVCMOS18
+    loc: W13
+  pmbus_clk:
+    iostd: LVCMOS18
+    loc: AA17
+  pmbus_data:
+    iostd: LVCMOS18
+    loc: V13
   led:
     iostd: LVCMOS25
     loc:
