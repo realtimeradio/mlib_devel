@@ -21,6 +21,7 @@ zdok_rev = 2;
 s.fabric_mhz = get(xsg_obj,'clk_rate');
 s.line_mhz_8bit = 2 * s.fabric_mhz;
 s.line_mhz_10bit = 10 * s.line_mhz_8bit / 8;
+s.line_mhz = s.line_mhz_8bit; % This is the parameter used for the timing constraint
 % Default num_clocks to board_count (i.e. one clock per board)
 num_clocks = str2num(board_count);
 
