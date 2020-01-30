@@ -6,7 +6,7 @@ use IEEE.std_logic_unsigned.all;
 use IEEE.numeric_std.all;
 
 -- entity declaraction
-entity  adc16_interface  is
+entity  adc16_caltech_interface  is
     generic (
                G_ROACH2_REV : integer := 1;
                G_ZDOK_REV   : integer := 1;
@@ -36,34 +36,34 @@ entity  adc16_interface  is
                iserdes_bitslip  :  in  std_logic_vector(63 downto 0);
 
                -- Parallel outputs
-               a1  :  out std_logic_vector(7 downto 0);
-               a2  :  out std_logic_vector(7 downto 0);
-               a3  :  out std_logic_vector(7 downto 0);
-               a4  :  out std_logic_vector(7 downto 0);
+               a1  :  out std_logic_vector(9 downto 0);
+               a2  :  out std_logic_vector(9 downto 0);
+               a3  :  out std_logic_vector(9 downto 0);
+               a4  :  out std_logic_vector(9 downto 0);
                b1  :  out std_logic_vector(7 downto 0);
                b2  :  out std_logic_vector(7 downto 0);
                b3  :  out std_logic_vector(7 downto 0);
                b4  :  out std_logic_vector(7 downto 0);
-               c1  :  out std_logic_vector(7 downto 0);
-               c2  :  out std_logic_vector(7 downto 0);
-               c3  :  out std_logic_vector(7 downto 0);
-               c4  :  out std_logic_vector(7 downto 0);
+               c1  :  out std_logic_vector(9 downto 0);
+               c2  :  out std_logic_vector(9 downto 0);
+               c3  :  out std_logic_vector(9 downto 0);
+               c4  :  out std_logic_vector(9 downto 0);
                d1  :  out std_logic_vector(7 downto 0);
                d2  :  out std_logic_vector(7 downto 0);
                d3  :  out std_logic_vector(7 downto 0);
                d4  :  out std_logic_vector(7 downto 0);
-               e1  :  out std_logic_vector(7 downto 0);
-               e2  :  out std_logic_vector(7 downto 0);
-               e3  :  out std_logic_vector(7 downto 0);
-               e4  :  out std_logic_vector(7 downto 0);
+               e1  :  out std_logic_vector(9 downto 0);
+               e2  :  out std_logic_vector(9 downto 0);
+               e3  :  out std_logic_vector(9 downto 0);
+               e4  :  out std_logic_vector(9 downto 0);
                f1  :  out std_logic_vector(7 downto 0);
                f2  :  out std_logic_vector(7 downto 0);
                f3  :  out std_logic_vector(7 downto 0);
                f4  :  out std_logic_vector(7 downto 0);
-               g1  :  out std_logic_vector(7 downto 0);
-               g2  :  out std_logic_vector(7 downto 0);
-               g3  :  out std_logic_vector(7 downto 0);
-               g4  :  out std_logic_vector(7 downto 0);
+               g1  :  out std_logic_vector(9 downto 0);
+               g2  :  out std_logic_vector(9 downto 0);
+               g3  :  out std_logic_vector(9 downto 0);
+               g4  :  out std_logic_vector(9 downto 0);
                h1  :  out std_logic_vector(7 downto 0);
                h2  :  out std_logic_vector(7 downto 0);
                h3  :  out std_logic_vector(7 downto 0);
@@ -87,9 +87,9 @@ entity  adc16_interface  is
                num_units        :  out std_logic_vector(3 downto 0)
     );
 
-end  adc16_interface;
+end  adc16_caltech_interface;
 
-architecture adc16_interface_arc of adc16_interface is
+architecture adc16_caltech_interface_arc of adc16_caltech_interface is
 
      -- Components
 
@@ -161,7 +161,8 @@ architecture adc16_interface_arc of adc16_interface is
                clkout2      :  out std_logic;
                clkout2_90   :  out std_logic;
                clkout2_180  :  out std_logic;
-               clkout2_270  :  out std_logic
+               clkout2_270  :  out std_logic;
+               clkout3      :  out std_logic
      );
      end component;
 
@@ -194,6 +195,7 @@ architecture adc16_interface_arc of adc16_interface is
      type  i4_v8  is array (0 to G_NUM_UNITS-1) of std_logic_vector(7 downto 0);
      type  i4_v20 is array (0 to G_NUM_UNITS-1) of std_logic_vector(19 downto 0);
      type  i4_v32 is array (0 to G_NUM_UNITS-1) of std_logic_vector(31 downto 0);
+     type  i4_v40 is array (0 to G_NUM_UNITS-1) of std_logic_vector(39 downto 0);
 
      -- Clocking (keep and s attributes retain unused clocks)
      signal line_clk_in_zdok0 : std_logic;
@@ -208,6 +210,7 @@ architecture adc16_interface_arc of adc16_interface is
      attribute s    of frame_clk_in : signal is "yes";
 
      signal line_clk     : std_logic;
+     signal line_clk_10bit : std_logic;
      signal frame_clk    : std_logic;
      signal fabric_clk_0 : std_logic;
      signal absel        : std_logic;
@@ -215,8 +218,8 @@ architecture adc16_interface_arc of adc16_interface is
      signal locked_0     : std_logic;
 
      -- MMCM BUFGs
-     signal bufg_i : std_logic_vector(5 downto 0);
-     signal bufg_o : std_logic_vector(5 downto 0);
+     signal bufg_i : std_logic_vector(6 downto 0);
+     signal bufg_o : std_logic_vector(6 downto 0);
 
      -- ZDOK
      signal s_ser_a_p : i4_v4;
@@ -228,6 +231,8 @@ architecture adc16_interface_arc of adc16_interface is
      signal s_iserdes_bitslip : i4_v8;
      signal s_p_data : i4_v32;
      signal s_p_data0 : i4_v32;
+     signal s_p10_data : i4_v40;
+     signal s_p10_data0 : i4_v40;
 
      -- Delay Controller
      signal s_delay_rst_a  : i4_v4;
@@ -275,11 +280,12 @@ architecture adc16_interface_arc of adc16_interface is
        clkout2      => bufg_i(2),
        clkout2_90   => bufg_i(3),
        clkout2_180  => bufg_i(4),
-       clkout2_270  => bufg_i(5)
+       clkout2_270  => bufg_i(5),
+       clkout3      => bufg_i(6)
      );
 
      -- MMCM BUFGs
-     bufg_gen: for i in 0 to 5 generate
+     bufg_gen: for i in 0 to 6 generate
        inst : BUFG
        PORT MAP (
          O => bufg_o(i),
@@ -321,42 +327,43 @@ architecture adc16_interface_arc of adc16_interface is
      fabric_clk_90  <= bufg_o(3);
      fabric_clk_180 <= bufg_o(4);
      fabric_clk_270 <= bufg_o(5);
+     line_clk_10bit <= bufg_o(6);
 
      roach2_rev <= std_logic_vector(to_unsigned(G_ROACH2_REV, roach2_rev'length));
      zdok_rev   <= std_logic_vector(to_unsigned(G_ZDOK_REV,   zdok_rev'length));
      num_units  <= std_logic_vector(to_unsigned(G_NUM_UNITS,  num_units'length));
 
      -- Parallel data outputs
-     a1 <= s_p_data(0)(31 downto 24);
-     a2 <= s_p_data(0)(23 downto 16);
-     a3 <= s_p_data(0)(15 downto  8);
-     a4 <= s_p_data(0)( 7 downto  0);
+     a1 <= s_p10_data(0)(39 downto 30);
+     a2 <= s_p10_data(0)(29 downto 20);
+     a3 <= s_p10_data(0)(19 downto 10);
+     a4 <= s_p10_data(0)( 9 downto  0);
      b1 <= s_p_data(1)(31 downto 24);
      b2 <= s_p_data(1)(23 downto 16);
      b3 <= s_p_data(1)(15 downto  8);
      b4 <= s_p_data(1)( 7 downto  0);
-     c1 <= s_p_data(2)(31 downto 24);
-     c2 <= s_p_data(2)(23 downto 16);
-     c3 <= s_p_data(2)(15 downto  8);
-     c4 <= s_p_data(2)( 7 downto  0);
+     c1 <= s_p10_data(2)(39 downto 30);
+     c2 <= s_p10_data(2)(29 downto 20);
+     c3 <= s_p10_data(2)(19 downto 10);
+     c4 <= s_p10_data(2)( 9 downto  0);
      d1 <= s_p_data(3)(31 downto 24);
      d2 <= s_p_data(3)(23 downto 16);
      d3 <= s_p_data(3)(15 downto  8);
      d4 <= s_p_data(3)( 7 downto  0);
 
      adc1_board: if G_NUM_UNITS = 8 generate
-       e1 <= s_p_data(4)(31 downto 24);
-       e2 <= s_p_data(4)(23 downto 16);
-       e3 <= s_p_data(4)(15 downto  8);
-       e4 <= s_p_data(4)( 7 downto  0);
+       e1 <= s_p10_data(4)(39 downto 30);
+       e2 <= s_p10_data(4)(29 downto 20);
+       e3 <= s_p10_data(4)(19 downto 10);
+       e4 <= s_p10_data(4)( 9 downto  0);
        f1 <= s_p_data(5)(31 downto 24);
        f2 <= s_p_data(5)(23 downto 16);
        f3 <= s_p_data(5)(15 downto  8);
        f4 <= s_p_data(5)( 7 downto  0);
-       g1 <= s_p_data(6)(31 downto 24);
-       g2 <= s_p_data(6)(23 downto 16);
-       g3 <= s_p_data(6)(15 downto  8);
-       g4 <= s_p_data(6)( 7 downto  0);
+       g1 <= s_p10_data(6)(39 downto 30);
+       g2 <= s_p10_data(6)(29 downto 20);
+       g3 <= s_p10_data(6)(19 downto 10);
+       g4 <= s_p10_data(6)( 9 downto  0);
        h1 <= s_p_data(7)(31 downto 24);
        h2 <= s_p_data(7)(23 downto 16);
        h3 <= s_p_data(7)(15 downto  8);
@@ -380,18 +387,18 @@ architecture adc16_interface_arc of adc16_interface is
      end generate;
 
      adc1_dummy: if G_NUM_UNITS /= 8 generate
-       e1 <= "00000000";
-       e2 <= "00000000";
-       e3 <= "00000000";
-       e4 <= "00000000";
+       e1 <= "0000000000";
+       e2 <= "0000000000";
+       e3 <= "0000000000";
+       e4 <= "0000000000";
        f1 <= "00000000";
        f2 <= "00000000";
        f3 <= "00000000";
        f4 <= "00000000";
-       g1 <= "00000000";
-       g2 <= "00000000";
-       g3 <= "00000000";
-       g4 <= "00000000";
+       g1 <= "0000000000";
+       g2 <= "0000000000";
+       g3 <= "0000000000";
+       g4 <= "0000000000";
        h1 <= "00000000";
        h2 <= "00000000";
        h3 <= "00000000";
@@ -415,27 +422,55 @@ architecture adc16_interface_arc of adc16_interface is
        s_delay_rst_a(i) <= delay_rst_edge(4*i+3    downto 4*i);
        s_delay_rst_b(i) <= delay_rst_edge(4*i+3+32 downto 4*i+32);
 
-       adc_unit_inst: adc_unit
-       port map (
-                   fabric_clk => fabric_clk_0,
-                   line_clk   => line_clk,
-                   frame_clk  => frame_clk,
-                   reset      => reset,
+       ADC_CHOICE_8bit: if i mod 2 > 0 generate
+         adc_unit_inst: adc_unit
+         port map (
+                     fabric_clk => fabric_clk_0,
+                     line_clk   => line_clk,
+                     frame_clk  => frame_clk,
+                     reset      => reset,
 
-                   ser_a_p => s_ser_a_p(i),
-                   ser_a_n => s_ser_a_n(i),
-                   ser_b_p => s_ser_b_p(i),
-                   ser_b_n => s_ser_b_n(i),
+                     ser_a_p => s_ser_a_p(i),
+                     ser_a_n => s_ser_a_n(i),
+                     ser_b_p => s_ser_b_p(i),
+                     ser_b_n => s_ser_b_n(i),
 
-                   iserdes_bitslip => s_iserdes_bitslip(i),
-                   p_data => s_p_data0(i),
-                   absel => absel,
-                   demux_mode => demux_mode,
+                     iserdes_bitslip => s_iserdes_bitslip(i),
+                     p_data => s_p_data0(i),
+                     absel => absel,
+                     demux_mode => demux_mode,
 
-                   delay_rst_a => s_delay_rst_a(i),
-                   delay_rst_b => s_delay_rst_b(i),
-                   delay_tap => delay_tap
-       );
+                     delay_rst_a => s_delay_rst_a(i),
+                     delay_rst_b => s_delay_rst_b(i),
+                     delay_tap => delay_tap
+         );
+         s_p10_data0(i) <= X"0000000000";
+       end generate; -- use 8-bit ADC
+
+       ADC_CHOICE_10bit: if i mod 2 = 0 generate
+         adc_unit_10_bit_inst: adc_unit_10bit
+         port map (
+                     fabric_clk => fabric_clk_0,
+                     line_clk   => line_clk_10bit,
+                     frame_clk  => frame_clk,
+                     reset      => reset,
+
+                     ser_a_p => s_ser_a_p(i),
+                     ser_a_n => s_ser_a_n(i),
+                     ser_b_p => s_ser_b_p(i),
+                     ser_b_n => s_ser_b_n(i),
+
+                     iserdes_bitslip => s_iserdes_bitslip(i),
+                     p_data => s_p10_data0(i),
+                     absel => absel,
+                     demux_mode => demux_mode,
+
+                     delay_rst_a => s_delay_rst_a(i),
+                     delay_rst_b => s_delay_rst_b(i),
+                     delay_tap => delay_tap
+         );
+         s_p_data0(i) <= X"00000000";
+       end generate; -- use 10-bit ADC
      end generate; -- for i in...
 
     process(frame_clk)
@@ -472,6 +507,7 @@ architecture adc16_interface_arc of adc16_interface is
       if rising_edge(fabric_clk_0) then
         -- s_p_data pipeline
         s_p_data <= s_p_data0;
+        s_p10_data <= s_p10_data0;
 
         -- delay_rst shift register
         delay_rst2 <= delay_rst1;
@@ -496,4 +532,4 @@ architecture adc16_interface_arc of adc16_interface is
     snap_we <= not s_snap_counter(10);
     snap_addr <= s_snap_counter(9 downto 0);
 
-end adc16_interface_arc;
+end adc16_caltech_interface_arc;

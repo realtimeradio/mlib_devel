@@ -68,7 +68,7 @@ architecture ADC_ISERDES_arc of ADC_ISERDES_10bit is
      end component;
 
      -- ISERDES Master
-     signal iserdes_q         : std_logic_vector(7 downto 0);
+     signal iserdes_q         : std_logic_vector(9 downto 0);
      signal iserdes_d         : std_logic;
      signal iserdes_clk       : std_logic;
      signal iserdes_clk_inv   : std_logic;
@@ -89,18 +89,23 @@ architecture ADC_ISERDES_arc of ADC_ISERDES_10bit is
      iserdes_clkdiv  <= clkdiv;
      iserdes_rst     <= reset;
      iserdes_d       <= s_data;
+     -- JH: assume the below comment is not true for the Caltech board's TI ADCs,
+     -- and apply bit inversion to the whole word to go from offset binary to 2's comp.
+
      -- iserdes_q is inverted, has MSb in bit 0 (due to differential-pair
      -- routing on ADC16 board, and is in straight offset binary.  Leave MSb
      -- inverted to convert to 2's complement, but invert/restore polarity of
      -- remaining bits and bit-reverse since ADC sends LSb first.
-     p_data <=     iserdes_q(0) &
+     p_data <= not iserdes_q(0) &
                not iserdes_q(1) &
                not iserdes_q(2) &
                not iserdes_q(3) &
                not iserdes_q(4) &
                not iserdes_q(5) &
                not iserdes_q(6) &
-               not iserdes_q(7);
+               not iserdes_q(7) &
+               not iserdes_q(8) &
+               not iserdes_q(9);
 
      process (clkdiv)
      begin
@@ -116,7 +121,7 @@ architecture ADC_ISERDES_arc of ADC_ISERDES_10bit is
      iserdes_m_inst : ISERDESE1
      GENERIC MAP (
       DATA_RATE            => "DDR",
-      DATA_WIDTH           => 8,
+      DATA_WIDTH           => 10,
       DYN_CLKDIV_INV_EN    => false,
       DYN_CLK_INV_EN       => false,
       INTERFACE_TYPE       => "NETWORKING",
@@ -156,7 +161,7 @@ architecture ADC_ISERDES_arc of ADC_ISERDES_10bit is
      iserdes_s_inst : ISERDESE1
      GENERIC MAP (
       DATA_RATE            => "DDR",
-      DATA_WIDTH           => 8,
+      DATA_WIDTH           => 10,
       DYN_CLKDIV_INV_EN    => false,
       DYN_CLK_INV_EN       => false,
       INTERFACE_TYPE       => "NETWORKING",
@@ -171,8 +176,8 @@ architecture ADC_ISERDES_arc of ADC_ISERDES_10bit is
       Q2           => open,
       Q3           => iserdes_q(6),
       Q4           => iserdes_q(7),
-      Q5           => open,
-      Q6           => open,
+      Q5           => iserdes_q(8),
+      Q6           => iserdes_q(9),
       SHIFTOUT1    => open,
       SHIFTOUT2    => open,
       BITSLIP      => iserdes_bitslip,

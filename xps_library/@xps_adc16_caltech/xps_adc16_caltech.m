@@ -5,7 +5,7 @@ if ~isa(blk_obj,'xps_block')
     error('XPS_ADC class requires a xps_block class object');
 end
 
-if ~strcmp(get(blk_obj,'type'),'xps_adc16')
+if ~strcmp(get(blk_obj,'type'),'xps_adc16_caltech')
     error(['Wrong XPS block type: ',get(blk_obj,'type')]);
 end
 
@@ -15,8 +15,9 @@ xsg_obj = get(blk_obj,'xsg_obj');
 
 s.hw_sys = get(xsg_obj,'hw_sys');
 s.roach2_rev = get_param(blk_name,'roach2_rev');
-board_count = get_param(blk_name,'board_count'); % Number of ADC boards
+board_count = '1';
 s.num_units = 4;
+zdok_rev = 2;
 s.fabric_mhz = get(xsg_obj,'clk_rate');
 s.line_mhz_8bit = 2 * s.fabric_mhz;
 s.line_mhz_10bit = 10 * s.line_mhz_8bit / 8;

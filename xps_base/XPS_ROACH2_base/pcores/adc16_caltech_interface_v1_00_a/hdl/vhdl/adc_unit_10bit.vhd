@@ -136,8 +136,8 @@ architecture adc_unit_arc of adc_unit_10bit is
          case demux_mode is
            when "01" => adc_iserdes_data <= adc_iserdes_data_a_pipelined(29 downto 20)
                                           & adc_iserdes_data_b_pipelined(29 downto 20)
-                                          & adc_iserdes_data_a_pipelined( 9 downto 10)
-                                          & adc_iserdes_data_b_pipelined( 9 downto 10);
+                                          & adc_iserdes_data_a_pipelined(19 downto 10)
+                                          & adc_iserdes_data_b_pipelined(19 downto 10);
 
            when "10" => adc_iserdes_data <= adc_iserdes_data_a_pipelined(19 downto 10)
                                           & adc_iserdes_data_b_pipelined(19 downto 10)
@@ -167,7 +167,7 @@ architecture adc_unit_arc of adc_unit_10bit is
                clkin      => line_clk,
                clkdiv     => frame_clk,
                s_data     => delay_a_out(i),
-               p_data     => adc_iserdes_data_a(10*(3-i)+7 downto 10*(3-i))
+               p_data     => adc_iserdes_data_a(10*(3-i)+9 downto 10*(3-i))
       );
 
      adc_iserdes_b_inst : ADC_ISERDES_10bit
@@ -177,7 +177,7 @@ architecture adc_unit_arc of adc_unit_10bit is
                clkin      => line_clk,
                clkdiv     => frame_clk,
                s_data     => delay_b_out(i),
-               p_data     => adc_iserdes_data_b(10*(3-i)+7 downto 10*(3-i))
+               p_data     => adc_iserdes_data_b(10*(3-i)+9 downto 10*(3-i))
       );
 
      ibufds_ser_a_inst : IBUFDS
