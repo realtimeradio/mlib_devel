@@ -21,6 +21,7 @@ entity  adc16_caltech_interface  is
                fabric_clk_270 :  out std_logic;
                locked         :  out std_logic_vector(1 downto 0);
                reset          :  in  std_logic;
+               sof            :  out std_logic;
 
                -- ZDOK
                clk_line_p    :  in  std_logic_vector(  G_NUM_CLOCKS-1 downto 0);
@@ -519,6 +520,7 @@ architecture adc16_caltech_interface_arc of adc16_caltech_interface is
         delay_rst_edge <= (not delay_rst2) and (delay_rst1 or delay_rst0);
 
         -- '0' to '1' transition on snap_req
+        sof <= (not s_snap_req(1)) and (s_snap_req(0));
         if s_snap_req(1) = '0' and s_snap_req(0) = '1' then
           -- Reset snap counter
           s_snap_counter <= (others => '0');

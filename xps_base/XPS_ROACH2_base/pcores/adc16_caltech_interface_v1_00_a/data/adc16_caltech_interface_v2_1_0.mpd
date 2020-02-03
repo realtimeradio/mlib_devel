@@ -71,6 +71,9 @@ PORT h2 = "", VEC = [7:0], DIR = O
 PORT h3 = "", VEC = [7:0], DIR = O
 PORT h4 = "", VEC = [7:0], DIR = O
 
+# Start of frame
+PORT sof = "", DIR = O
+
 # Reset
 PORT reset = "", DIR = I
 

@@ -94,6 +94,32 @@ try
       set_param(h, 'Name', outport_name);
     end
   end
+  
+  inport_name  = sprintf('sof_sim');
+  gateway_name = sprintf('%s_sof', gw_name );
+  outport_name = sprintf('sof');
+  sof_port_num_str = num2str(4*4*board_count + 1);
+  inport_pos  = [x+ 20, y,   x+ 20+30, y+14];
+  gateway_pos = [x+100, y-3, x+100+70, y+17];
+  outport_pos = [x+210, y,   x+210+30, y+14];
+
+  reuse_block(blk, inport_name, 'built-in/inport', ...
+      'Port', sof_port_num_str, ...
+      'Position', inport_pos);
+  
+  reuse_block(blk, gateway_name, 'xbsIndex_r4/Gateway In', ...
+      'arith_type', 'Bool', ...
+      'n_bits', num2str(1), ...
+      'Position', gateway_pos);
+  
+  reuse_block(blk, outport_name, 'built-in/outport', ...
+      'Port', sof_port_num_str, ...
+      'Position', outport_pos);
+  
+  add_line(blk, [inport_name,  '/1'], [gateway_name, '/1']);
+  h=add_line(blk, [gateway_name, '/1'], [outport_name, '/1']);
+  set_param(h, 'Name', outport_name);
+  
   clean_blocks(blk);
 
   save_state(blk, 'defaults', defaults, varargin{:});

@@ -89,14 +89,11 @@ architecture ADC_ISERDES_arc of ADC_ISERDES_10bit is
      iserdes_clkdiv  <= clkdiv;
      iserdes_rst     <= reset;
      iserdes_d       <= s_data;
-     -- JH: assume the below comment is not true for the Caltech board's TI ADCs,
-     -- and apply bit inversion to the whole word to go from offset binary to 2's comp.
-
      -- iserdes_q is inverted, has MSb in bit 0 (due to differential-pair
      -- routing on ADC16 board, and is in straight offset binary.  Leave MSb
      -- inverted to convert to 2's complement, but invert/restore polarity of
      -- remaining bits and bit-reverse since ADC sends LSb first.
-     p_data <= not iserdes_q(0) &
+     p_data <=     iserdes_q(0) &
                not iserdes_q(1) &
                not iserdes_q(2) &
                not iserdes_q(3) &

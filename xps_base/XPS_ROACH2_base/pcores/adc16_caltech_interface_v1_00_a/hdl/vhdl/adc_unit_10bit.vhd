@@ -136,8 +136,8 @@ architecture adc_unit_arc of adc_unit_10bit is
          case demux_mode is
            when "01" => adc_iserdes_data <= adc_iserdes_data_a_pipelined(29 downto 20)
                                           & adc_iserdes_data_b_pipelined(29 downto 20)
-                                          & adc_iserdes_data_a_pipelined(19 downto 10)
-                                          & adc_iserdes_data_b_pipelined(19 downto 10);
+                                          & adc_iserdes_data_a_pipelined( 9 downto  0)
+                                          & adc_iserdes_data_b_pipelined( 9 downto  0);
 
            when "10" => adc_iserdes_data <= adc_iserdes_data_a_pipelined(19 downto 10)
                                           & adc_iserdes_data_b_pipelined(19 downto 10)
