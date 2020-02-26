@@ -463,7 +463,7 @@ architecture adc16_caltech_interface_arc of adc16_caltech_interface is
 
                      iserdes_bitslip => s_iserdes_bitslip(i),
                      p_data => s_p10_data0(i),
-                     absel => absel,
+                     absel => (not absel), --TODO: why does this need NOT-ing?!
                      demux_mode => demux_mode,
 
                      delay_rst_a => s_delay_rst_a(i),
