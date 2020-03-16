@@ -85,7 +85,12 @@ entity  adc16_caltech_interface  is
                -- ROACH2 rev and number of ADC boards (for adc16_controller)
                roach2_rev       :  out std_logic_vector(1 downto 0);
                zdok_rev         :  out std_logic_vector(1 downto 0);
-               num_units        :  out std_logic_vector(3 downto 0)
+               num_units        :  out std_logic_vector(3 downto 0);
+
+               -- sync input from simulink
+               sync_in : in std_logic;
+               -- sync output to pin
+               sync_out : out std_logic
     );
 
 end  adc16_caltech_interface;
@@ -248,6 +253,8 @@ architecture adc16_caltech_interface_arc of adc16_caltech_interface is
      signal s_snap_counter: std_logic_vector(10 downto 0);
 
      begin
+     -- connect sync in (running at fabric clock) to sync out
+     sync_out <= sync_in;
 
      -- Select line clocks for zdok0 and zdok1
      line_clk_zdok0_1: if G_ZDOK_REV = 1 generate
@@ -256,6 +263,7 @@ architecture adc16_caltech_interface_arc of adc16_caltech_interface is
 
      line_clk_zdok0_2: if G_ZDOK_REV = 2 generate
        line_clk_in_zdok0 <= line_clk_in(0);
+       --bufg_i(1) <= frame_clk_in(0);
      end generate;
 
      line_clk_zdok1_1: if G_ZDOK_REV = 1  and G_NUM_CLOCKS = 8 generate
@@ -274,15 +282,16 @@ architecture adc16_caltech_interface_arc of adc16_caltech_interface is
        reset        => reset,
        locked       => locked_0,
        clkin        => line_clk_in_zdok0,
-       clkout0p     => bufg_i(0),
+       clkout0p     => bufg_i(0), -- line clk 8 bit (DDR)
        clkout0n     => open,
-       clkout1p     => bufg_i(1),
+       clkout1p     => bufg_i(1), -- frame clk
+       clkout1p     => open,
        clkout1n     => open,
-       clkout2      => bufg_i(2),
-       clkout2_90   => bufg_i(3),
-       clkout2_180  => bufg_i(4),
-       clkout2_270  => bufg_i(5),
-       clkout3      => bufg_i(6)
+       clkout2      => bufg_i(2), -- fabric clk 0 
+       clkout2_90   => bufg_i(3), -- fabric clk 90
+       clkout2_180  => bufg_i(4), -- fabric clk 180 
+       clkout2_270  => bufg_i(5), -- fabric clk 270
+       clkout3      => bufg_i(6) -- line clk 10 bit (DDR)
      );
 
      -- MMCM BUFGs
@@ -306,18 +315,16 @@ architecture adc16_caltech_interface_arc of adc16_caltech_interface is
          IB  => clk_line_n(i),
          O   => line_clk_in(i)
        );
-       zdok_rev1_frame_clk: if G_ZDOK_REV = 1 generate
-         -- ADC frame clocks
-         frame_clk_inst : IBUFDS
-         generic map (
-           DIFF_TERM  => TRUE,
-           IOSTANDARD => "LVDS_25")
-         port map (
-           I   => clk_frame_p(i),
-           IB  => clk_frame_n(i),
-           O   => frame_clk_in(i)
-         );
-       end generate;
+       -- ADC frame clocks
+       frame_clk_inst : IBUFDS
+       generic map (
+         DIFF_TERM  => TRUE,
+         IOSTANDARD => "LVDS_25")
+       port map (
+         I   => clk_frame_p(i),
+         IB  => clk_frame_n(i),
+         O   => frame_clk_in(i)
+       );
      end generate;
 
      -- Internal routing

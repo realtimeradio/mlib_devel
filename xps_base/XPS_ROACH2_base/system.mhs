@@ -385,6 +385,7 @@
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) # PORT adc0_adc3wire_csn2     = adc0_adc3wire_csn2, DIR = O
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) # PORT adc0_adc3wire_csn3     = adc0_adc3wire_csn3, DIR = O
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) # PORT adc0_adc3wire_csn4     = adc0_adc3wire_csn4, DIR = O
+#IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) # PORT adc0_sync_out     = adc0_sync_out, DIR = O
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) && get(b,'num_units') > 4 # PORT adc1_adc3wire_sclk     = adc1_adc3wire_sclk, DIR = O
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) && get(b,'num_units') > 4 # PORT adc1_adc3wire_sdata    = adc1_adc3wire_sdata, DIR = O
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) && get(b,'num_units') > 4 # PORT adc1_adc3wire_csn1     = adc1_adc3wire_csn1, DIR = O

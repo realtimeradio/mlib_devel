@@ -14,18 +14,18 @@ entity  ADC_MMCM  is
                locked       :  out std_logic;
 
                -- Clock inputs
-               clkin        :  in  std_logic;
+               clkin        :  in  std_logic; -- line clk (10 bit)
 
                -- Clock outputs
-               clkout0p     :  out std_logic; -- serial line clock (line_clk)
+               clkout0p     :  out std_logic; -- line clk (8 bit)
                clkout0n     :  out std_logic;
-               clkout1p     :  out std_logic; -- framing clock (frame_clk = line_clk/8)
+               clkout1p     :  out std_logic; -- frame clk
                clkout1n     :  out std_logic;
                clkout2      :  out std_logic; -- fabric clock (2 * frame_clk) @   0 degrees phase
                clkout2_90   :  out std_logic; -- fabric clock (2 * frame_clk) @  90 degrees phase
                clkout2_180  :  out std_logic; -- fabric clock (2 * frame_clk) @ 180 degrees phase
                clkout2_270  :  out std_logic; -- fabric clock (2 * frame_clk) @ 270 degrees phase
-               clkout3      :  out std_logic  -- serial line clock for 10-bit adc (1.25*line_clk)
+               clkout3      :  out std_logic  -- serial line clock for 10-bit adc (= clk in)
     );
 
 end  ADC_MMCM;
@@ -111,6 +111,20 @@ architecture ADC_MMCM_arc of ADC_MMCM is
       );
      end component;
 
+     component BUFR generic (
+         BUFR_DIVIDE : integer
+     );
+     port (
+         I   : in std_logic;
+         CE  : in std_logic;
+         CLR : in std_logic;
+         O  : out std_logic
+     );
+     end component;
+
+     -- BUFR Signals
+     signal bufr_clkout : std_logic;
+
      -- BUFG Signals
      signal ibufgds_clkinp  : std_logic;
      signal ibufgds_clkinn  : std_logic;
@@ -142,95 +156,83 @@ architecture ADC_MMCM_arc of ADC_MMCM is
      mmcm_clkin <= clkin;
      mmcm_clkfbin <= mmcm_clkfbout;
 
-     clkout0p <= mmcm_clkout0;
+     clkout0p <= mmcm_clkout0; --clkin * 8/10 (line clk @ 8bit)
      clkout0n <= mmcm_clkout0b;
-     clkout1p <= mmcm_clkout1;
+     clkout1p <= mmcm_clkout1; -- clkin / 5 (frame clk)
      clkout1n <= mmcm_clkout1b;
-     clkout2  <= mmcm_clkout2;
+     clkout2  <= mmcm_clkout2; -- clkin / 2.5 (fabric clk (2xframe clk)
      clkout2_90  <= mmcm_clkout2_90;
      clkout2_180 <= mmcm_clkout2_180;
      clkout2_270 <= mmcm_clkout2_270;
-     clkout3 <= mmcm_clkout3;
+     clkout3 <= mmcm_clkout3; -- clkin (line clk @ 10 bit)
 
-     -- Clock input from adc @ around 1GHz
+     -- Clock input from adc @ around 1GHz (500 MHz DDR)
+     -- Divide by 3 here to satisfy the MMCM PFD Freq requirements for High Bandwidth Mode.
+     -- Division by 3 isn't allowed in the MMCM for input clocks > 315 MHz.
+     -- Virtex 6 MMCM rules are FUN!
+     bufr_inst : BUFR
+     GENERIC MAP (
+       BUFR_DIVIDE => 3
+     ) PORT MAP (
+       I => mmcm_clkin,
+       O => bufr_clkout,
+       CLR => '0',
+       CE => '1'
+     );
+
      mmcm_adv_inst : MMCM_ADV
      GENERIC MAP (
-      BANDWIDTH            => "OPTIMIZED",
+      BANDWIDTH            => "HIGH", -- Error out if high doesn't work. Optimize will switch to "LOW" mode, which performs terribly.
       CLKOUT4_CASCADE      => false,
       CLOCK_HOLD           => false,
       COMPENSATION         => "ZHOLD",
       STARTUP_WAIT         => false,
-      DIVCLK_DIVIDE        => 2,     -- D = 2
-      CLKFBOUT_MULT_F      => 5.000, -- M = 5.000
+      DIVCLK_DIVIDE        => 1,     -- D = (effectively 3 because of upstream BUFR)
+      CLKFBOUT_MULT_F      => 6.000, -- M = 10.000
       CLKFBOUT_PHASE       => 0.000,
       CLKFBOUT_USE_FINE_PS => false,
-      CLKOUT0_DIVIDE_F     => 2.500, -- Fout = (M * Fin) / (D * 2.500) = Fin (when D=2, M=5)
+      CLKOUT0_DIVIDE_F     => 2.50, -- Fout = (M * Fin) / (D * 2.50) = (8/10)*Fin (when M/D = 2)
       CLKOUT0_PHASE        => 0.000,
       CLKOUT0_DUTY_CYCLE   => 0.500,
       CLKOUT0_USE_FINE_PS  => false,
-      CLKOUT1_DIVIDE       => 10,    -- Fout = (M * Fin) / (D * 10) = Fin / 4 (when D=2, M=5)
+      CLKOUT1_DIVIDE       => 10,    -- Fout = (M * Fin) / (D * 10) = Fin / 5 (when M/D = 2)
       CLKOUT1_PHASE        => 0.000,
       CLKOUT1_DUTY_CYCLE   => 0.500,
       CLKOUT1_USE_FINE_PS  => false,
-      CLKOUT2_DIVIDE       => 5,     -- Fout = (M * Fin) / (D * 4) = Fin / 2 (when D=2, M=5)
+      CLKOUT2_DIVIDE       => 5,     -- Fout = (M * Fin) / (D * 5) = Fin / 2.5 (when M/D = 2)
       CLKOUT2_PHASE        => 0.000,
       CLKOUT2_DUTY_CYCLE   => 0.500,
       CLKOUT2_USE_FINE_PS  => false,
-      CLKOUT3_DIVIDE       => 5,     -- Fout = (M * Fin) / (D * 4) = Fin / 2 (when D=2, M=5)
+      CLKOUT3_DIVIDE       => 5,     -- Fout = (M * Fin) / (D * 5) = Fin / 2.5 (when M/D = 2)
       CLKOUT3_PHASE        => 90.000,
       CLKOUT3_DUTY_CYCLE   => 0.500,
       CLKOUT3_USE_FINE_PS  => false,
-      -- 10-bit ADC clocks, which are 1.25x the 8-bit clock rates
-      CLKOUT4_DIVIDE       => 2,     -- Fout = (M * Fin) / (D * 4) = Fin * 1.25 (when D=2, M=5)
+      CLKOUT4_DIVIDE       => 2,     -- Fout = (M * Fin) / (D * 2) = Fin (when M/D = 2)
       CLKOUT4_PHASE        => 0.000,
       CLKOUT4_DUTY_CYCLE   => 0.500,
       CLKOUT4_USE_FINE_PS  => false,
-      CLKIN1_PERIOD        => 2.500, -- 400 MHz (should be calculated from user input)
+      CLKIN1_PERIOD        => 2.00, -- 500 MHz (should be calculated from user input)
       REF_JITTER1          => 0.010
-
-      --BANDWIDTH            => "OPTIMIZED",
-      --CLKOUT4_CASCADE      => false,
-      --CLOCK_HOLD           => false,
-      --COMPENSATION         => "ZHOLD",
-      --STARTUP_WAIT         => false,
-      --DIVCLK_DIVIDE        => 1,
-      --CLKFBOUT_MULT_F      => 6.000,
-      --CLKFBOUT_PHASE       => 0.000,
-      --CLKFBOUT_USE_FINE_PS => false,
-      --CLKOUT0_DIVIDE_F     => 6.000,
-      --CLKOUT0_PHASE        => 0.000,
-      --CLKOUT0_DUTY_CYCLE   => 0.500,
-      --CLKOUT0_USE_FINE_PS  => true,
-      --CLKOUT1_DIVIDE       => 12,
-      --CLKOUT1_PHASE        => 0.000,
-      --CLKOUT1_DUTY_CYCLE   => 0.500,
-      --CLKOUT1_USE_FINE_PS  => true,
-      --CLKOUT2_DIVIDE       => 3,
-      --CLKOUT2_PHASE        => 0.250,
-      --CLKOUT2_DUTY_CYCLE   => 0.500,
-      --CLKOUT2_USE_FINE_PS  => true,
-      --CLKIN1_PERIOD        => 5.000,
-      --REF_JITTER1          => 0.010
-
 
       )
      PORT MAP (
       CLKFBOUT     => mmcm_clkfbout,
       CLKFBOUTB    => open,
-      CLKOUT0      => mmcm_clkout0,
-      CLKOUT0B     => mmcm_clkout0b,
-      CLKOUT1      => mmcm_clkout1,
-      CLKOUT1B     => mmcm_clkout1b,
-      CLKOUT2      => mmcm_clkout2,
-      CLKOUT2B     => mmcm_clkout2_180,
-      CLKOUT3      => mmcm_clkout2_90,
-      CLKOUT3B     => mmcm_clkout2_270,
-      CLKOUT4      => mmcm_clkout3,
+      CLKOUT0      => mmcm_clkout0, -- clkin * 8/10
+      CLKOUT0B     => mmcm_clkout0b, -- clkin * 8/10 (180 deg)
+      CLKOUT1      => mmcm_clkout1, -- clkin/5
+      CLKOUT1B     => mmcm_clkout1b, -- clkin/5 (180 deg)
+      CLKOUT2      => mmcm_clkout2, -- clkin/2.5
+      CLKOUT2B     => mmcm_clkout2_180, --clkin/2.5 (180 deg)
+      CLKOUT3      => mmcm_clkout2_90, -- clkin/2.5 (90 deg)
+      CLKOUT3B     => mmcm_clkout2_270, -- clkin/2.5 (270 deg)
+      CLKOUT4      => mmcm_clkout3, -- clkin
       CLKOUT5      => open,
       CLKOUT6      => open,
       -- Input clock control
       CLKFBIN      => mmcm_clkfbin,
-      CLKIN1       => mmcm_clkin,
+      --CLKIN1       => mmcm_clkin,
+      CLKIN1       => bufr_clkout,
       CLKIN2       => '0',
       -- Tied to always select the primary input clock
       CLKINSEL     => '1',

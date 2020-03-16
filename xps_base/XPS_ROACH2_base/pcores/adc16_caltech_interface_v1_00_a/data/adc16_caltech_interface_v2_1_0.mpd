@@ -94,4 +94,9 @@ PORT roach2_rev = "", VEC = [1:0], DIR = O
 PORT zdok_rev   = "", VEC = [1:0], DIR = O
 PORT num_units  = "", VEC = [3:0], DIR = O
 
+# Sync input from simulink
+PORT sync_in = "", DIR = I
+# Sync output to ZDOK
+PORT sync_out = "", DIR = O
+
 END

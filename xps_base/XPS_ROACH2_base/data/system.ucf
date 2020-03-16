@@ -828,6 +828,10 @@ NET "epb_data<31>"      LOC = AJ33;
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))## Answer Record 46398 (http://www.xilinx.com/support/answers/46398.htm).
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('NET "adc16_clk_line_p<%d>" TNM_NET = "adc16_line_clk";\n', get(b, 'line_clk_index'))
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('TIMESPEC "TS_adc16_line_clk" = PERIOD "adc16_line_clk" %.6g ns;\n', 1000/get(b,'line_mhz'))
+#IF# (strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('NET "adc16_clk_frame_p<%d>" TNM_NET = "adc16_frame_clk";\n', get(b, 'line_clk_index'))
+#IF# (strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('TIMESPEC "TS_adc16_frame_clk" = PERIOD "adc16_frame_clk" %.6g ns;\n', 1000/(get(b,'line_mhz')/10))
+#IF# (strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('NET "adc16_clk_frame_p<0>" CLOCK_DEDICATED_ROUTE = FALSE;')
+#IF# (strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('INST "*adc_mmcm_0/bufr_inst" LOC = BUFR_X0Y10;')
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))##
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))#### ADC16 Control Constraints
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))##
@@ -838,6 +842,7 @@ NET "epb_data<31>"      LOC = AJ33;
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('NET adc0_adc3wire_csn4  %s | SLEW = "SLOW" | DRIVE = "2";\n', get(b, 'pin_csn4'))
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('NET adc0_adc3wire_sdata %s | SLEW = "SLOW" | DRIVE = "2";\n', get(b, 'pin_sdata0'))
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('NET adc0_adc3wire_sclk  %s | SLEW = "SLOW" | DRIVE = "2";\n', get(b, 'pin_sclk0'))
+#IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))#sprintf('NET adc0_sync_out %s;\n', get(b, 'pin_sync_out'))
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech'))## signals for adc1
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) && get(b,'num_units') > 4 #sprintf('NET adc1_adc3wire_csn1  %s | SLEW = "SLOW" | DRIVE = "2";\n', get(b, 'pin_csn5'))
 #IF# (strcmp(get(b,'type'),'xps_adc16') || strcmp(get(b,'type'),'xps_adc16_caltech')) && get(b,'num_units') > 4 #sprintf('NET adc1_adc3wire_csn2  %s | SLEW = "SLOW" | DRIVE = "2";\n', get(b, 'pin_csn6'))

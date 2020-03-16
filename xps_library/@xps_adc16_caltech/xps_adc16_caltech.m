@@ -21,7 +21,7 @@ zdok_rev = 2;
 s.fabric_mhz = get(xsg_obj,'clk_rate');
 s.line_mhz_8bit = 2 * s.fabric_mhz;
 s.line_mhz_10bit = 10 * s.line_mhz_8bit / 8;
-s.line_mhz = s.line_mhz_8bit; % This is the parameter used for the timing constraint
+s.line_mhz = s.line_mhz_10bit; % This is the parameter used for the timing constraint
 % Default num_clocks to board_count (i.e. one clock per board)
 num_clocks = str2num(board_count);
 
@@ -48,6 +48,7 @@ s.line_clk_index = 0;
 % Control singal pins for zdok revision 2 are different for ROACH2 rev 1 and
 % rev 2 because they go through the ZDOK connectors now.  Set them all for
 % ROACH2 rev2, then tweak the ones that need changing for ROACH2 rev 1.
+s.pin_sync_out = 'LOC = R27  | IOSTANDARD = LVCMOS25';
 
 % Control signal pins for ZDOK 0
 s.pin_csn1   = 'LOC = R29  | IOSTANDARD = LVCMOS25';
@@ -119,8 +120,10 @@ misc_ports.roach2_rev = {2 'out' 'adc16_roach2_rev'};
 misc_ports.zdok_rev   = {2 'out' 'adc16_zdok_rev'};
 misc_ports.num_units  = {4 'out' 'adc16_num_units'};
 
-misc_ports.clk_frame_p = {num_clocks 'in' 'net_gnd'};
-misc_ports.clk_frame_n = {num_clocks 'in' 'net_gnd'};
+misc_ports.sync_out = {1 'out' 'adc0_sync_out'};
+
+%misc_ports.clk_frame_p = {num_clocks 'in' 'net_gnd'};
+%misc_ports.clk_frame_n = {num_clocks 'in' 'net_gnd'};
 
 b = set(b,'misc_ports',misc_ports);
 
@@ -134,8 +137,12 @@ ucf_constraints_lvds = struct( ...
 % "...pins_1" are for zdok revision 1
 % "...pins_2" are for zdok revision 2
 
-r2_zdok0_clk_p_pins_2 = {'P30'};
-r2_zdok0_clk_n_pins_2 = {'P31'};
+%r2_zdok0_clk_p_pins_2 = {'P30'}; % HMCAD1511
+%r2_zdok0_clk_n_pins_2 = {'P31'}; % HMCAD1511
+r2_zdok0_clk_p_pins_2 = {'K37'}; % ADS5296A
+r2_zdok0_clk_n_pins_2 = {'L37'}; % ADS5296A
+r2_zdok0_fclk_p_pins_2 = {'M33'}; % ADS5296A
+r2_zdok0_fclk_n_pins_2 = {'M32'}; % ADS5296A
 
 %r2_zdok0_frm_p_pins_2 = {};
 %r2_zdok0_frm_n_pins_2 = {};
@@ -300,8 +307,8 @@ r2_zdok1_ser_b_n_pins_2 = {
 
 zdok0_clock_p_str = sprintf('''%s'',', r2_zdok0_clk_p_pins_2{:});
 zdok0_clock_n_str = sprintf('''%s'',', r2_zdok0_clk_n_pins_2{:});
-zdok0_frame_p_str = ',';
-zdok0_frame_n_str = ',';
+zdok0_frame_p_str = sprintf('''%s'',', r2_zdok0_fclk_p_pins_2{:});
+zdok0_frame_n_str = sprintf('''%s'',', r2_zdok0_fclk_n_pins_2{:});
 zdok0_ser_a_p_str = sprintf('''%s'',', r2_zdok0_ser_a_p_pins_2{:});
 zdok0_ser_a_n_str = sprintf('''%s'',', r2_zdok0_ser_a_n_pins_2{:});
 zdok0_ser_b_p_str = sprintf('''%s'',', r2_zdok0_ser_b_p_pins_2{:});
@@ -316,7 +323,7 @@ zdok1_ser_a_n_str = sprintf('''%s'',', r2_zdok1_ser_a_n_pins_2{:});
 zdok1_ser_b_p_str = sprintf('''%s'',', r2_zdok1_ser_b_p_pins_2{:});
 zdok1_ser_b_n_str = sprintf('''%s'',', r2_zdok1_ser_b_n_pins_2{:});
 
-% Remove trainling comma from pin strings and surround with braces
+% Remove trailing comma from pin strings and surround with braces
 clock_p_str = ['{', zdok0_clock_p_str(1:end-1), '}'];
 clock_n_str = ['{', zdok0_clock_n_str(1:end-1), '}'];
 frame_p_str = ['{', zdok0_frame_p_str(1:end-1), '}'];
@@ -332,6 +339,9 @@ ext_ports.clk_line_n = {num_clocks 'in'  'adc16_clk_line_n'  clock_n_str  'vecto
 if zdok_rev == 1
   ext_ports.clk_frame_p = {s.num_units 'in'  'adc16_clk_frame_p' frame_p_str  'vector=true'  mhs_constraints ucf_constraints_lvds };
   ext_ports.clk_frame_n = {s.num_units 'in'  'adc16_clk_frame_n' frame_n_str  'vector=true'  mhs_constraints ucf_constraints_lvds };
+else
+  ext_ports.clk_frame_p = {num_clocks 'in'  'adc16_clk_frame_p' frame_p_str  'vector=true'  mhs_constraints ucf_constraints_lvds };
+  ext_ports.clk_frame_n = {num_clocks 'in'  'adc16_clk_frame_n' frame_n_str  'vector=true'  mhs_constraints ucf_constraints_lvds };
 end
 
 ext_ports.ser_a_p    = {4*s.num_units 'in'  'adc16_ser_a_p'     ser_a_p_str  'vector=true'  mhs_constraints ucf_constraints_lvds };

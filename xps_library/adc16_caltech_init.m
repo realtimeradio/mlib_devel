@@ -102,6 +102,7 @@ try
   inport_pos  = [x+ 20, y,   x+ 20+30, y+14];
   gateway_pos = [x+100, y-3, x+100+70, y+17];
   outport_pos = [x+210, y,   x+210+30, y+14];
+  y = y + 50;
 
   reuse_block(blk, inport_name, 'built-in/inport', ...
       'Port', sof_port_num_str, ...
@@ -119,6 +120,36 @@ try
   add_line(blk, [inport_name,  '/1'], [gateway_name, '/1']);
   h=add_line(blk, [gateway_name, '/1'], [outport_name, '/1']);
   set_param(h, 'Name', outport_name);
+
+  % Sync input
+  inport_pos  = [x+ 20, y,   x+ 20+30, y+14];
+  cast_pos  = [x+ 100, y,   x+ 100+70, y+14];
+  gateway_pos = [x+180, y-3, x+180+70, y+17];
+  term_pos = [x+310, y,   x+310+30, y+14];
+
+  sync_port_num_str = num2str(4*4*board_count + 1 + 1);
+  gateway_name = sprintf('%s_sync_in', gw_name);
+  cast_name = sprintf('sync_cast');
+  inport_name  = sprintf('sync_in');
+  term_name = sprintf('sync_term');
+  reuse_block(blk, inport_name, 'built-in/inport', ...
+      'Port', sync_port_num_str, ...
+      'Position', inport_pos);
+  
+  reuse_block(blk, cast_name, 'xbsIndex_r4/Convert', ...
+      'arith_type', 'Boolean', ...
+      'Position', cast_pos);
+
+  reuse_block(blk, gateway_name, 'xbsIndex_r4/Gateway Out', ...
+      'Position', gateway_pos);
+
+
+  reuse_block(blk, term_name, 'built-in/Terminator', ...
+      'Position', term_pos);
+  
+  add_line(blk, [inport_name,  '/1'], [cast_name, '/1']);
+  add_line(blk, [cast_name,  '/1'], [gateway_name, '/1']);
+  add_line(blk, [gateway_name,  '/1'], [term_name, '/1']);
   
   clean_blocks(blk);
 
