@@ -130,4 +130,44 @@ pins:
        - AN16
        - AN17
        - AV15
+<<<<<<< HEAD
+=======
+#eth_clk should be 156.25MHz for 10GbE
+  eth_clk_p:
+    loc: Y31
+  eth_clk_n:
+    loc: Y32
+  mgt_tx_p:
+    loc: 
+      - Y35
+      - V35
+      - T35
+      - R33
+  mgt_tx_n:
+    loc:
+      - Y36
+      - V36
+      - T36
+      - R34
+  mgt_rx_p:
+    loc:
+      - AA38
+      - W38
+      - U38
+      - R38
+  mgt_rx_n:
+    loc:
+      - AA39
+      - W39
+      - U39
+      - R39
+  sfp_disable:
+    iostd: LVCMOS12
+    loc:
+      - G12
+      - G10
+      - K12
+      - J7
+
+>>>>>>> 024c616d4... Simplify tengbaser_infrastructure_ultrascale.
 
