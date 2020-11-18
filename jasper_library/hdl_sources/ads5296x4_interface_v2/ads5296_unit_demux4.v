@@ -52,35 +52,38 @@ module ads5296_unit (
   assign fifo_din1 = stream_index==1'b1 ? adc1_d1 : adc1_d0;
   
   // Frame clock error counter
-  reg [3:0] fclk4bR;
+  // FCLK should cycle: 0b1111 -> 0b1000 -> 0b0011 -> 0b1110 -> 0b0000 
+  (* shreg_extract = "no" *) reg [3:0] fclk4bR;
+  (* shreg_extract = "no" *) reg [3:0] fclk4bRR;
   reg [31:0] err_cnt;
   assign fclk_err_cnt = err_cnt;
   (* mark_debug = "true" *) wire [31:0] debug_err_cnt = err_cnt;
   always @(posedge lclk_d4) begin
     fclk4bR <= fclk4b;
-    case(fclk4b)
+    fclk4bRR <= fclk4bR;
+    case(fclk4bR)
       4'b0001 : begin
-        if (fclk4bR != 4'b1111) begin
+        if (fclk4bRR != 4'b1111) begin
           err_cnt <= err_cnt + 1'b1;
         end
       end
       4'b1100 : begin
-        if (fclk4bR != 4'b0001) begin
+        if (fclk4bRR != 4'b0001) begin
           err_cnt <= err_cnt + 1'b1;
         end
       end
       4'b0111 : begin
-        if (fclk4bR != 4'b1100) begin
+        if (fclk4bRR != 4'b1100) begin
           err_cnt <= err_cnt + 1'b1;
         end
       end
       4'b0000 : begin
-        if (fclk4bR != 4'b0111) begin
+        if (fclk4bRR != 4'b0111) begin
           err_cnt <= err_cnt + 1'b1;
         end
       end
       4'b1111 : begin
-        if (fclk4bR != 4'b0000) begin
+        if (fclk4bRR != 4'b0000) begin
           err_cnt <= err_cnt + 1'b1;
         end
       end
@@ -93,7 +96,7 @@ module ads5296_unit (
   // On sync, reset the deserializer. After a sync,
   // start writing on the next word start, where frame clock = 1111.
   // Thereafter, just count. This means that behaviour is (might be)
-  // predictable with a corrupted frame clock
+  // unpredictable with a corrupted frame clock
   reg [2:0] ctr;
   reg wait_reg;
   always @(posedge lclk_d4) begin
@@ -109,9 +112,10 @@ module ads5296_unit (
         end
       end else begin
         // On the last cycle, release the counter reset.
-        // On the next clock the counter will be 0, as fclk4b goes to 0b1111
+        // On the next clock the counter will be 0, as fclk4b goes to 0b1111 (as fclk4bR goes to 0b0000)
+        // On _this_ cycle, fclk4b is 0b0000 (fclk4bR is 0b1110)
         // And the first values in a data word are received.
-        if (fclk4b == 4'b0000) begin
+        if (fclk4bR == 4'b1110) begin
           wait_reg <= 1'b0;
         end
       end

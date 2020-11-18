@@ -22,6 +22,7 @@ class ads5296x4(YellowBlock):
 
         self.add_source('ads5296x4_interface_v2/ads5296x4_interface_demux4.v')
         self.add_source('ads5296x4_interface_v2/ads5296_unit_demux4.v')
+        self.add_source('ads5296x4_interface_v2/fclk_deserialize.v')
         self.add_source('ads5296x4_interface_v2/wb_ads5296_attach.v')
         self.add_source('ads5296x4_interface_v2/data_fifo.xci')
         self.add_source('spi_master/spi_master.v')
@@ -31,12 +32,8 @@ class ads5296x4(YellowBlock):
         self.port_prefix = self.blocktype + 'fmc%d' % self.port
 
     def gen_children(self):
-        swreg0 = YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'fullpath':'%s/ads5296_sync%d'%(self.name,self.port), 'io_dir':'From Processor', 'name':'ads5296_sync%d'%self.port}, self.platform)
-        swreg1 = YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'fullpath':'%s/ads5296_rst%d'%(self.name,self.port), 'io_dir':'From Processor', 'name':'ads5296_rst%d'%self.port}, self.platform)
-        swreg2 = YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'fullpath':'%s/ads5296_spi_out%d'%(self.name,self.port), 'io_dir':'From Processor', 'name':'ads5296_spi_out%d'%self.port}, self.platform)
-        swreg3 = YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'fullpath':'%s/ads5296_spi_in%d'%(self.name,self.port), 'io_dir':'To Processor', 'name':'ads5296_spi_in%d'%self.port}, self.platform)
-        #return [swreg0, swreg1, swreg2, swreg3]
-        return []
+        swreg = YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'fullpath':'%s/ads5296_clksel%d'%(self.name,self.port), 'io_dir':'From Processor', 'name':'ads5296_clksel%d'%self.port}, self.platform)
+        return [swreg]
 
     def modify_top(self,top):
         # Connect up the reset register
@@ -44,6 +41,8 @@ class ads5296x4(YellowBlock):
         for b in range(self.board_count):
             inst = top.get_instance(entity=module, name="%s_%d" % (self.fullname, b))
             inst.add_wb_interface(nbytes=16*4, regname='ads5296_controller%d_%d' % (self.port, b), mode='rw', typecode=self.typecode)
+            inst.add_parameter("G_IS_MASTER", "1'b1")
+            inst.add_port('clk_out', 'adc%d_clk%d' % (self.port, b))
             inst.add_port('rst', '%s_adc_rst' % self.fullname)
             inst.add_port('sync', '%s_adc_sync' % self.fullname)
             inst.add_port('lclk_p', '%s_%d_lclk_p' % (self.port_prefix, b), parent_port=True, dir='in')
@@ -82,13 +81,10 @@ class ads5296x4(YellowBlock):
             inst.add_port('din_n', '%s_%d_din_n' % (self.port_prefix, b), parent_port=True, width=self.num_units_per_board*self.lanes_per_unit, dir='in')
             inst.add_port('dout', '%s_%d_dout' % (self.fullname, b), width=self.adc_resolution*self.num_units_per_board*self.channels_per_unit)
             if b == self.clock_source:
-                inst.add_parameter("G_IS_MASTER", "1'b1")
-                inst.add_port('clk_out', 'adc%d_clk' % self.port)
                 inst.add_port('sync_out', '%s_adc_sync_out' % self.fullname)
             else:
-                inst.add_parameter("G_IS_MASTER", "1'b0")
-                inst.add_port('clk_out', '')
                 inst.add_port('sync_out', '')
+
 
             # split out the ports which go to simulink
             for xn, x in enumerate(ascii_lowercase[b*self.num_units_per_board : (b+1) * self.num_units_per_board]):
@@ -100,6 +96,18 @@ class ads5296x4(YellowBlock):
                         '%s_%d_dout[%d-1:%d]' % (self.fullname, b, (self.channels_per_unit*xn+c+1)*self.adc_resolution, (self.channels_per_unit*xn + c)*self.adc_resolution),
                     )
         
+        if self.board_count == 2:
+            # Instantiate clock mux (Xilinx BUFGMUX primitive)
+            clkmux = top.get_instance(entity="BUFGMUX", name="%s_clock_mux" % self.fullname)
+            clkmux.add_port('I0', 'adc%d_clk0' % self.port)
+            clkmux.add_port('I1', 'adc%d_clk1' % self.port)
+            clkmux.add_port('O', 'adc%d_clk' % self.port)
+            clkmux.add_port('S', '%s_ads5296_clksel%d_user_data_out[0]' % (self.name, self.port), parent_sig=False) # Provided by a child swreg
+        else:
+            # Unless there are two boards, use clock 0
+            top.add_signal('adc%d_clk' % self.port)
+            top.assign_signal('adc%d_clk' % self.port, 'adc%d_clk0' % self.port)
+
         # The simulink yellow block provides a simulink-input to drive sync / reset. These can be passed straight
         # to top-level ports. Let the synthesizer infer buffers.
         top.add_port('%s_adc_sync' % self.port_prefix, dir='out')
@@ -329,7 +337,8 @@ class ads5296x4(YellowBlock):
             cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks sys_clk0_dcm]' % (root, clocks[b].name)))
             cons.append(RawConstraint("set_false_path -from [get_clocks -of_objects [get_pins %s/mmcm_inst/CLKOUT0]] -to [get_clocks -of_objects [get_pins %s/clkout_bufg/O]]" % (root, root)))
             # TODO: What are the consequences of this TIG, which ignores the div-by-4 clock buffer reset
-            cons.append(RawConstraint("set_false_path -from [get_pins %s/lclk_d4_rstR_reg/C] -to [get_pins %s/clkout_bufg/CLR]" % (root, root)))
+            cons.append(RawConstraint("set_false_path -from [get_pins %s/fclk_deserialize_inst[*]/lclk_d4_rstR_reg/C] -to [get_pins %s/clkout_bufg/CLR]" % (root, root)))
+            cons.append(RawConstraint("set_false_path -from [get_pins %s/wb_ads5296_attach_inst/fclk_sel_reg_cdc_reg/C] -to [get_pins %s/clkout_bufg/CLR]" % (root, root)))
             #cons.append(RawConstraint("set_false_path -from [get_pins {%s/wb_attach_inst/delay_val_reg_reg[*]/C}] -to [get_pins {%s/iodelay_in[*]/CNTVALUEIN[*]}]" % (root, root)))
             #cons.append(RawConstraint("set_false_path -from [get_pins {%s/wb_attach_inst/delay_load_reg_reg*/C}] -to [get_pins {%s/delay_loadR_reg[*]/D}]" % (root, root)))
 

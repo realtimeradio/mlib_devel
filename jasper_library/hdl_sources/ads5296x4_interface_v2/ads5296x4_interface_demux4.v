@@ -36,21 +36,24 @@ module ads5296x4_interface_v2 #(
     input         wb_cyc_i,
     input         wb_stb_i
   );
+  
+  localparam MAX_NUM_FCLKS = 4;
 
-  wire [4*2*G_NUM_UNITS + 1 - 1 : 0]  delay_load;
-  wire [4*2*G_NUM_UNITS + 1 - 1 : 0]  delay_rst;
-  wire [4*2*G_NUM_UNITS + 1 - 1 : 0] delay_en_vtc;
+  wire [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1 : 0]  delay_load;
+  wire [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1 : 0]  delay_rst;
+  wire [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1 : 0] delay_en_vtc;
   wire [8 : 0] delay_val;
 
   // Clocks
   wire lclk_int; // lclk single ended unbuffered
-  wire [4 - 1 : 0] fclk;     // fclk data signal single ended
+  wire [G_NUM_FCLKS - 1 : 0] fclk;     // fclk data signal single ended
   wire lclk;     // lclk buffered
   wire lclk_d4;  // lclk buffered div by 2
 
   wire [31:0] fclk_err_cnt;
   wire iserdes_rst;
   wire mmcm_rst;
+  wire [1:0] fclk_sel;
   reg [31:0] fclk0_ctr;
   reg [31:0] fclk1_ctr;
   reg [31:0] fclk2_ctr;
@@ -58,7 +61,7 @@ module ads5296x4_interface_v2 #(
   reg [31:0] lclk_ctr;
   wb_ads5296_attach #( 
     .G_NUM_UNITS(G_NUM_UNITS),
-    .G_NUM_FCLKS(1) // Only bother controlling 1 fclk
+    .G_NUM_FCLKS(G_NUM_FCLKS)
   ) wb_ads5296_attach_inst (
     .wb_clk_i(wb_clk_i),
     .wb_rst_i(wb_rst_i),
@@ -83,38 +86,25 @@ module ads5296x4_interface_v2 #(
     .delay_en_vtc(delay_en_vtc),
     .delay_val(delay_val),
     .iserdes_rst(iserdes_rst),
-    .mmcm_rst(mmcm_rst)
+    .mmcm_rst(mmcm_rst),
+    .fclk_sel(fclk_sel)
   );
 
   // Buffer the differential inputs
   wire [4*2*G_NUM_UNITS - 1:0] din;
   wire [4*4*2*G_NUM_UNITS - 1:0] din4b;
   wire [8*4*2*G_NUM_UNITS - 1:0] din8b;
-  wire [3:0] fclk4b;
+  // These registers are assigned by multiplexer, depending which FCLK source we wish to use
+  reg [3:0] fclk4b;
+  reg mmcm_rst_aligned;
+  reg iserdes_rst_aligned;
 
   IBUFDS fclk_buf [G_NUM_FCLKS - 1 : 0] (
     .I(fclk_p),
     .IB(fclk_n),
-    .O(fclk[G_NUM_FCLKS - 1 : 0])
+    .O(fclk)
   );
    
-  generate
-  if (G_NUM_FCLKS < 4) begin
-    assign fclk[3] = 1'b0;
-  end
-  endgenerate
-  
-  generate
-  if (G_NUM_FCLKS < 3) begin
-    assign fclk[2] = 1'b0;
-  end
-  endgenerate
-  
-  generate
-  if (G_NUM_FCLKS < 2) begin
-    assign fclk[1] = 1'b0;
-  end
-  endgenerate 
    
   IBUFDS lclk_ibuf (
     .I(lclk_p),
@@ -127,15 +117,13 @@ module ads5296x4_interface_v2 #(
     .O(lclk)
   );
 
-  reg lclk_d4_rst = 1'b0;
-  reg lclk_d4_rstR = 1'b0;
   BUFGCE_DIV #(
     .BUFGCE_DIVIDE(2)
   ) clkout_bufg(
     .I(lclk_int),
     .O(lclk_d4),
     .CE(1'b1),
-    .CLR(lclk_d4_rstR)
+    .CLR(mmcm_rst_aligned)
   );
 
   IBUFDS din_buf[4*2*G_NUM_UNITS - 1:0] (
@@ -157,11 +145,11 @@ module ads5296x4_interface_v2 #(
 
   wire delay_clk = wb_clk_i;
 
-  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS : 0] delay_loadR;
-  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS : 0] delay_loadRR;
-  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS : 0] delay_loadRRR;
+  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadR;
+  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadRR;
+  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadRRR;
 
-  wire [4*2*G_NUM_UNITS : 0] delay_load_strobe = delay_loadRR & ~delay_loadRRR;
+  wire [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_load_strobe = delay_loadRR & ~delay_loadRRR;
   always @(posedge lclk_d4) begin
     delay_loadR <= delay_load;
     delay_loadRR <= delay_loadR;
@@ -169,7 +157,7 @@ module ads5296x4_interface_v2 #(
   end
 
   wire [4*2*G_NUM_UNITS - 1:0] din_delayed;
-  wire fclk_delayed;
+  wire [MAX_NUM_FCLKS - 1:0] fclk_delayed_all;
 
   IDELAYE3 #(
     .DELAY_TYPE("VAR_LOAD"),
@@ -180,48 +168,50 @@ module ads5296x4_interface_v2 #(
     .CASCADE("NONE"),
     .SIM_DEVICE("ULTRASCALE"),
     .REFCLK_FREQUENCY(200.0)
-  ) iodelay_in [ 4*2*G_NUM_UNITS : 0] (
+  ) iodelay_in [ 4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] (
     .CLK     (lclk_d4),
     .LOAD    (delay_load_strobe),
     .DATAIN  (1'b0),
-    .IDATAIN ({fclk[0], din}),
+    .IDATAIN ({fclk, din}),
     .CNTVALUEIN(delay_val),
     .CNTVALUEOUT(),
     .INC     (1'b0),
     .CE      (1'b0),
     .RST     (delay_rst),
-    .DATAOUT ({fclk_delayed, din_delayed}),
+    .DATAOUT ({fclk_delayed_all[G_NUM_FCLKS - 1:0], din_delayed}),
     .EN_VTC(delay_en_vtc)
   );
-  
-  reg fclk_delayedR;
-  reg iserdes_rst_reg = 1'b0;
-  wire start_of_frame = fclk_delayed & ~fclk_delayedR;
-  always @(posedge lclk) begin
-    fclk_delayedR <= fclk_delayed;
-    lclk_d4_rstR <= lclk_d4_rst;
-    if (mmcm_rst) begin
-      lclk_d4_rst <= 1'b1;
-    end else if (start_of_frame) begin
-      lclk_d4_rst <= 1'b0;
-    end
-    if (iserdes_rst) begin
-      iserdes_rst_reg <= 1'b1;
-    end else if (start_of_frame) begin
-      iserdes_rst_reg <= 1'b0;
-    end
+
+  generate
+  if (G_NUM_FCLKS < 4) begin
+    assign fclk_delayed_all[3] = 1'b0;
   end
+  endgenerate
   
-  always @(posedge fclk_delayed) begin
+  generate
+  if (G_NUM_FCLKS < 3) begin
+    assign fclk_delayed_all[2] = 1'b0;
+  end
+  endgenerate
+  
+  generate
+  if (G_NUM_FCLKS < 2) begin
+    assign fclk_delayed_all[1] = 1'b0;
+  end
+  endgenerate 
+
+
+  
+  always @(posedge fclk_delayed_all[0]) begin
     fclk0_ctr <= fclk0_ctr + 1'b1;
   end
-  always @(posedge fclk[1]) begin
+  always @(posedge fclk_delayed_all[1]) begin
     fclk1_ctr <= fclk1_ctr + 1'b1;
   end
-  always @(posedge fclk[2]) begin
+  always @(posedge fclk_delayed_all[2]) begin
     fclk2_ctr <= fclk2_ctr + 1'b1;
   end
-  always @(posedge fclk[3]) begin
+  always @(posedge fclk_delayed_all[3]) begin
     fclk3_ctr <= fclk3_ctr + 1'b1;
   end
   always @(posedge lclk) begin
@@ -229,46 +219,71 @@ module ads5296x4_interface_v2 #(
   end
 
   // Deserialize fclk and data
-  // Don't use vector instances because we have
+  // Don't use vector instances for data because we have
   // to deal with the fact that the ISERDES block
   // has an 8-bit Q output, meaning data need
   // some slicing.
+  wire [4*MAX_NUM_FCLKS - 1:0] fclk4b_all;
+  wire [MAX_NUM_FCLKS - 1:0] iserdes_rst_aligned_all;
+  wire [MAX_NUM_FCLKS - 1:0] mmcm_rst_aligned_all;
+  fclk_deserialize fclk_deserialize_inst[G_NUM_FCLKS-1:0] (
+    .lclk(lclk),
+    .fclk(fclk_delayed_all[G_NUM_FCLKS-1:0]),
+    .iserdes_rst_in(iserdes_rst),
+    .mmcm_rst_in(mmcm_rst),
+    .fclk4b(fclk4b_all[4*G_NUM_FCLKS - 1:0]),
+    .iserdes_rst_out(iserdes_rst_aligned_all[G_NUM_FCLKS - 1:0]),
+    .mmcm_rst_out(mmcm_rst_aligned_all[G_NUM_FCLKS - 1:0])
+  );
+
   ISERDESE3 #(
     .DATA_WIDTH(4),
     .SIM_DEVICE("ULTRASCALE")
-  ) iserdes_fclk (
+  ) iserdes_data[4*2*G_NUM_UNITS-1:0] (
     .CLK(lclk),
     .CLK_B(~lclk),
     .CLKDIV(lclk_d4),
-    .D(fclk_delayed),
-    //.D(fclk),
-    .Q(fclk4b),
-    .RST(iserdes_rst_reg),
+    .D(din_delayed),
+    //.D(din[i]),
+    .Q(din8b),
+    .RST(iserdes_rst_aligned),
     .FIFO_RD_EN(1'b0),
-    .FIFO_EMPTY()
+    .FIFO_RD_CLK(1'b0),
+    .FIFO_EMPTY(),
+    .INTERNAL_DIVCLK()
   );
 
   generate
     genvar i;
     for (i=0; i<4*2*G_NUM_UNITS; i=i+1) begin
-      ISERDESE3 #(
-        .DATA_WIDTH(4),
-        .SIM_DEVICE("ULTRASCALE")
-      ) iserdes_data (
-        .CLK(lclk),
-        .CLK_B(~lclk),
-        .CLKDIV(lclk_d4),
-        .D(din_delayed[i]),
-        //.D(din[i]),
-        .Q(din8b[(i+1)*8 - 1 : i*8]),
-        .RST(iserdes_rst_reg),
-        .FIFO_RD_EN(1'b0),
-        .FIFO_EMPTY()
-      );
       assign din4b[(i+1)*4 - 1 : i*4] = din8b[(i+1)*8 - 4 - 1: i*8];
     end
   endgenerate
 
+  always @(*) begin
+    case (fclk_sel)
+      2'd0: begin
+        fclk4b <= fclk4b_all[3:0];
+        mmcm_rst_aligned <= mmcm_rst_aligned_all[0];
+        iserdes_rst_aligned <= iserdes_rst_aligned_all[0];
+      end
+      2'd1: begin
+        fclk4b <= fclk4b_all[7:4];
+        mmcm_rst_aligned <= mmcm_rst_aligned_all[1];
+        iserdes_rst_aligned <= iserdes_rst_aligned_all[1];
+      end
+      2'd2: begin
+        fclk4b <= fclk4b_all[11:8];
+        mmcm_rst_aligned <= mmcm_rst_aligned_all[2];
+        iserdes_rst_aligned <= iserdes_rst_aligned_all[2];
+      end
+      2'd3: begin
+        fclk4b <= fclk4b_all[15:12];
+        mmcm_rst_aligned <= mmcm_rst_aligned_all[3];
+        iserdes_rst_aligned <= iserdes_rst_aligned_all[3];
+      end
+    endcase
+  end
 
   generate
   if (G_IS_MASTER) begin

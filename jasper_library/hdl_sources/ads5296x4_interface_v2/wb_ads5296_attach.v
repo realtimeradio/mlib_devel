@@ -30,7 +30,8 @@ module wb_ads5296_attach #(
     output [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0]  delay_en_vtc,
     output [8 : 0] delay_val,
     output iserdes_rst,
-    output mmcm_rst
+    output mmcm_rst,
+    output [1:0] fclk_sel
   );
 
   reg wb_ack;
@@ -43,6 +44,7 @@ module wb_ads5296_attach #(
   reg [8 : 0] delay_val_reg;
   reg iserdes_rst_reg;
   reg mmcm_rst_reg;
+  reg [1:0] fclk_sel_reg;
 
   reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0]  delay_load_reg_cdc;
   reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0]  delay_rst_reg_cdc;
@@ -50,6 +52,7 @@ module wb_ads5296_attach #(
   reg [8 : 0] delay_val_reg_cdc;
   reg iserdes_rst_reg_cdc;
   reg mmcm_rst_reg_cdc;
+  reg fclk_sel_reg_cdc;
 
   assign delay_load = delay_load_reg_cdc;
   assign delay_rst = delay_rst_reg_cdc;
@@ -57,6 +60,7 @@ module wb_ads5296_attach #(
   assign delay_val = delay_val_reg_cdc;
   assign iserdes_rst = iserdes_rst_reg_cdc;
   assign mmcm_rst = mmcm_rst_reg_cdc;
+  assign fclk_sel = fclk_sel_reg_cdc;
 
   reg [31:0] fclk_err_cnt_reg;
   reg [31:0] lclk_cnt_reg;
@@ -154,6 +158,10 @@ module wb_ads5296_attach #(
             9 : begin
               mmcm_rst_reg <= wb_dat_i[0];
             end
+            // 10 - 14 [READ ONLY] clock counters
+            15 : begin
+              fclk_sel_reg <= wb_dat_i[1:0];
+            end
             default: begin
             end
           endcase
@@ -210,6 +218,9 @@ module wb_ads5296_attach #(
             14: begin
               wb_data_out_reg[31:0] <= fclk3_cnt_reg_cdc[31:0];
             end
+            15: begin
+              wb_data_out_reg[31:0] <= {30'b0, fclk_sel_reg};
+            end
             default: begin
               wb_data_out_reg <= 32'b0;
             end
@@ -239,7 +250,7 @@ module wb_ads5296_attach #(
     end
 
     /* strobes */
-    delay_load_reg_cdc <= 33'b0;
+    delay_load_reg_cdc <= {(4*2*G_NUM_UNITS + G_NUM_FCLKS){1'b0}};
     if (register_readyRR) begin
       register_done <= 1'b1;
       delay_load_reg_cdc <= delay_load_reg;
@@ -248,6 +259,7 @@ module wb_ads5296_attach #(
       delay_val_reg_cdc <= delay_val_reg;
       iserdes_rst_reg_cdc <= iserdes_rst_reg;
       mmcm_rst_reg_cdc <= mmcm_rst_reg;
+      fclk_sel_reg_cdc <= fclk_sel_reg;
     end
 
     /* Wishbone reads */
