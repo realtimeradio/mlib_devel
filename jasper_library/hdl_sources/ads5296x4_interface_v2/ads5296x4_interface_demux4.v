@@ -145,15 +145,22 @@ module ads5296x4_interface_v2 #(
 
   wire delay_clk = wb_clk_i;
 
-  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadR;
-  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadRR;
-  (* async_reg = "true" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadRRR;
+  (* shreg_extract = "no" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_rstR;
 
-  wire [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_load_strobe = delay_loadRR & ~delay_loadRRR;
+  (* shreg_extract = "no" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadR;
+  (* shreg_extract = "no" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_loadRR;
+  (* shreg_extract = "no" *) reg [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_en_vtcR;
+
+  wire [4*2*G_NUM_UNITS + G_NUM_FCLKS - 1: 0] delay_load_strobe = delay_loadR & ~delay_loadRR;
+  
+  (* shreg_extract = "no" *) reg [8:0] delay_valR;
+  (* shreg_extract = "no" *) reg [8:0] delay_valRR;
   always @(posedge lclk_d4) begin
     delay_loadR <= delay_load;
     delay_loadRR <= delay_loadR;
-    delay_loadRRR <= delay_loadRR;
+    delay_valR <= delay_val;
+    delay_rstR <= delay_rst;
+    delay_en_vtcR <= delay_en_vtc;
   end
 
   wire [4*2*G_NUM_UNITS - 1:0] din_delayed;
@@ -173,13 +180,13 @@ module ads5296x4_interface_v2 #(
     .LOAD    (delay_load_strobe),
     .DATAIN  (1'b0),
     .IDATAIN ({fclk, din}),
-    .CNTVALUEIN(delay_val),
+    .CNTVALUEIN(delay_valR),
     .CNTVALUEOUT(),
     .INC     (1'b0),
     .CE      (1'b0),
-    .RST     (delay_rst),
+    .RST     (delay_rstR),
     .DATAOUT ({fclk_delayed_all[G_NUM_FCLKS - 1:0], din_delayed}),
-    .EN_VTC(delay_en_vtc)
+    .EN_VTC(delay_en_vtcR)
   );
 
   generate
@@ -318,21 +325,6 @@ module ads5296x4_interface_v2 #(
   
 
   // Deserializers
-  (* async_reg = "true" *) reg syncR;
-  (* async_reg = "true" *) reg syncRR;
-  reg fifo_we;
-  always @(posedge lclk_d4) begin
-    syncR <= sync;
-    syncRR <= syncR;
-    if (rst) begin
-      fifo_we <= 1'b0;
-    end else begin
-      if (syncR & ~syncRR) begin
-        fifo_we <= 1'b1;
-      end
-    end
-  end
-
   reg [10:0] fifo_re_sr;
   reg fifo_re_reg;
   wire fifo_re = fifo_re_sr[10];
@@ -345,6 +337,21 @@ module ads5296x4_interface_v2 #(
       fifo_re_sr <= 11'b0;
     end else if ( ~fifo_re ) begin
       fifo_re_sr <= {fifo_re_sr[9:0], syncR_sclk & ~ syncRR_sclk};
+    end
+  end
+
+  (* async_reg = "true" *) reg syncR;
+  (* async_reg = "true" *) reg syncRR;
+  reg fifo_we;
+  always @(posedge lclk_d4) begin
+    syncR <= syncR_sclk; // CDC
+    syncRR <= syncR;
+    if (rst) begin
+      fifo_we <= 1'b0;
+    end else begin
+      if (syncR & ~syncRR) begin
+        fifo_we <= 1'b1;
+      end
     end
   end
   wire [32*4*G_NUM_UNITS - 1 : 0] fclk_err_cnt_multi;

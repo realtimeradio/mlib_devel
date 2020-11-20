@@ -112,42 +112,46 @@ module ads5296_unit (
         end
       end else begin
         // On the last cycle, release the counter reset.
-        // On the next clock the counter will be 0, as fclk4b goes to 0b1111 (as fclk4bR goes to 0b0000)
-        // On _this_ cycle, fclk4b is 0b0000 (fclk4bR is 0b1110)
-        // And the first values in a data word are received.
-        if (fclk4bR == 4'b1110) begin
+        // On the next clock the counter will be 0, and fclk4bR will be 0b1111
+        // On _this_ cycle, fclk4bR is 0b0000
+        // Using the delayed fclk is ok because we are using delayed data signals below
+        if (fclk4bR == 4'b0000) begin
           wait_reg <= 1'b0;
         end
       end
     end
   end  
 
-  // Assume data is received LSB first      
+  // Assume data is received LSB first
+  reg [3:0] din4b_0R;
+  reg [3:0] din4b_1R;     
   always @(posedge lclk_d4) begin
+    din4b_0R <= din4b_0;
+    din4b_1R <= din4b_1;
     // Strobe defaults
     fifo_we <= 1'b0;
     if (ctr == 3'd0) begin
-      adc0_d0[3:0] <= din4b_0;
-      adc1_d0[3:0] <= din4b_1;
+      adc0_d0[3:0] <= din4b_0R;
+      adc1_d0[3:0] <= din4b_1R;
     end else if (ctr == 3'd1) begin
-      adc0_d0[7:4] <= din4b_0;
-      adc1_d0[7:4] <= din4b_1;
+      adc0_d0[7:4] <= din4b_0R;
+      adc1_d0[7:4] <= din4b_1R;
     end else if (ctr == 3'd2) begin
       // Finish first word
-      adc0_d0[9:8] <= din4b_0[1:0];
-      adc1_d0[9:8] <= din4b_1[1:0];
+      adc0_d0[9:8] <= din4b_0R[1:0];
+      adc1_d0[9:8] <= din4b_1R[1:0];
       fifo_we <= 1'b1;
       stream_index <= 1'b0;
       // Start second word
-      adc0_d1[1:0] <= din4b_0[3:2];
-      adc1_d1[1:0] <= din4b_1[3:2];
+      adc0_d1[1:0] <= din4b_0R[3:2];
+      adc1_d1[1:0] <= din4b_1R[3:2];
     end else if (ctr == 3'd3) begin
-      adc0_d1[5:2] <= din4b_0;
-      adc1_d1[5:2] <= din4b_1;
+      adc0_d1[5:2] <= din4b_0R;
+      adc1_d1[5:2] <= din4b_1R;
     end else if (ctr == 3'd4) begin
       // Finish second word
-      adc0_d1[9:6] <= din4b_0;
-      adc1_d1[9:6] <= din4b_1;
+      adc0_d1[9:6] <= din4b_0R;
+      adc1_d1[9:6] <= din4b_1R;
       fifo_we <= 1'b1;
       stream_index <= 1'b1;
     end else begin

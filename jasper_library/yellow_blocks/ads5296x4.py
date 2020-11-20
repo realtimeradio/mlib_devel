@@ -332,13 +332,23 @@ class ads5296x4(YellowBlock):
 
         
         
-        for b in range(self.board_count):
-            root = "%s_%d" % (self.fullname, b)
-            cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks sys_clk0_dcm]' % (root, clocks[b].name)))
-            cons.append(RawConstraint("set_false_path -from [get_clocks -of_objects [get_pins %s/mmcm_inst/CLKOUT0]] -to [get_clocks -of_objects [get_pins %s/clkout_bufg/O]]" % (root, root)))
+        for b1 in range(self.board_count):
+            root1 = "%s_%d" % (self.fullname, b1)
+            cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks sys_clk0_dcm]' % (root1, clocks[b1].name)))
+            # Since we're mux-ing the clocks, make all combinations of MMCM and LCLKs ignored
+            for b2 in range(self.board_count):
+                root2 = "%s_%d" % (self.fullname, b2)
+                cons.append(RawConstraint("set_false_path -from [get_clocks -of_objects [get_pins %s/mmcm_inst/CLKOUT0]] -to [get_clocks -of_objects [get_pins %s/clkout_bufg/O]]" % (root1, root2)))
+
+            # We're using an FPGA clock from either the board 0 lclk or the board 1 lclk. We don't need to time between these.
+            for b2 in range(b1, self.board_count):
+                root2 = "%s_%d" % (self.fullname, b2)
+                cons.append(RawConstraint("set_false_path -from [get_clocks -of_objects [get_pins %s/mmcm_inst/CLKOUT0]] -to [get_clocks -of_objects [get_pins %s/mmcm_inst/CLKOUT0]]" % (root1, root2)))
+                cons.append(RawConstraint("set_false_path -from [get_clocks -of_objects [get_pins %s/mmcm_inst/CLKOUT0]] -to [get_clocks -of_objects [get_pins %s/mmcm_inst/CLKOUT0]]" % (root2, root1)))
             # TODO: What are the consequences of this TIG, which ignores the div-by-4 clock buffer reset
-            cons.append(RawConstraint("set_false_path -from [get_pins %s/fclk_deserialize_inst[*]/lclk_d4_rstR_reg/C] -to [get_pins %s/clkout_bufg/CLR]" % (root, root)))
-            cons.append(RawConstraint("set_false_path -from [get_pins %s/wb_ads5296_attach_inst/fclk_sel_reg_cdc_reg/C] -to [get_pins %s/clkout_bufg/CLR]" % (root, root)))
+            cons.append(RawConstraint("set_false_path -from [get_pins %s/fclk_deserialize_inst[*]/lclk_d4_rstR_reg/C] -to [get_pins %s/clkout_bufg/CLR]" % (root1, root1)))
+            cons.append(RawConstraint("set_false_path -from [get_pins %s/wb_ads5296_attach_inst/fclk_sel_reg_cdc_reg/C] -to [get_pins %s/clkout_bufg/CLR]" % (root1, root1)))
+            cons.append(RawConstraint("set_false_path -from [get_pins %s/syncR_sclk_reg/C] -to [get_pins %s/syncR_reg/D]" % (root1, root1)))
             #cons.append(RawConstraint("set_false_path -from [get_pins {%s/wb_attach_inst/delay_val_reg_reg[*]/C}] -to [get_pins {%s/iodelay_in[*]/CNTVALUEIN[*]}]" % (root, root)))
             #cons.append(RawConstraint("set_false_path -from [get_pins {%s/wb_attach_inst/delay_load_reg_reg*/C}] -to [get_pins {%s/delay_loadR_reg[*]/D}]" % (root, root)))
 
