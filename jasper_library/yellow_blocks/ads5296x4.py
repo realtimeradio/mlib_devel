@@ -15,6 +15,9 @@ class ads5296x4(YellowBlock):
     channels_per_unit = 4
     lanes_per_channel = lanes_per_unit // channels_per_unit
     clock_source = 1
+    # version 1: Pinout "Alt2 pinout" (First boards manufactured)
+    # version 2: Pinout "Alt3 pinout"
+    version = 1 # May be overwritten by block attributes
     def initialize(self):
         # Compute line clock rate. Factor of 2.0 is for DDR
         self.line_clock_freq_mhz = self.adc_resolution * self.sample_rate / self.lanes_per_channel / 2.0
@@ -222,28 +225,44 @@ class ads5296x4(YellowBlock):
 
     def gen_constraints(self):
         cons = []
+        assert self.version in [1,2], "Don't know what to do with version %d!" % self.version
 
         for pol in ['p', 'n']:
             # Chip 0
-            cons.append(PortConstraint(
-                '%s_0_din_%s' % (self.port_prefix, pol),
-                'fmc%d_ha_%s' % (self.port, pol),
-                port_index=list(range(8)),
-                iogroup_index=range(2,2+8),
-            ))
-            # Chip 1
-            cons.append(PortConstraint(
-                '%s_0_din_%s' % (self.port_prefix, pol),
-                'fmc%d_ha_%s' % (self.port, pol),
-                port_index=list(range(8,8+7)),
-                iogroup_index=range(10,10+7),
-            ))
-            cons.append(PortConstraint(
-                '%s_0_din_%s' % (self.port_prefix, pol),
-                'fmc%d_hb_%s' % (self.port, pol),
-                port_index=[15],
-                iogroup_index=[0],
-            ))
+            if self.version == 1:
+                cons.append(PortConstraint(
+                    '%s_0_din_%s' % (self.port_prefix, pol),
+                    'fmc%d_ha_%s' % (self.port, pol),
+                    port_index=list(range(8)),
+                    iogroup_index=range(2,2+8),
+                ))
+                # Chip 1
+                Cons.append(PortConstraint(
+                    '%s_0_din_%s' % (self.port_prefix, pol),
+                    'fmc%d_ha_%s' % (self.port, pol),
+                    port_index=list(range(8,8+7)),
+                    iogroup_index=range(10,10+7),
+                ))
+                Cons.append(PortConstraint(
+                    '%s_0_din_%s' % (self.port_prefix, pol),
+                    'fmc%d_hb_%s' % (self.port, pol),
+                    port_index=[15],
+                    iogroup_index=[0],
+                ))
+            elif self.version == 2:
+                cons.append(PortConstraint(
+                    '%s_0_din_%s' % (self.port_prefix, pol),
+                    'fmc%d_ha_%s' % (self.port, pol),
+                    port_index=list(range(8)),
+                    iogroup_index=range(1,1+8),
+                ))
+                # Chip 1
+                Cons.append(PortConstraint(
+                    '%s_0_din_%s' % (self.port_prefix, pol),
+                    'fmc%d_ha_%s' % (self.port, pol),
+                    port_index=list(range(8,8+8)),
+                    iogroup_index=range(9,9+8),
+                ))
             # Chip 2
             cons.append(PortConstraint(
                 '%s_0_din_%s' % (self.port_prefix, pol),
@@ -262,10 +281,16 @@ class ads5296x4(YellowBlock):
         # Add the clock pins for board 0
         cons.append(PortConstraint('%s_0_lclk_p' % (self.port_prefix), 'fmc%d_clk_p' % self.port, iogroup_index=2))
         cons.append(PortConstraint('%s_0_lclk_n' % (self.port_prefix), 'fmc%d_clk_n' % self.port, iogroup_index=2))
-        cons.append(PortConstraint('%s_0_fclk0_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=0))
-        cons.append(PortConstraint('%s_0_fclk0_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=0))
-        cons.append(PortConstraint('%s_0_fclk2_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=1))
-        cons.append(PortConstraint('%s_0_fclk2_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=1))
+        if self.version == 1:
+            cons.append(PortConstraint('%s_0_fclk0_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=1))
+            cons.append(PortConstraint('%s_0_fclk0_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=1))
+            cons.append(PortConstraint('%s_0_fclk2_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=0))
+            cons.append(PortConstraint('%s_0_fclk2_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=0))
+        elif self.version == 2:
+            cons.append(PortConstraint('%s_0_fclk0_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=0))
+            cons.append(PortConstraint('%s_0_fclk0_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=0))
+            cons.append(PortConstraint('%s_0_fclk2_p' % (self.port_prefix), 'fmc%d_hb_p' % self.port, iogroup_index=0))
+            cons.append(PortConstraint('%s_0_fclk2_n' % (self.port_prefix), 'fmc%d_hb_n' % self.port, iogroup_index=0))
 
         # Add the single ended pins
         # in single-ended numbering, N pin is 1 greater than P pin
