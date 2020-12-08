@@ -237,13 +237,13 @@ class ads5296x4(YellowBlock):
                     iogroup_index=range(2,2+8),
                 ))
                 # Chip 1
-                Cons.append(PortConstraint(
+                cons.append(PortConstraint(
                     '%s_0_din_%s' % (self.port_prefix, pol),
                     'fmc%d_ha_%s' % (self.port, pol),
                     port_index=list(range(8,8+7)),
                     iogroup_index=range(10,10+7),
                 ))
-                Cons.append(PortConstraint(
+                cons.append(PortConstraint(
                     '%s_0_din_%s' % (self.port_prefix, pol),
                     'fmc%d_hb_%s' % (self.port, pol),
                     port_index=[15],
@@ -257,7 +257,7 @@ class ads5296x4(YellowBlock):
                     iogroup_index=range(1,1+8),
                 ))
                 # Chip 1
-                Cons.append(PortConstraint(
+                cons.append(PortConstraint(
                     '%s_0_din_%s' % (self.port_prefix, pol),
                     'fmc%d_ha_%s' % (self.port, pol),
                     port_index=list(range(8,8+8)),
