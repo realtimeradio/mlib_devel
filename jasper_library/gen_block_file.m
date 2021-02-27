@@ -133,11 +133,15 @@ for n = 1:length(xps_blks)
     % as well as the tag name, which identifies the block to the rest
     % of the toolflow
     block_params = get_param(xps_blks{n}, 'DialogParameters');
-    fields = fieldnames(block_params);
     fprintf(fid, '  %s:\n', xps_blks{n});
     fprintf(fid, '    %s: %s\n', 'name', get_param(xps_blks{n}, 'Name'));
     fprintf(fid, '    %s: %s\n', 'fullpath', xps_blks{n});
     fprintf(fid, '    %s: %s\n', 'tag', get_param(xps_blks{n}, 'Tag'));
+    if numel(block_params) > 0
+        fields = fieldnames(block_params);
+    else
+        fields = [];
+    end
     for m = 1:length(fields)
         try
             val = eval_param(xps_blks{n}, fields{m});
