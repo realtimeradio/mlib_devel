@@ -83,10 +83,6 @@ pins:
   mgt_rx_n:
     loc: [C3, E3, G3]
 
-  sfp_disable:
-    iostd: LVCMOS25
-    loc: [W21, W22, U17]
-
   wr_20m_vcxo:
     loc: Y8
     iostd: LVCMOS18
@@ -153,6 +149,10 @@ pins:
     loc: V20
     iostd: LVCMOS25
   
+  sfp_disable:
+    iostd: LVCMOS25
+    loc: [W20, V19, W19]
+
 
   adc_csn:
     iostd: LVCMOS18
