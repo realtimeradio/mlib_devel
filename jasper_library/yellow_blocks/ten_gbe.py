@@ -338,11 +338,12 @@ class tengbaser_xilinx_k7(ten_gbe):
 
         cons.append(RawConstraint('set_false_path -from [get_pins {tengbaser_infra%d_inst/ten_gig_eth_pcs_pma_core_support_layer_i/ten_gig_eth_pcs_pma_shared_clock_reset_block/reset_pulse_reg[0]/C}] -to [get_pins {tengbaser_infra%d_inst/ten_gig_eth_pcs_pma_core_support_layer_i/ten_gig_eth_pcs_pma_shared_clock_reset_block/gttxreset_txusrclk2_sync_i/sync1_r_reg*/PRE}]' % (num, num)))
 
+        cons.append(PortConstraint('tx_disable%d'%self.port, 'sfp_disable', iogroup_index=self.port))
+
         # make the ethernet core clock async relative to whatever the user is using as user_clk
         # Find the clock of *clk_counter* to determine what source user_clk comes from. This is fragile.
         
         if self.platform.name == 'snap':
-           cons.append(PortConstraint('tx_disable%d'%self.port, 'sfp_disable', iogroup_index=self.port))
            cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d -asynchronous -group [get_clocks -include_generated_clocks sys_clk_p_CLK] -group [get_clocks -include_generated_clocks ethclk%d]'%(num,num)))
            cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d_usr_clk -asynchronous -group [get_clocks -of_objects [get_cells -hierarchical -filter {name=~*clk_counter*}]] -group [get_clocks -include_generated_clocks ethclk%d]' % (num, num)))
         else:
