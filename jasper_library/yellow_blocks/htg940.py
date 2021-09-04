@@ -1,14 +1,14 @@
 from .yellow_block import YellowBlock
 from constraints import ClockConstraint, PortConstraint, RawConstraint
 
-class htg9200(YellowBlock):
+class htg940(YellowBlock):
     def initialize(self):
-        self.add_source('infrastructure/htg9200_infrastructure.v')
+        self.add_source('infrastructure/htg940_infrastructure.v')
         self.add_source('wbs_arbiter')
         self.provides = ['sys_clk', 'sys_clk90', 'sys_clk180', 'sys_clk270']
 
     def modify_top(self,top):
-        inst = top.get_instance('htg9200_infrastructure', 'htg9200_infrastructure_inst')
+        inst = top.get_instance('htg940_infrastructure', 'htg940_infrastructure_inst')
         inst.add_port('sys_clk_buf_n', 'sys_clk_n', parent_port=True, dir='in')
         inst.add_port('sys_clk_buf_p', 'sys_clk_p', parent_port=True, dir='in')
         inst.add_port('sys_clk0     ', 'sys_clk   ')

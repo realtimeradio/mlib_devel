@@ -1,0 +1,282 @@
+name: htg940
+manufacturer: HTG
+fpga: xcvu13p-fhgb2104-2-e
+family: ultrascaleplus
+backend_target: vivado
+#mmbus_architecture: ['wishbone', 'AXI4-Lite']
+#mmbus_architecture: ['AXI4-Lite', 'wishbone']
+mmbus_architecture: 'wishbone'
+# wishbone at address 0; AXI offset = 1MB
+mmbus_base_address: 0x00100000
+#axi_ic_base_address: 0x44A00000
+dsp_wb_base_address: 0x00010000
+# How to address each 32-bit (i.e. 4 indicates byte-addressable)
+mmbus_address_alignment: 4
+sources: []
+constraints: []
+tengbe:
+  gt_quad: "X0Y6"
+onehundredgbe:
+  refclk_freq_str: "156.25"
+  include_rs_fec: 1
+  cmac_loc:
+    - CMACE4_X0Y6
+provides:
+  - qsfp0
+#  - qsfp1
+#  - qsfp2
+#  - qsfp3
+#  - qsfp4
+#  - qsfp5
+#  - qsfp6
+pins:
+  sys_clk_p:
+    loc: C38 
+    iostd: LVDS
+  sys_clk_n:
+    loc: C39
+    iostd: LVDS
+
+# ddr4 200mhz sysclk
+#  sys_clk_p:
+#    loc: BA34
+#    iostd: DIFF_HSTL_I_12
+#  sys_clk_n:
+#    loc: BB34
+#    iostd: DIFF_HSTL_I_12
+
+    
+
+
+  # Use GPIO 9,10,11,12 for SPI
+#  miso:
+#    loc: BJ29
+#    iostd: LVCMOS18
+#  mosi:
+#    loc: BG32
+#    iostd: LVCMOS18
+#  sclk:
+#    loc: BF32
+#    iostd: LVCMOS18
+#  cs_n:
+#    loc: BK30
+#    iostd: LVCMOS18
+#  led:
+#    iostd: LVCMOS18
+#    loc:
+#      - BF53
+#      - BG48
+#      - BG49
+#      - BE54
+#      - BE53
+  usb_tx:
+    iostd: LVCMOS18
+    loc: P15
+  usb_rx:
+    iostd: LVCMOS18
+    loc: R15
+  usb_cts:
+    iostd: LVCMOS18
+    loc: D14
+  usb_rts:
+    iostd: LVCMOS18
+    loc: L15
+
+
+  gpio:
+    iostd: LVCMOS18
+    loc:
+#      # 0_p
+      - AV26
+#      # 1_p
+      - AY27
+#      # 2_p
+      - BA25
+#      # 3, 4, ... 12
+      - BB27
+#      - BG33
+#      - BH29
+#      - BG30
+#      - BF31
+#      - BH30
+#      - BJ29
+#      - BG32
+#      - BF32
+#      - BK30
+#  qsfp_mgt_ref_clk_p:
+#    loc:
+#      - AJ15
+#      - AD13
+#      - AG40
+#      - AB42
+#  qsfp_mgt_ref_clk_n:
+#    loc:
+#      - AJ14
+#      - AD12
+#      - AG41
+#      - AB43
+#
+#  940 1gbe interface
+#  gbe_rgmii_rxd:
+#    iostd: LVCMOS25
+#    loc:
+#      - A20
+#      - D21
+#      - E21
+#      - C21
+#  gbe_rgmii_txd:
+#    iostd: LVCMOS25
+#    loc:
+#      - D20
+#      - A19
+#      - B19
+#      - E20
+#  gbe_rgmii_tx_ctl:
+#    iostd: LVCMOS25
+#    loc: G21
+#  gbe_rgmii_rx_ctl:
+#    iostd: LVCMOS25
+#    loc: B21
+#  gbe_rgmii_txc:
+#    iostd: LVCMOS25
+#    loc: G20
+#  gbe_phy_mdio:
+#    iostd: LVCMOS18
+#    loc: G19
+#  gbe_phy_mdc:
+#    iostd: LVCMOS18
+#    loc: A18
+#  gbe_rx_clk:
+#    iostd: 
+#    loc: G20
+#  gbe_tx_clk:
+#    iostd:
+#    loc: G21
+
+
+
+#
+#  gbe_phy_power_down_n:
+#    iostd: LVCMOS18
+#    loc: BF22
+  #gbe_phy_rst_n:
+  #  iostd: LVCMOS18
+  #  loc: U65.19 #TODO
+
+  eth_clk_p:
+    loc:
+      - L36
+#      - AD13
+#      - AG40
+#      - AB42
+  eth_clk_n:
+    loc:
+      - L37
+#      - AD12
+#      - AG41
+#      - AB43
+  mgt_rx_p:
+    loc:
+      - J45
+      - F45
+      - H43
+      - D45
+  mgt_rx_n:
+    loc:
+      - J46
+      - F46
+      - H44
+      - D46
+  mgt_tx_p:
+    loc:
+      - G40
+      - C42
+      - E42
+      - A42
+  mgt_tx_n:
+    loc:
+      - G41
+      - C43
+      - E43
+      - A43
+#  qsfp_mgt_rx_p:
+#    loc:
+#      - AL6
+#      - AK4
+#      - AJ2
+#      - AH4
+#      - AG2
+#      - AF4
+#      - AE2
+#      - AE6
+#      - AD4
+#      - AC2
+#      - AC6
+#      - AB4
+#      - AA2
+#      - Y4
+#      - W2
+#      - V4
+#  qsfp_mgt_rx_n:
+#    loc:
+#      - AL5
+#      - AK3
+#      - AJ1
+#      - AH3
+#      - AG1
+#      - AF3
+#      - AE1
+#      - AE5
+#      - AD3
+#      - AC1
+#      - AC5
+#      - AB3
+#      - AA1
+#      - Y3
+#      - W1
+#      - V3
+#  qsfp_mgt_tx_p:
+#    loc:
+#      - AK9
+#      - AJ7
+#      - AJ11
+#      - AH9
+#      - AG7
+#      - AG11
+#      - AF9
+#      - AE11
+#      - AD9
+#      - AC11
+#      - AB9
+#      - AA7
+#      - AA11
+#      - Y9
+#      - W7
+#      - W11
+#  qsfp_mgt_tx_n:
+#    loc:
+#      - AK8
+#      - AJ6
+#      - AJ10
+#      - AH8
+#      - AG6
+#      - AG10
+#      - AF8
+#      - AE10
+#      - AD8
+#      - AC10
+#      - AB8
+#      - AA6
+#      - AA10
+#      - Y8
+#      - W6
+#      - W10
+#  qsfp_modprsl_ls:
+#    iostd: LVCMOS18
+#    loc: [BN35, BN34, BP34, BL32]
+#  qsfp_sda:
+#    iostd: LVCMOS18
+#    loc: [BN30, BM30, BP32, BM34]
+#  qsfp_scl:
+#    iostd: LVCMOS18
+#    loc: [BN29, BL30, BN32, BM32]
