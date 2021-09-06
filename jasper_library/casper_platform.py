@@ -31,6 +31,9 @@ class Platform(object):
         #: A list of resources present on a platform to facilitate
         #: simple drc checking. Eg. ['qdr0', 'sysclk2x']
         self.provides = self.conf.get('provides', [])
+        #: A version number for the underlying hardware
+        #: defaults to 1 if none is specified in the yaml configuration
+        self.version = self.conf.get('version', 1)
         #: A list of source files/directories required to compile
         #: the template top.v (does NOT include top.v itself)
         self.sources = self.conf.get('sources', [])
@@ -74,12 +77,18 @@ class Platform(object):
         # Add respective memory map bus architecture attributes to support AXI4-lite
         try:
             self.mmbus_architecture = self.conf['mmbus_architecture']
+            if not isinstance(self.mmbus_architecture, list):
+                self.mmbus_architecture = [self.mmbus_architecture]
         except KeyError:
-            self.mmbus_architecture = 'wishbone'
-        try:
-            self.mmbus_base_address = self.conf['mmbus_base_address']
-        except KeyError:
-            self.mmbus_base_address = 0x40000000
+            self.mmbus_architecture = ['wishbone']
+        
+        # mmbus_base_address is the address the client should use for an AXI transaction
+        self.mmbus_base_address = self.conf.get('mmbus_base_address', 0x40000000)
+        # axi_ic_base_address is the address the AXI devices consider themselves to have.
+        # This may or may not be the same as mmbus_base_address. It will be different
+        # if an upstream arbiter is removing the mmbus_base_address before passing
+        # on an AXI command
+        self.axi_ic_base_address = self.conf.get('axi_ic_base_address', self.mmbus_base_address)
         try:
             self.mmbus_address_alignment = self.conf['mmbus_address_alignment']
         except KeyError:

@@ -1,0 +1,191 @@
+name: htg9200
+manufacturer: Xilinx
+fpga: xcvu13p-fhgb2104-2-e
+family: ultrascaleplus
+backend_target: vivado
+#mmbus_architecture: ['wishbone', 'AXI4-Lite']
+#mmbus_architecture: ['AXI4-Lite', 'wishbone']
+mmbus_architecture: 'wishbone'
+# wishbone at address 0; AXI offset = 1MB
+mmbus_base_address: 0x00100000
+#axi_ic_base_address: 0x44A00000
+dsp_wb_base_address: 0x00010000
+# How to address each 32-bit (i.e. 4 indicates byte-addressable)
+mmbus_address_alignment: 4
+sources: []
+constraints: []
+onehundredgbe:
+  refclk_freq_str: "156.25"
+  include_rs_fec: 1
+  cmac_loc:
+    - CMACE4_X0Y6
+    - CMACE4_X0Y8
+    - CMACE4_X0Y7
+provides:
+  - qsfp0
+  - qsfp1
+  - qsfp2
+#  - qsfp3
+#  - qsfp4
+#  - qsfp5
+#  - qsfp6
+#  - qsfp7
+#  - qsfp8
+#  - qsfp9
+pins:
+  sys_clk_p:
+    loc: AV26
+    iostd: LVDS
+  sys_clk_n:
+    loc: AW26
+    iostd: LVDS
+  # Use GPIO 9,10,11,12 for SPI
+#  miso:
+#    loc: BJ29
+#    iostd: LVCMOS18
+#  mosi:
+#    loc: BG32
+#    iostd: LVCMOS18
+#  sclk:
+#    loc: BF32
+#    iostd: LVCMOS18
+#  cs_n:
+#    loc: BK30
+#    iostd: LVCMOS18
+  gpio:
+    iostd: LVCMOS18
+    loc:
+      - P33
+      - K34
+      - E35
+      - H37
+  led:
+    iostd: LVCMOS18
+    loc:
+      - BA24 
+      - BB24
+      - BC24
+      - BD24
+      - AP25
+      - BD25
+      - BC26
+      - BC27
+  usb_tx:
+    iostd: LVCMOS18
+    loc: BB27
+    #loc: AY27
+  usb_rx:
+    iostd: LVCMOS18
+    loc: AY27
+    #loc: BB27
+  usb_cts:
+    iostd: LVCMOS18
+    loc: AY28
+  usb_rts:
+    iostd: LVCMOS18
+    loc: BC28
+  qsfp_mgt_ref_clk_p:
+    loc:
+      - K38
+      - R36
+      - W36
+  qsfp_mgt_ref_clk_n:
+    loc:
+      - K39
+      - R37
+      - W37
+  eth_clk_p:
+    loc:
+      - K38 
+  eth_clk_n:
+    loc:
+      - K39
+  mgt_rx_p:
+    loc:
+      - F45
+      - J45
+      - H43
+      - D45
+  mgt_rx_n:
+    loc:
+      - F46
+      - J46
+      - H44
+      - D46
+  mgt_tx_p:
+    loc:
+      - C42
+      - G40
+      - E42
+      - A42
+  mgt_tx_n:
+    loc:
+      - C43
+      - G41
+      - E43
+      - A43
+  qsfp_mgt_rx_p:
+    loc:
+      - F45
+      - J45
+      - H43
+      - D45
+      - L45
+      - N45
+      - M43
+      - K43
+      - R45
+      - U45
+      - T43
+      - P43
+  qsfp_mgt_rx_n:
+    loc:
+      - F46
+      - J46
+      - H44
+      - D46
+      - L46
+      - N46
+      - M44
+      - K44
+      - R46
+      - U46
+      - T44
+      - P44
+  qsfp_mgt_tx_p:
+    loc:
+      - C42
+      - G40
+      - E42
+      - A42
+      - L40
+      - N40
+      - M38
+      - J40
+      - R40
+      - U40
+      - T38
+      - P38
+  qsfp_mgt_tx_n:
+    loc:
+      - C43
+      - G41
+      - E43
+      - A43
+      - L41 
+      - N41
+      - M39
+      - J41
+      - R41
+      - U41
+      - T39
+      - P39
+  qsfp_modprsl_ls:
+    iostd: LVCMOS18
+    loc: [BE21, BD21, AY22]
+#  qsfp_sda:
+#    iostd: LVCMOS18
+#    loc: [BN30, BM30, BP32, BM34]
+#  qsfp_scl:
+#    iostd: LVCMOS18
+#    loc: [BN29, BL30, BN32, BM32]
