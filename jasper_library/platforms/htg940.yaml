@@ -74,10 +74,10 @@ pins:
       - AR25
   usb_tx:
     iostd: LVCMOS18
-    loc: P15
+    loc: R15
   usb_rx:
     iostd: LVCMOS18
-    loc: R15
+    loc: P15
   usb_cts:
     iostd: LVCMOS18
     loc: D14
