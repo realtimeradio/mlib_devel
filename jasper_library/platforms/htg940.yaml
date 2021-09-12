@@ -61,14 +61,17 @@ pins:
 #  cs_n:
 #    loc: BK30
 #    iostd: LVCMOS18
-#  led:
-#    iostd: LVCMOS18
-#    loc:
-#      - BF53
-#      - BG48
-#      - BG49
-#      - BE54
-#      - BE53
+  led:
+    iostd: LVCMOS18
+    loc:
+      - AP28
+      - AN28
+      - AP26
+      - AP25
+      - AR28
+      - AR27
+      - AT28
+      - AR25
   usb_tx:
     iostd: LVCMOS18
     loc: P15
