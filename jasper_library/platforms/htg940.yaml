@@ -284,5 +284,5 @@ pins:
 #    iostd: LVCMOS18
 #    loc: [BN29, BL30, BN32, BM32]
   i2c:
-    iostd: LVCMOS33 
+    iostd: LVCMOS18 
     loc: [AV28, AU27] #SDA, SCL
