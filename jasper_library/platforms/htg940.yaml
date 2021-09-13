@@ -21,14 +21,20 @@ onehundredgbe:
   include_rs_fec: 1
   cmac_loc:
     - CMACE4_X0Y6
+    - CMACE4_X0Y1 
+    - CMACE4_X1Y3
+#    - CMACE4_
+#    - CMACE4_X0Y2
+#    - CMACE4_
 provides:
   - qsfp0
-#  - qsfp1
-#  - qsfp2
+# qsfp1-5 are assumed to be on a 6-port mezzanine in FMC "D"
+# port "2" in the mezzanine card is not connected
+  - qsfp1
+  - qsfp2
 #  - qsfp3
 #  - qsfp4
 #  - qsfp5
-#  - qsfp6
 pins:
   sys_clk_p:
     loc: C38 
@@ -106,18 +112,6 @@ pins:
 #      - BG32
 #      - BF32
 #      - BK30
-#  qsfp_mgt_ref_clk_p:
-#    loc:
-#      - AJ15
-#      - AD13
-#      - AG40
-#      - AB42
-#  qsfp_mgt_ref_clk_n:
-#    loc:
-#      - AJ14
-#      - AD12
-#      - AG41
-#      - AB43
 #
 #  940 1gbe interface
 #  gbe_rgmii_rxd:
@@ -202,78 +196,127 @@ pins:
       - C43
       - E43
       - A43
-#  qsfp_mgt_rx_p:
-#    loc:
-#      - AL6
-#      - AK4
-#      - AJ2
-#      - AH4
-#      - AG2
-#      - AF4
-#      - AE2
-#      - AE6
-#      - AD4
-#      - AC2
-#      - AC6
-#      - AB4
-#      - AA2
-#      - Y4
-#      - W2
-#      - V4
-#  qsfp_mgt_rx_n:
-#    loc:
-#      - AL5
-#      - AK3
-#      - AJ1
-#      - AH3
-#      - AG1
-#      - AF3
-#      - AE1
-#      - AE5
-#      - AD3
-#      - AC1
-#      - AC5
-#      - AB3
-#      - AA1
-#      - Y3
-#      - W1
-#      - V3
-#  qsfp_mgt_tx_p:
-#    loc:
-#      - AK9
-#      - AJ7
-#      - AJ11
-#      - AH9
-#      - AG7
-#      - AG11
-#      - AF9
-#      - AE11
-#      - AD9
-#      - AC11
-#      - AB9
-#      - AA7
-#      - AA11
-#      - Y9
-#      - W7
-#      - W11
-#  qsfp_mgt_tx_n:
-#    loc:
-#      - AK8
-#      - AJ6
-#      - AJ10
-#      - AH8
-#      - AG6
-#      - AG10
-#      - AF8
-#      - AE10
-#      - AD8
-#      - AC10
-#      - AB8
-#      - AA6
-#      - AA10
-#      - Y8
-#      - W6
-#      - W10
+
+  qsfp_mgt_ref_clk_p:
+    loc:
+      - L36
+      - AV11
+      - AF11
+      - AK11
+      - AB11
+      - AP11
+  qsfp_mgt_ref_clk_n:
+    loc:
+      - L37
+      - AV10
+      - AF10
+      - AK10
+      - AB10
+      - AP10
+  qsfp_mgt_rx_p:
+    loc:
+      - J45
+      - F45
+      - H43
+      - D45
+      - BC2
+      - BA2
+      - AW4
+      - AV2
+      - AJ4
+      - AH2
+      - AG4
+      - AF2
+      - AN4
+      - AM2
+      - AL4
+      - AK2
+      - AE4
+      - AD2
+      - AC4
+      - AB2
+      - AU4
+      - AT2
+      - AR4
+      - AP2
+  qsfp_mgt_rx_n:
+    loc:
+      - J46
+      - F46
+      - H44
+      - D46
+      - BC1
+      - BA1
+      - AW3
+      - AV1
+      - AJ3
+      - AH1
+      - AG3
+      - AF1
+      - AN3
+      - AM1
+      - AL3
+      - AK1
+      - AE3
+      - AD1
+      - AC3
+      - AB1
+      - AU3
+      - AT1
+      - AR3
+      - AP1
+  qsfp_mgt_tx_p:
+    loc:
+      - G41
+      - C43
+      - E43
+      - A43
+      - BF5
+      - BD5
+      - BB5
+      - AV7
+      - AJ9
+      - AH7
+      - AG9
+      - AF7
+      - AN9
+      - AM7
+      - AL9
+      - AK7
+      - AE9
+      - AD7
+      - AC9
+      - AB7
+      - AU9
+      - AT7
+      - AR9
+      - AP7
+  qsfp_mgt_tx_n:
+    loc:
+      - G41
+      - C43
+      - E43
+      - A43
+      - BF4
+      - BD4
+      - BB4
+      - AV6
+      - AJ8
+      - AH6
+      - AG8
+      - AF6
+      - AN8
+      - AM6
+      - AL8
+      - AK6
+      - AE8
+      - AD6
+      - AC8
+      - AB6
+      - AU8
+      - AT6
+      - AR8
+      - AP6
 #  qsfp_modprsl_ls:
 #    iostd: LVCMOS18
 #    loc: [BN35, BN34, BP34, BL32]
