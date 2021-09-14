@@ -36,8 +36,8 @@ if __name__ == '__main__':
                     help="Backend to use. Default: vivado")
     parser.add_argument("--sysgen", dest="sysgen", type=str, default='',
                     help="Specify a specific sysgen startup script.")
-    parser.add_argument("--jobs", dest="jobs", type=int, default=4,
-                    help="Number of cores to run compiles with. Default=4")
+    parser.add_argument("--jobs", dest="jobs", type=int, default=8,
+                    help="Number of cores to run compiles with. Default=8")
     parser.add_argument("--nonprojectmode", dest="nonprojectmode",
                     action='store_false', default=True,
                     help="Project Mode is enabled by default/Non Project Mode "

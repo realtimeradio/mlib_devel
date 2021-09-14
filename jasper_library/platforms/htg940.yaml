@@ -22,7 +22,7 @@ onehundredgbe:
   cmac_loc:
     - CMACE4_X0Y6
     - CMACE4_X0Y1 
-    - CMACE4_X1Y3
+    - CMACE4_X0Y2
 #    - CMACE4_
 #    - CMACE4_X0Y2
 #    - CMACE4_
@@ -317,9 +317,9 @@ pins:
       - AT6
       - AR8
       - AP6
-#  qsfp_modprsl_ls:
-#    iostd: LVCMOS18
-#    loc: [BN35, BN34, BP34, BL32]
+  qsfp_modprsl_ls:
+    iostd: LVCMOS18
+    loc: [B32, AP15, AU14]
 #  qsfp_sda:
 #    iostd: LVCMOS18
 #    loc: [BN30, BM30, BP32, BM34]
