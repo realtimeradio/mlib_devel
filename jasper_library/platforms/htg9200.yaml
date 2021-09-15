@@ -14,14 +14,16 @@ dsp_wb_base_address: 0x00010000
 mmbus_address_alignment: 4
 sources: []
 constraints: []
+tengbe:
+  gt_quad: "X0Y9"
 onehundredgbe:
   refclk_freq_str: "156.25"
-  include_rs_fec: 1
+  #include_rs_fec: 1
   cmac_loc:
-    - CMACE4_X0Y10 
+    - CMACE4_X0Y9 
     - CMACE4_X0Y8
     - CMACE4_X0Y7
-    - CMACE4_X0Y9
+    - CMACE4_X0Y2
     - CMACE4_X0Y6
     - CMACE4_X0Y5
     - CMACE4_X0Y4

@@ -18,23 +18,23 @@ tengbe:
   gt_quad: "X0Y6"
 onehundredgbe:
   refclk_freq_str: "156.25"
-  include_rs_fec: 1
+  #include_rs_fec: 1
   cmac_loc:
     - CMACE4_X0Y6
     - CMACE4_X0Y1 
     - CMACE4_X0Y2
-#    - CMACE4_
-#    - CMACE4_X0Y2
-#    - CMACE4_
+    - CMACE4_X0Y3
+    - CMACE4_X0Y4
+    - CMACE4_X0Y5
 provides:
   - qsfp0
 # qsfp1-5 are assumed to be on a 6-port mezzanine in FMC "D"
 # port "2" in the mezzanine card is not connected
   - qsfp1
   - qsfp2
-#  - qsfp3
-#  - qsfp4
-#  - qsfp5
+  - qsfp3
+  - qsfp4
+  - qsfp5
 pins:
   sys_clk_p:
     loc: C38 
@@ -319,7 +319,7 @@ pins:
       - AP6
   qsfp_modprsl_ls:
     iostd: LVCMOS18
-    loc: [B32, AP15, AU14]
+    loc: [B32, AP15, AY15, AU13, BB12, AM15]
 #  qsfp_sda:
 #    iostd: LVCMOS18
 #    loc: [BN30, BM30, BP32, BM34]
