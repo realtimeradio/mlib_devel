@@ -267,10 +267,10 @@ pins:
       - AP1
   qsfp_mgt_tx_p:
     loc:
-      - G41
-      - C43
-      - E43
-      - A43
+      - G40
+      - C42
+      - E42
+      - A42
       - BF5
       - BD5
       - BB5
