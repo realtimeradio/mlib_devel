@@ -23,7 +23,7 @@ onehundredgbe:
     - CMACE4_X0Y9 
     - CMACE4_X0Y8
     - CMACE4_X0Y7
-    - CMACE4_X0Y2
+    - CMACE4_X0Y3
     - CMACE4_X0Y6
     - CMACE4_X0Y5
     - CMACE4_X0Y4
@@ -242,7 +242,7 @@ pins:
       - U41
       - T39
       - P39
-      - W40
+      - W41
       - AA41
       - Y39
       - V39
