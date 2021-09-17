@@ -219,25 +219,30 @@ pins:
       - F45
       - H43
       - D45
-      - BC2
+       #DP 0, 2, 1, 3
+      - AV2
       - BA2
       - AW4
-      - AV2
-      - AJ4
-      - AH2
-      - AG4
+      - BC2
+       # DP 15, 14, 12, 13
       - AF2
+      - AG4
+      - AH2
+      - AJ4
+       # DP 11, 10 , 9, 8
       - AN4
-      - AM2
-      - AL4
       - AK2
+      - AL4
+      - AM2
+       # DP 19, 17, 18, 16
       - AE4
-      - AD2
       - AC4
+      - AD2
       - AB2
+       # DP 5, 4, 6, 7
       - AU4
-      - AT2
       - AR4
+      - AT2
       - AP2
   qsfp_mgt_rx_n:
     loc:
@@ -245,25 +250,30 @@ pins:
       - F46
       - H44
       - D46
-      - BC1
+       #DP 0, 2, 1, 3
+      - AV1
       - BA1
       - AW3
-      - AV1
-      - AJ3
-      - AH1
-      - AG3
+      - BC1
+       # DP 15, 14, 12, 13
       - AF1
+      - AG3
+      - AH1
+      - AJ3
+       # DP 11, 10 , 9, 8
       - AN3
-      - AM1
-      - AL3
       - AK1
+      - AL3
+      - AM1
+       # DP 19, 17, 18, 16
       - AE3
-      - AD1
       - AC3
+      - AD1
       - AB1
+       # DP 5, 4, 6, 7
       - AU3
-      - AT1
       - AR3
+      - AT1
       - AP1
   qsfp_mgt_tx_p:
     loc:
@@ -271,25 +281,30 @@ pins:
       - C42
       - E42
       - A42
-      - BF5
+       #DP 0, 2, 1, 3
+      - AV7
       - BD5
       - BB5
-      - AV7
-      - AJ9
-      - AH7
-      - AG9
+      - BF5
+       # DP 15, 14, 12, 13
       - AF7
+      - AG9
+      - AH7
+      - AJ9
+       # DP 11, 10 , 9, 8
       - AN9
-      - AM7
-      - AL9
       - AK7
+      - AL9
+      - AM7
+       # DP 19, 17, 18, 16
       - AE9
-      - AD7
       - AC9
+      - AD7
       - AB7
+       # DP 5, 4, 6, 7
       - AU9
-      - AT7
       - AR9
+      - AT7
       - AP7
   qsfp_mgt_tx_n:
     loc:
@@ -297,25 +312,30 @@ pins:
       - C43
       - E43
       - A43
-      - BF4
+       #DP 0, 2, 1, 3
+      - AV6
       - BD4
       - BB4
-      - AV6
-      - AJ8
-      - AH6
-      - AG8
+      - BF4
+       # DP 15, 14, 12, 13
       - AF6
+      - AG8
+      - AH6
+      - AJ8
+       # DP 11, 10 , 9, 8
       - AN8
-      - AM6
-      - AL8
       - AK6
+      - AL8
+      - AM6
+       # DP 19, 17, 18, 16
       - AE8
+      - AC6
       - AD6
-      - AC8
       - AB6
+       # DP 5, 4, 6, 7
       - AU8
-      - AT6
       - AR8
+      - AT6
       - AP6
   qsfp_modprsl_ls:
     iostd: LVCMOS18
