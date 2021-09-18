@@ -90,19 +90,21 @@ pins:
   usb_rts:
     iostd: LVCMOS18
     loc: L15
-
-
+  sync_in:
+    iostd: LVCMOS18
+    loc:
+      - AV26
   gpio:
     iostd: LVCMOS18
     loc:
 #      # 0_p
-      - AV26
+      - BF33
 #      # 1_p
-      - AY27
+      - AK27
 #      # 2_p
-      - BA25
+      - AR32
 #      # 3, 4, ... 12
-      - BB27
+      - AR31
 #      - BG33
 #      - BH29
 #      - BG30
