@@ -1,9 +1,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
 %   Center for Astronomy Signal Processing and Electronics Research           %
-%   http://seti.ssl.berkeley.edu/casper/                                      %
-%   Copyright (C) 2006 University of California, Berkeley                     %
+%   http://casper.berkeley.edu                                                %
+%   Copyright (C)2010 Billy Mallard                                           %
 %                                                                             %
 %   This program is free software; you can redistribute it and/or modify      %
 %   it under the terms of the GNU General Public License as published by      %
@@ -21,39 +20,49 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if ~strcmp(bdroot, 'xps_library')
-    sysgen_blk = find_system(gcs, 'SearchDepth', 1,'FollowLinks','on','LookUnderMasks','all','Tag','genX');
-    if length(sysgen_blk) == 1
-        xsg_blk = sysgen_blk{1};
-    else
-        error('XPS block must be on the same level as the Xilinx SysGen block');
-    end
+function async_bram_vacc_init(blk, varargin)
+% Initialize and configure a async_bram_vacc block.
+%
+% async_bram_vacc_init(blk, varargin)
+%
+% blk = The block to configure.
+% varargin = {'varname', 'value', ...} pairs.
+%
+% Valid varnames for this block are:
+% vec_len = 
+% arith_type = 
+% n_bits = 
+% bin_pt = 
 
-    [hw_sys, hw_subsys] = xps_get_hw_plat(get_param(gcb,'hw_sys'));
-    clk_src = get_param(gcb, 'clk_src');
-    %clk_src = get_param(gcb, [hw_sys, '_clk_src']);
-    syn_tool = get_param(gcb, 'synthesis_tool');
+% Declare any default values for arguments you might like.
+defaults = {};
+if same_state(blk, 'defaults', defaults, varargin{:}), return, end
+check_mask_type(blk, 'async_bram_vacc');
+munge_block(blk, varargin{:});
 
-    %set_param(gcb, 'clk_src', clk_src);
+vec_len = get_var('vec_len', 'defaults', defaults, varargin{:});
+arith_type = get_var('arith_type', 'defaults', defaults, varargin{:});
+n_bits = get_var('n_bits', 'defaults', defaults, varargin{:});
+bin_pt = get_var('bin_pt', 'defaults', defaults, varargin{:});
 
-    ngc_config.include_clockwrapper = 1;
-    ngc_config.include_cf = 0;
+% Validate input fields.
 
-    xlsetparam(xsg_blk,'xilinxfamily', 'virtexuplus',...
-        'part', hw_subsys,...
-        'speed', '-2L-e',...
-        'testbench', 'off',...
-        'package', 'fhgb2104');
-
-    xlsetparam(xsg_blk,...
-        'sysclk_period', num2str(1000/clk_rate),...
-        'synthesis_language', 'VHDL');
-
-    if strcmp(syn_tool, 'Leonardo Spectrum')
-        xlsetparam(xsg_blk, 'synthesis_tool', 'Spectrum');
-    else
-        xlsetparam(xsg_blk, 'synthesis_tool', syn_tool)
-    end
-
-    xlsetparam(xsg_blk,'clock_loc','d7hack')
+if vec_len < 6
+	errordlg('async_bram_vacc: Invalid vector length. Must be greater than 5.')
 end
+
+if n_bits < 1
+	errordlg('async_bram_vacc: Invalid bit width. Must be greater than 0.')
+end
+
+if bin_pt > n_bits
+	errordlg('async_bram_vacc: Invalid binary point. Cannot be greater than the bit width.')
+end
+
+% Adjust sub-block parameters.
+
+set_param([blk, '/Constant'], 'arith_type', arith_type)
+set_param([blk, '/Adder'], 'arith_type', arith_type)
+
+save_state(blk, 'defaults', defaults, varargin{:});
+
