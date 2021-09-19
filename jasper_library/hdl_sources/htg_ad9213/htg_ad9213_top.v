@@ -9,12 +9,11 @@ module htg_ad9213_quad_top #(
   // 200MHz external clock
   input         clk_200_p,
   input         clk_200_n,
-  // Software reset
+  // Software reset, driven from Simulink
   input         reset,
   // External UART pins
   input         uart_txd,
   output        uart_rxd,
-  output        adc_0_clkout,
   //// FMC A
   // HMC
   output        hmc_a_sync,
@@ -82,7 +81,7 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_a_dout_29,
   output [11:0] adc_a_dout_30,
   output [11:0] adc_a_dout_31,
-  output        adc_a_clkout,
+  output        adc_a_clkout, // Clock domain for adc_a_dout*. (Hopefully all adc_*_dout are on the same domain)
   //// FMC B
   // HMC
   output        hmc_b_sync,
@@ -150,7 +149,7 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_b_dout_29,
   output [11:0] adc_b_dout_30,
   output [11:0] adc_b_dout_31,
-  output        adc_b_clkout,
+  output        adc_b_clkout, // Clock domain for adc_b_dout*. (Hopefully all adc_*_dout are on the same domain)
   //// FMC C
   // HMC
   output        hmc_c_sync,
@@ -218,7 +217,7 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_c_dout_29,
   output [11:0] adc_c_dout_30,
   output [11:0] adc_c_dout_31,
-  output        adc_c_clkout,
+  output        adc_c_clkout, // Clock domain for adc_c_dout*. (Hopefully all adc_*_dout are on the same domain)
   //// FMC D
   // HMC
   output        hmc_d_sync,
@@ -286,5 +285,5 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_d_dout_29,
   output [11:0] adc_d_dout_30,
   output [11:0] adc_d_dout_31,
-  output        adc_d_clkout
+  output        adc_d_clkout, // Clock domain for adc_d_dout*. (Hopefully all adc_*_dout are on the same domain)
 );
