@@ -131,26 +131,26 @@ class htg_ad9213(YellowBlock):
         assert fmc in ['a', 'b', 'c', 'd']
 
         cons = []
-        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_sync'),           'fmc_' + fmc + '_la_n', iogroup_index=3)]
-        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_reset'),          'fmc_' + fmc + '_la_p', iogroup_index=3)]
-        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio1'),          'fmc_' + fmc + '_la_p', iogroup_index=2)]
-        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio2'),          'fmc_' + fmc + '_la_p', iogroup_index=0)]
-        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio3'),          'fmc_' + fmc + '_la_n', iogroup_index=1)]
-        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio4'),          'fmc_' + fmc + '_la_p', iogroup_index=5)]
+        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_sync'),           'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=3)]
+        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_reset'),          'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=3)]
+        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio1'),          'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=2)]
+        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio2'),          'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=0)]
+        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio3'),          'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=1)]
+        cons += [PortConstraint(self.expand_name('hmc_' + fmc + '_gpio4'),          'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=5)]
 
-        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_clk'),            'fmc_' + fmc + '_la_n', iogroup_index=2)]
-        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_data'),           'fmc_' + fmc + '_la_p', iogroup_index=1)]
-        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_slen_hmc7044'),   'fmc_' + fmc + '_la_n', iogroup_index=0)]
-        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_cs_adf4371'),     'fmc_' + fmc + '_la_n', iogroup_index=16)]
-        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_csb_ad9213'),     'fmc_' + fmc + '_la_p', iogroup_index=6)]
+        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_clk'),            'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=2)]
+        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_data'),           'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=1)]
+        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_slen_hmc7044'),   'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=0)]
+        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_cs_adf4371'),     'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=16)]
+        cons += [PortConstraint(self.expand_name('spi_' + fmc + '_csb_ad9213'),     'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=6)]
 
-        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_pdwn'),           'fmc_' + fmc + '_la_n', iogroup_index=7)]
-        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_rstb'),           'fmc_' + fmc + '_la_p', iogroup_index=16)]
-        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio0'),          'fmc_' + fmc + '_la_n', iogroup_index=5)]
-        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio1'),          'fmc_' + fmc + '_la_n', iogroup_index=4)]
-        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio2'),          'fmc_' + fmc + '_la_n', iogroup_index=6)]
-        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio3'),          'fmc_' + fmc + '_la_p', iogroup_index=4)]
-        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio4'),          'fmc_' + fmc + '_la_n', iogroup_index=12)]
+        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_pdwn'),           'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=7)]
+        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_rstb'),           'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=16)]
+        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio0'),          'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=5)]
+        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio1'),          'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=4)]
+        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio2'),          'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=6)]
+        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio3'),          'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=4)]
+        cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio4'),          'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=12)]
 
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=0)]
@@ -174,8 +174,8 @@ class htg_ad9213(YellowBlock):
         cons += [PortConstraint(self.expand_name('clk_200_n'), 'sys_clk_200_n')]
 
         if self.use_uart:
-            cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_rx')]
-            cons += [PortConstraint(self.expand_name('uart_rxd'), 'usb_tx')]
+            cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_rx', iostd='LVCMOS18')]
+            cons += [PortConstraint(self.expand_name('uart_rxd'), 'usb_tx', iostd='LVCMOS18')]
 
         if self.use_fmc_a:
             cons += self._gen_constraints_one_fmc_interface('a')
