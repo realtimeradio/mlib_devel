@@ -44,12 +44,12 @@ pins:
     iostd: LVDS
 
 # ddr4 200mhz sysclk
-#  sys_clk_p:
-#    loc: BA34
-#    iostd: DIFF_HSTL_I_12
-#  sys_clk_n:
-#    loc: BB34
-#    iostd: DIFF_HSTL_I_12
+  sys_clk_200_p:
+    loc: BA34
+    iostd: DIFF_HSTL_I_12
+  sys_clk_200_n:
+    loc: BB34
+    iostd: DIFF_HSTL_I_12
 
     
 
