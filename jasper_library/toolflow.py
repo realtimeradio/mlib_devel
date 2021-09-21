@@ -1207,7 +1207,8 @@ class ToolflowBackend(object):
                                       const.symbolic_indices)
             numindices = len(const.symbolic_indices)
             const.location = [pins[idx].loc for idx in range(numindices)]
-            const.io_standard = [pins[idx].iostd for idx in range(numindices)]
+            if const.io_standard is None:
+                const.io_standard = [pins[idx].iostd for idx in range(numindices)]
             const.drive_strength = [pins[idx].drive_strength for idx in range(numindices)]
             const.is_vector = const.portname_indices != []
 
