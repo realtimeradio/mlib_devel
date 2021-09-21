@@ -111,6 +111,11 @@ class YellowBlock(object):
         self.provides = []
         #: A list of source files (paths relative to `self.hdl_root`) required by this module
         self.sources = []
+
+        #: Custom variables set in the platform's yaml file, under a key matching
+        #: this block name
+        self.blockconf = platform.conf.get(self.blocktype, {})
+
         #: A list of IP dictionaries defining user-supplied IP to include with this block
         #: Dictionaries in this list have keys `path` (the path to the library)
         #: `name` (the name of the IP)

@@ -16,6 +16,8 @@ sources: []
 constraints: []
 tengbe:
   gt_quad: "X0Y6"
+microblaze:
+  use_uart: False
 onehundredgbe:
   refclk_freq_str: "156.25"
   #include_rs_fec: 1
