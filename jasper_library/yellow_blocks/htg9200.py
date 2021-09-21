@@ -73,5 +73,5 @@ class htg9200(YellowBlock):
     def gen_tcl_cmds(self):
        tcl_cmds = {}
        #TODO is this right for HTG?
-       tcl_cmds['promgen'] = ['write_cfgmem  -format mcs -size 64 -interface SPIx8 -loadbit "up 0x0 $bit_file " -checksum -file "$mcs_file" -force']
+       tcl_cmds['promgen'] = ['write_cfgmem  -format mcs -size 128 -interface SPIx8 -loadbit "up 0x0 $bit_file " -checksum -file "$mcs_file" -force']
        return tcl_cmds
