@@ -88,7 +88,7 @@ class htg_ad9213(YellowBlock):
         inst.add_port('jesd_' + fmc + '_serdes_1_n',    self.expand_name('jesd_' + fmc + '_serdes_1_n'),    parent_port=True, dir='in', width=8)
         # Simulink Ports
         for i in range(32):
-            inst.add_port('adc_' + fmc + '_dout_' + str(i), self.expand_name('adc_' + fmc + '_dout_' + str(i)), width=12, parent_port=False)
+            inst.add_port('adc_' + fmc + '_dout_' + str(i), self.expand_name('adc_' + fmc + '_dout' + str(i)), width=12, parent_port=False)
         inst.add_port('locked_' + fmc, self.expand_name('locked_' + fmc), width=3, parent_port=False)
         # Data output clock
         inst.add_port('adc_' + fmc + '_clkout', 'fmc_' + fmc + '_clk', parent_port=False)
