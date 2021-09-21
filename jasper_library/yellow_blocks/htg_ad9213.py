@@ -1,7 +1,7 @@
 import os
 from .yellow_block import YellowBlock
 from verilog import VerilogModule
-from constraints import PortConstraint, ClockConstraint, RawConstraint
+from constraints import PortConstraint, ClockConstraint, RawConstraint, ClockGroupConstraint
 
 from math import ceil, floor
 
@@ -13,25 +13,35 @@ class htg_ad9213(YellowBlock):
 
         hdl_path = os.path.join(self.source_path, 'src', 'hdl')
         bd_path = os.path.join(self.source_path, 'src', 'bd')
+        self.elf = os.path.join(self.source_path, 'src', 'sw', 'adc.elf')
 
         self.add_source('htg_ad9213/htg_ad9213_quad_top.v')
         self.add_source(os.path.join(hdl_path, 'd_ff.v'))
         self.add_source(os.path.join(hdl_path, 'ad_3w_spi.v'))
-        self.add_source(os.path.join(hdl_path, 'ad9213_top.v'))
         self.add_source(os.path.join(hdl_path, 'jesd204_ad9213_demapper.v'))
+        self.add_source(self.elf)
 
         self.provides = []
         # LIES: This core doesn't actually provide clocks other than 0-degrees
         if self.use_fmc_a:
             self.provides += ['fmc_a_clk', 'fmc_a_clk90', 'fmc_a_clk180', 'fmc_a_clk270']
+            self.add_source(os.path.join(hdl_path, 'ad9213_fmc_a_top.v'))
         if self.use_fmc_b:
             self.provides += ['fmc_b_clk', 'fmc_b_clk90', 'fmc_b_clk180', 'fmc_b_clk270']
+            self.add_source(os.path.join(hdl_path, 'ad9213_fmc_b_top.v'))
         if self.use_fmc_c:
             self.provides += ['fmc_c_clk', 'fmc_c_clk90', 'fmc_c_clk180', 'fmc_c_clk270']
+            self.add_source(os.path.join(hdl_path, 'ad9213_fmc_c_top.v'))
         if self.use_fmc_d:
             self.provides += ['fmc_d_clk', 'fmc_d_clk90', 'fmc_d_clk180', 'fmc_d_clk270']
+            self.add_source(os.path.join(hdl_path, 'ad9213_fmc_d_top.v'))
 
-        self.bd = os.path.join(bd_path, 'adc_test.tcl')
+        self.bd = {
+            'a': os.path.join(bd_path, 'adc_fmc_a.tcl'),
+            'b': os.path.join(bd_path, 'adc_fmc_b.tcl'),
+            'c': os.path.join(bd_path, 'adc_fmc_c.tcl'),
+            'd': os.path.join(bd_path, 'adc_fmc_d.tcl'),
+        }
 
     def _add_one_fmc_interface(self, inst, fmc):
         """
@@ -79,6 +89,7 @@ class htg_ad9213(YellowBlock):
         # Simulink Ports
         for i in range(32):
             inst.add_port('adc_' + fmc + '_dout_' + str(i), self.expand_name('adc_' + fmc + '_dout_' + str(i)), width=12, parent_port=False)
+        inst.add_port('locked_' + fmc, self.expand_name('locked_' + fmc), width=3, parent_port=False)
         # Data output clock
         inst.add_port('adc_' + fmc + '_clkout', 'fmc_' + fmc + '_clk', parent_port=False)
         
@@ -131,7 +142,16 @@ class htg_ad9213(YellowBlock):
         
     def gen_tcl_cmds(self):
         tcl_cmds = {}
-        tcl_cmds['pre_synth'] = ['source %s' % self.bd]
+        tcl_cmds['pre_synth'] = []
+        if self.use_fmc_a:
+            tcl_cmds['pre_synth'] += ['source %s' % self.bd['a']]
+        if self.use_fmc_b:
+            tcl_cmds['pre_synth'] += ['source %s' % self.bd['b']]
+        if self.use_fmc_c:
+            tcl_cmds['pre_synth'] += ['source %s' % self.bd['c']]
+        if self.use_fmc_d:
+            tcl_cmds['pre_synth'] += ['source %s' % self.bd['d']]
+        tcl_cmds['pre_synth'] += ['set_property SCOPED_TO_CELLS { microblaze_adc_0 } [get_files -all -of_objects [get_fileset sources_1] {get_files %s}]' % self.elf]
         return tcl_cmds
 
     def _gen_constraints_one_fmc_interface(self, fmc):
@@ -188,7 +208,9 @@ class htg_ad9213(YellowBlock):
         # Common constraints
         cons += [PortConstraint(self.expand_name('clk_200_p'), 'sys_clk_200_p')]
         cons += [PortConstraint(self.expand_name('clk_200_n'), 'sys_clk_200_n')]
-        cons += [ClockConstraint(self.expand_name('clk_200_p'), freq=200.0)]
+        cons += [ClockConstraint(self.expand_name('clk_200_p'), name=self.fullname+"_refclk", freq=200.0)]
+        cons += [ClockGroupConstraint('-include_generated_clocks %s_refclk' % self.fullname, '-of_objects -include_generated_clocks [get_nets sys_clk]', 'asynchronous')]
+
 
         if self.use_uart:
             cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_rx', iostd='LVCMOS18')]

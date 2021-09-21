@@ -107,6 +107,34 @@ try
         out_port_num = out_port_num + 1;
         y = y + 50;
       end % lanes
+      inport_name  = sprintf('locked_%s_sim', fmc);
+      gateway_name = sprintf('%s_locked_%s', gw_name, fmc);
+      outport_name = sprintf('locked_%s', fmc);
+
+      inport_pos  = [x+ 20, y,   x+ 20+30, y+14];
+      gateway_pos = [x+100, y-3, x+100+70, y+17];
+      outport_pos = [x+210, y,   x+210+30, y+14];
+
+      reuse_block(blk, inport_name, 'built-in/inport', ...
+        'Port', num2str(in_port_num), ...
+        'Position', inport_pos);
+
+      reuse_block(blk, gateway_name, 'xbsIndex_r4/Gateway In', ...
+        'arith_type', 'Unsigned', ...
+        'n_bits', '3', ...
+        'bin_pt', '0', ...
+        'Position', gateway_pos);
+
+      reuse_block(blk, outport_name, 'built-in/outport', ...
+        'Port', num2str(out_port_num), ...
+        'Position', outport_pos);
+
+      add_line(blk, [inport_name,  '/1'], [gateway_name, '/1']);
+      add_line(blk, [gateway_name, '/1'], [outport_name, '/1']);
+
+      in_port_num = in_port_num + 1;
+      out_port_num = out_port_num + 1;
+      y = y + 50;
       % Increment column
       x = x + 210+30+50;
       y = 20 + 50;
