@@ -213,8 +213,8 @@ class htg_ad9213(YellowBlock):
 
 
         if self.use_uart:
-            cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_rx', iostd='LVCMOS18')]
-            cons += [PortConstraint(self.expand_name('uart_rxd'), 'usb_tx', iostd='LVCMOS18')]
+            cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_tx', iostd='LVCMOS18')]
+            cons += [PortConstraint(self.expand_name('uart_rxd'), 'usb_rx', iostd='LVCMOS18')]
 
         if self.use_fmc_a:
             cons += self._gen_constraints_one_fmc_interface('a')
