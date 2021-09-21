@@ -209,7 +209,7 @@ class htg_ad9213(YellowBlock):
         cons += [PortConstraint(self.expand_name('clk_200_p'), 'sys_clk_200_p')]
         cons += [PortConstraint(self.expand_name('clk_200_n'), 'sys_clk_200_n')]
         cons += [ClockConstraint(self.expand_name('clk_200_p'), name=self.fullname+"_refclk", freq=200.0)]
-        cons += [ClockGroupConstraint('-include_generated_clocks %s_refclk' % self.fullname, '-of_objects -include_generated_clocks [get_nets sys_clk]', 'asynchronous')]
+        cons += [ClockGroupConstraint('-include_generated_clocks %s_refclk' % self.fullname, '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
 
 
         if self.use_uart:
