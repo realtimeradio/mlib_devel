@@ -151,7 +151,7 @@ class htg_ad9213(YellowBlock):
             tcl_cmds['pre_synth'] += ['source %s' % self.bd['c']]
         if self.use_fmc_d:
             tcl_cmds['pre_synth'] += ['source %s' % self.bd['d']]
-        tcl_cmds['pre_synth'] += ['set_property SCOPED_TO_CELLS { microblaze_adc_0 } [get_files -all -of_objects [get_fileset sources_1] {get_files %s}]' % self.elf]
+        tcl_cmds['pre_synth'] += ['set_property SCOPED_TO_CELLS { microblaze_adc_0 } [get_files adc.elf]']
         return tcl_cmds
 
     def _gen_constraints_one_fmc_interface(self, fmc):
