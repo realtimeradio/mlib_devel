@@ -289,7 +289,7 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_d_dout_30,
   output [11:0] adc_d_dout_31,
   output        adc_d_clkout, // Clock domain for adc_d_dout*. (Hopefully all adc_*_dout are on the same domain)
-  output [2:0]  locked_d,
+  output [2:0]  locked_d
 );
 
 wire clk_200_ibuf;
