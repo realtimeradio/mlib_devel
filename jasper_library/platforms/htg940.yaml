@@ -405,16 +405,14 @@ pins:
       - V6
       - Y6
       - AA8
-  fmc_a_gbtclk_m2c_p:
-    iostd: LVDS
+  fmc_a_gbtclk_m2c_n:
     loc:
       - D10
       - H11
       - M10
       - T10
       - Y10
-  fmc_a_gbtclk_m2c_n:
-    iostd: LVDS
+  fmc_a_gbtclk_m2c_p:
     loc:
       - D11
       - H10
@@ -619,15 +617,13 @@ pins:
       - J41
       - N41
       - M39
-  fmc_b_gbtclk_m2c_p:
-    iostd: LVDS
+  fmc_b_gbtclk_m2c_n:
     loc:
       - AG37
       - AC37
       - W37
       - R37
-  fmc_b_gbtclk_m2c_n:
-    iostd: LVDS
+  fmc_b_gbtclk_m2c_p:
     loc:
       - AG36
       - AC36
@@ -777,15 +773,13 @@ pins:
       - AG41
       - AH39
       - AF39
-  fmc_c_gbtclk_m2c_p:
-    iostd: LVDS
+  fmc_c_gbtclk_m2c_n:
     loc:
       - BA41
       - AV39
       - AR37
       - AL37
-  fmc_c_gbtclk_m2c_n:
-    iostd: LVDS
+  fmc_c_gbtclk_m2c_p:
     loc:
       - BA40
       - AV38
@@ -943,16 +937,14 @@ pins:
       - AC8
       - AD6
       - AE8
-  fmc_d_gbtclk_m2c_p:
-    iostd: LVDS
+  fmc_d_gbtclk_m2c_n:
     loc:
       - AW8
       - AT10
       - AM10
       - AH10
       - AD10
-  fmc_d_gbtclk_m2c_n:
-    iostd: LVDS
+  fmc_d_gbtclk_m2c_p:
     loc:
       - AW9
       - AT11
