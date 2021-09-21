@@ -9,17 +9,16 @@ class htg_ad9213(YellowBlock):
     def initialize(self):
         print(self.source_path)
         if not self.source_path:
-            self.source_path = os.environ['HDL_ROOT']
+            self.source_path = os.path.join(os.environ['HDL_ROOT'], 'htg_ad9213')
 
-        print(self.source_path)
         hdl_path = os.path.join(self.source_path, 'src', 'hdl')
         bd_path = os.path.join(self.source_path, 'src', 'bd')
 
         self.add_source('htg_ad9213/htg_ad9213_quad_top.v')
-        #self.add_source(os.path.join(hdl_path, 'd_ff.v'))
-        #self.add_source(os.path.join(hdl_path, 'ad_3w_spi.v'))
-        #self.add_source(os.path.join(hdl_path, 'top.v'))
-        #self.add_source(os.path.join(hdl_path, 'jesd204_ad9213_demapper.v'))
+        self.add_source(os.path.join(hdl_path, 'd_ff.v'))
+        self.add_source(os.path.join(hdl_path, 'ad_3w_spi.v'))
+        self.add_source(os.path.join(hdl_path, 'ad9213_top.v'))
+        self.add_source(os.path.join(hdl_path, 'jesd204_ad9213_demapper.v'))
 
         self.provides = []
         # LIES: This core doesn't actually provide clocks other than 0-degrees
@@ -92,7 +91,16 @@ class htg_ad9213(YellowBlock):
         # Common ports
         # 200M Clk
         inst.add_port('clk_200_p', self.expand_name('clk_200_p'), dir='in', parent_port=True)
-        inst.add_port('clk_200_n', self.expand_name('clk_200_p'), dir='in', parent_port=True)
+        inst.add_port('clk_200_n', self.expand_name('clk_200_n'), dir='in', parent_port=True)
+
+        for fmc in ['a', 'b', 'c', 'd']:
+            top.add_signal('fmc_%s_clk' % fmc) # Connected to core
+            top.add_signal('fmc_%s_clk90' % fmc)  # unconnected
+            top.add_signal('fmc_%s_clk180' % fmc) # unconnected
+            top.add_signal('fmc_%s_clk270' % fmc) # unconnected
+            top.assign_signal('fmc_%s_clk90' % fmc, "1'b0")
+            top.assign_signal('fmc_%s_clk180' % fmc, "1'b0")
+            top.assign_signal('fmc_%s_clk270' % fmc, "1'b0")
 
         # Simulink reset input
         inst.add_port('reset', self.expand_name('reset'))
@@ -102,9 +110,15 @@ class htg_ad9213(YellowBlock):
             inst.add_port('uart_txd', self.expand_name('uart_txd'), dir='in', parent_port=True)
             inst.add_port('uart_rxd', self.expand_name('uart_rxd'), dir='out', parent_port=True)
         else:
-            inst.add_port('uart_txd', "1'b0", dir='in', parent_port=False)
+            inst.add_port('uart_txd', "1'b0")
+            inst.add_port('uart_rxd', "")
 
         # TODO. LEDs, Lock signals, etc.
+
+        inst.add_parameter('USE_FMC_A', "1'b1" if self.use_fmc_a else "1'b0")
+        inst.add_parameter('USE_FMC_B', "1'b1" if self.use_fmc_b else "1'b0")
+        inst.add_parameter('USE_FMC_C', "1'b1" if self.use_fmc_c else "1'b0")
+        inst.add_parameter('USE_FMC_D', "1'b1" if self.use_fmc_d else "1'b0")
 
         if self.use_fmc_a:
             self._add_one_fmc_interface(inst, 'a')
@@ -158,12 +172,14 @@ class htg_ad9213(YellowBlock):
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=1)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_p'), 'fmc_' + fmc + '_clk_m2c_p', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_n'), 'fmc_' + fmc + '_clk_m2c_n', iogroup_index=0)]
-        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_syncinb_p'),     'fmc_' + fmc + '_la_p', iogroup_index=10)]
+        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_syncinb_p'),     'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=10)]
         # Set by IP
         #cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_serdes_0_p'),    'fmc_' + fmc + 'XXXXX', iogroup_index=2)]
         #cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_serdes_0_n'),    'fmc_' + fmc + 'XXXXX', iogroup_index=2)]
         #cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_serdes_1_p'),    'fmc_' + fmc + 'XXXXX', iogroup_index=2)]
         #cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_serdes_1_n'),    'fmc_' + fmc + 'XXXXX', iogroup_index=2)]
+        cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_p'), freq=self.sample_rate / 32)]
+        cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'), freq=self.sample_rate / 32)]
         return cons
 
 
@@ -172,6 +188,7 @@ class htg_ad9213(YellowBlock):
         # Common constraints
         cons += [PortConstraint(self.expand_name('clk_200_p'), 'sys_clk_200_p')]
         cons += [PortConstraint(self.expand_name('clk_200_n'), 'sys_clk_200_n')]
+        cons += [ClockConstraint(self.expand_name('clk_200_p'), freq=200.0)]
 
         if self.use_uart:
             cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_rx', iostd='LVCMOS18')]
