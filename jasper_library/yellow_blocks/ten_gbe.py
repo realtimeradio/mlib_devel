@@ -580,6 +580,6 @@ class tengbaser_xilinx_usplus(ten_gbe):
         # make the ethernet core clock async relative to whatever the user is using as user_clk
         # Find the clock of *clk_counter* to determine what source user_clk comes from. This is fragile.
         
-        cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets user_clk]] -group [get_clocks -include_generated_clocks ethclk%d]'%(num,num)))
-        cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets sys_clk]] -group [get_clocks -include_generated_clocks ethclk%d]'%(num,num)))
+        cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d_user -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets user_clk]] -group [get_clocks -include_generated_clocks ethclk%d]'%(num,num)))
+        cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d_sys -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets sys_clk]] -group [get_clocks -include_generated_clocks ethclk%d]'%(num,num)))
         return cons
