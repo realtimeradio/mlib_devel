@@ -103,6 +103,8 @@ class htg_ad9213(YellowBlock):
         # 200M Clk
         inst.add_port('clk_200_p', self.expand_name('clk_200_p'), dir='in', parent_port=True)
         inst.add_port('clk_200_n', self.expand_name('clk_200_n'), dir='in', parent_port=True)
+        inst.add_port('clk_100', 'sys_clk')  # Toolflow infrastructure should provide this
+        inst.add_port('clk_adc', 'user_clk') # MSSGE block should set this to be one of the adc_clkout signals
 
         for fmc in ['a', 'b', 'c', 'd']:
             top.add_signal('fmc_%s_clk' % fmc) # Connected to core

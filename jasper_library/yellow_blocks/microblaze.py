@@ -13,7 +13,7 @@ class microblaze(YellowBlock):
 
     def initialize(self):
         self.include_spi_ports = True
-        self.include_uart_ports = self.blockconf.get('use_uart', True)
+        self.include_uart_ports = False#self.blockconf.get('use_uart', True)
         if self.platform.name in ['snap2']:
             if self.platform.version == 1:
                 self.memfile= 'executable_no_xadc.mem'
@@ -75,8 +75,12 @@ class microblaze_k7(microblaze):
         inst.add_port('Clk', 'wb_clk_i')
         inst.add_port('Reset', 'wb_rst_i')
         inst.add_port('dcm_locked', '1\'b1')
-        inst.add_port('UART_rxd', 'UART_rxd', dir='in', parent_port=True)
-        inst.add_port('UART_txd', 'UART_txd', dir='out', parent_port=True)
+        if self.include_uart_ports:
+            inst.add_port('UART_rxd', 'UART_rxd', dir='in', parent_port=True)
+            inst.add_port('UART_txd', 'UART_txd', dir='out', parent_port=True)
+        else:
+            inst.add_port('UART_rxd', '1\'b0')
+            inst.add_port('UART_txd', '')
         inst.add_port('CYC_O', 'wbm_cyc_o')
         inst.add_port('STB_O', 'wbm_stb_o')
         inst.add_port('WE_O ', 'wbm_we_o ')
@@ -109,8 +113,9 @@ class microblaze_k7(microblaze):
  
     def gen_constraints(self):
         cons = []
-        cons.append(PortConstraint('UART_rxd', 'usb_tx'))
-        cons.append(PortConstraint('UART_txd', 'usb_rx')) 
+        if self.include_uart_ports:
+            cons.append(PortConstraint('UART_rxd', 'usb_tx'))
+            cons.append(PortConstraint('UART_txd', 'usb_rx')) 
         if self.include_spi_ports:
             cons.append(PortConstraint('spi_rtl_io0', 'spi_flash_data', iogroup_index=[0]))
             cons.append(PortConstraint('spi_rtl_io1', 'spi_flash_data', iogroup_index=[1]))

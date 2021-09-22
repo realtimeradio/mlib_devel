@@ -9,6 +9,8 @@ module htg_ad9213_quad_top #(
   // 200MHz external clock
   input         clk_200_p,
   input         clk_200_n,
+  input         clk_100, // 100M Async clock
+  input         clk_adc, // ADC sample clock / 32
   // Software reset, driven from Simulink
   input         reset,
   // External UART pins -- always on FMC C
@@ -310,6 +312,8 @@ generate
 if (USE_FMC_A)
   ad9213_fmc_a_top ad9213_top_a_inst (
     .clk_200(clk_200),
+    .clk_100(clk_100),
+    .clk_adc(clk_adc),
     .reset(reset),
     .adc_clkout(adc_a_clkout),
     .uart_txd(1'b0),
@@ -388,6 +392,8 @@ generate
 if (USE_FMC_B)
   ad9213_fmc_b_top ad9213_top_b_inst (
     .clk_200(clk_200),
+    .clk_100(clk_100),
+    .clk_adc(clk_adc),
     .reset(reset),
     .adc_clkout(adc_b_clkout),
     .uart_txd(1'b0),
@@ -466,6 +472,8 @@ generate
 if (USE_FMC_C)
   ad9213_fmc_c_top ad9213_top_c_inst (
     .clk_200(clk_200),
+    .clk_100(clk_100),
+    .clk_adc(clk_adc),
     .reset(reset),
     .adc_clkout(adc_c_clkout),
     .uart_txd(uart_txd),
@@ -544,6 +552,8 @@ generate
 if (USE_FMC_D)
   ad9213_fmc_d_top ad9213_top_d_inst (
     .clk_200(clk_200),
+    .clk_100(clk_100),
+    .clk_adc(clk_adc),
     .reset(reset),
     .adc_clkout(adc_d_clkout),
     .uart_txd(1'b0),
