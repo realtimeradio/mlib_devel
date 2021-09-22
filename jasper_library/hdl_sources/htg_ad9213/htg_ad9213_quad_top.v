@@ -308,7 +308,7 @@ BUFG clk_200_bufg (
 
 generate
 if (USE_FMC_A)
-  ad9213_fmc_a_top ad213_top_a_inst (
+  ad9213_fmc_a_top ad9213_top_a_inst (
     .clk_200(clk_200),
     .reset(reset),
     .adc_clkout(adc_a_clkout),
@@ -386,7 +386,7 @@ endgenerate
 
 generate
 if (USE_FMC_B)
-  ad9213_fmc_b_top ad213_top_b_inst (
+  ad9213_fmc_b_top ad9213_top_b_inst (
     .clk_200(clk_200),
     .reset(reset),
     .adc_clkout(adc_b_clkout),
@@ -464,7 +464,7 @@ endgenerate
 
 generate
 if (USE_FMC_C)
-  ad9213_fmc_c_top ad213_top_c_inst (
+  ad9213_fmc_c_top ad9213_top_c_inst (
     .clk_200(clk_200),
     .reset(reset),
     .adc_clkout(adc_c_clkout),
@@ -542,7 +542,7 @@ endgenerate
 
 generate
 if (USE_FMC_D)
-  ad9213_fmc_d_top ad213_top_d_inst (
+  ad9213_fmc_d_top ad9213_top_d_inst (
     .clk_200(clk_200),
     .reset(reset),
     .adc_clkout(adc_d_clkout),

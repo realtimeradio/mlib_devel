@@ -141,17 +141,36 @@ class htg_ad9213(YellowBlock):
             self._add_one_fmc_interface(inst, 'd')
         
     def gen_tcl_cmds(self):
+        def get_updatemem_cmd(fmc):
+            cmd = ""
+            cmd += "exec updatemem -bit ./myproj.runs/impl_1/top.bit -meminfo ./myproj.runs/impl_1/top.mmi"
+            cmd += " -data %s" % self.elf
+            cmd += " -proc %s" % (self.expand_name("inst/ad9213_top_%s_inst/adc_test_inst/microblaze_adc_0" % fmc))
+            cmd += " -out ./myproj.runs/impl_1/top.bit -force"
+            return cmd
+
         tcl_cmds = {}
         tcl_cmds['pre_synth'] = []
+        # Use updatemem to load ADC uBlaze binary, because there seems to be some
+        # strange vivado behaviour with different parts of the tool not agreeing
+        # on the uBlaze cell name. Associating the binary requires using the "genX"
+        # string which comes from the instantiation being in a generate block,
+        # but actually loading the code requires not having the "genX" specifier,
+        # since it is not present in the .mmi memory info file.
+        tcl_cmds['post_bitgen'] = []
         if self.use_fmc_a:
             tcl_cmds['pre_synth'] += ['source %s' % self.bd['a']]
+            tcl_cmds['post_bitgen'] += [get_updatemem_cmd('a')]
         if self.use_fmc_b:
             tcl_cmds['pre_synth'] += ['source %s' % self.bd['b']]
+            tcl_cmds['post_bitgen'] += [get_updatemem_cmd('b')]
         if self.use_fmc_c:
             tcl_cmds['pre_synth'] += ['source %s' % self.bd['c']]
+            tcl_cmds['post_bitgen'] += [get_updatemem_cmd('c')]
         if self.use_fmc_d:
             tcl_cmds['pre_synth'] += ['source %s' % self.bd['d']]
-        tcl_cmds['pre_synth'] += ['set_property SCOPED_TO_CELLS { microblaze_adc_0 } [get_files adc.elf]']
+            tcl_cmds['post_bitgen'] += [get_updatemem_cmd('d')]
+        
         return tcl_cmds
 
     def _gen_constraints_one_fmc_interface(self, fmc):
