@@ -15,28 +15,26 @@ mmbus_address_alignment: 4
 sources: []
 constraints: []
 tengbe:
-  gt_quad: "X0Y6"
+  gt_quad: "X0Y9"
 microblaze:
   use_uart: False
 onehundredgbe:
   refclk_freq_str: "156.25"
   #include_rs_fec: 1
   cmac_loc:
-    - CMACE4_X0Y6
-    - CMACE4_X0Y1 
-    - CMACE4_X0Y2
-    - CMACE4_X0Y3
-    - CMACE4_X0Y4
+    - CMACE4_X0Y9
+    - CMACE4_X0Y6 
+    - CMACE4_X0Y8
+    - CMACE4_X0Y7
     - CMACE4_X0Y5
 provides:
   - qsfp0
-# qsfp1-5 are assumed to be on a 6-port mezzanine in FMC "D"
-# port "2" in the mezzanine card is not connected
+# qsfp1-5 are assumed to be on a 6-port mezzanine in FMC "B"
+# ports "2" and "5" in the mezzanine card are not connected
   - qsfp1
   - qsfp2
   - qsfp3
   - qsfp4
-  - qsfp5
 pins:
   sys_clk_p:
     loc: C38 
@@ -92,19 +90,21 @@ pins:
   usb_rts:
     iostd: LVCMOS18
     loc: L15
-
-
+  sync_in:
+    iostd: LVCMOS18
+    loc:
+      - AV26
   gpio:
     iostd: LVCMOS18
     loc:
 #      # 0_p
-      - AV26
+      - BF33
 #      # 1_p
-      - AY27
+      - AK27
 #      # 2_p
-      - BA25
+      - AR32
 #      # 3, 4, ... 12
-      - BB27
+      - AR31
 #      - BG33
 #      - BH29
 #      - BG30
@@ -202,19 +202,17 @@ pins:
   qsfp_mgt_ref_clk_p:
     loc:
       - L36
-      - AV11
-      - AF11
-      - AK11
-      - AB11
-      - AP11
+      - AE36
+      - N36
+      - U36
+      - AA36
   qsfp_mgt_ref_clk_n:
     loc:
       - L37
-      - AV10
-      - AF10
-      - AK10
-      - AB10
-      - AP10
+      - AU37
+      - N37
+      - U37
+      - AA37
   qsfp_mgt_rx_p:
     loc:
       - J45
@@ -222,30 +220,30 @@ pins:
       - H43
       - D45
        #DP 0, 2, 1, 3
-      - AV2
-      - BA2
-      - AW4
-      - BC2
+      - AE45
+      - AD43
+      - AB43
+      - AC45
        # DP 15, 14, 12, 13
-      - AF2
-      - AG4
-      - AH2
-      - AJ4
+      - M43
+      - N45
+      - L45
+      - K43
        # DP 11, 10 , 9, 8
-      - AN4
-      - AK2
-      - AL4
-      - AM2
+      - R45
+      - U45
+      - T43
+      - P43
        # DP 19, 17, 18, 16
-      - AE4
-      - AC4
-      - AD2
-      - AB2
+      #- AE4
+      #- AC4
+      #- AD2
+      #- AB2
        # DP 5, 4, 6, 7
-      - AU4
-      - AR4
-      - AT2
-      - AP2
+      - Y43
+      - W45
+      - V43
+      - AA45
   qsfp_mgt_rx_n:
     loc:
       - J46
@@ -253,30 +251,30 @@ pins:
       - H44
       - D46
        #DP 0, 2, 1, 3
-      - AV1
-      - BA1
-      - AW3
-      - BC1
+      - AE46
+      - AD44
+      - AB44
+      - AC46
        # DP 15, 14, 12, 13
-      - AF1
-      - AG3
-      - AH1
-      - AJ3
+      - M44
+      - N46
+      - L46
+      - K44
        # DP 11, 10 , 9, 8
-      - AN3
-      - AK1
-      - AL3
-      - AM1
+      - R46
+      - U46
+      - T44
+      - P44
        # DP 19, 17, 18, 16
-      - AE3
-      - AC3
-      - AD1
-      - AB1
+      #- AE3
+      #- AC3
+      #- AD1
+      #- AB1
        # DP 5, 4, 6, 7
-      - AU3
-      - AR3
-      - AT1
-      - AP1
+      - Y44
+      - W46
+      - V44
+      - AA46
   qsfp_mgt_tx_p:
     loc:
       - G40
@@ -284,30 +282,30 @@ pins:
       - E42
       - A42
        #DP 0, 2, 1, 3
-      - AV7
-      - BD5
-      - BB5
-      - BF5
+      - AR40
+      - AD38
+      - AB38
+      - AC40
        # DP 15, 14, 12, 13
-      - AF7
-      - AG9
-      - AH7
-      - AJ9
+      - M38
+      - N40
+      - L40
+      - J40
        # DP 11, 10 , 9, 8
-      - AN9
-      - AK7
-      - AL9
-      - AM7
+      - R40
+      - U40
+      - T38
+      - P38
        # DP 19, 17, 18, 16
-      - AE9
-      - AC9
-      - AD7
-      - AB7
+      #- AE9
+      #- AC9
+      #- AD7
+      #- AB7
        # DP 5, 4, 6, 7
-      - AU9
-      - AR9
-      - AT7
-      - AP7
+      - Y38
+      - W40
+      - V38
+      - AA40
   qsfp_mgt_tx_n:
     loc:
       - G41
@@ -315,33 +313,33 @@ pins:
       - E43
       - A43
        #DP 0, 2, 1, 3
-      - AV6
-      - BD4
-      - BB4
-      - BF4
+      - AE41
+      - AD39
+      - AB39
+      - AC41
        # DP 15, 14, 12, 13
-      - AF6
-      - AG8
-      - AH6
-      - AJ8
+      - M39
+      - N41
+      - L41
+      - J41
        # DP 11, 10 , 9, 8
-      - AN8
-      - AK6
-      - AL8
-      - AM6
+      - R41
+      - U41
+      - T39
+      - P39
        # DP 19, 17, 18, 16
-      - AE8
-      - AC6
-      - AD6
-      - AB6
+     # - AE8
+     # - AC6
+     # - AD6
+     # - AB6
        # DP 5, 4, 6, 7
-      - AU8
-      - AR8
-      - AT6
-      - AP6
+      - Y39
+      - W41
+      - V39
+      - AA41
   qsfp_modprsl_ls:
     iostd: LVCMOS18
-    loc: [B32, AP15, AY15, AU13, BB12, AM15]
+    loc: [B32, C36, A34, A40, G34]
 #  qsfp_sda:
 #    iostd: LVCMOS18
 #    loc: [BN30, BM30, BP32, BM34]
