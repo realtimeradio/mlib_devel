@@ -75,6 +75,8 @@ class htg_ad9213(YellowBlock):
         inst.add_port('adc_' + fmc + '_gpio2',          self.expand_name('adc_' + fmc + '_gpio2'),          parent_port=True, dir='inout')
         inst.add_port('adc_' + fmc + '_gpio3',          self.expand_name('adc_' + fmc + '_gpio3'),          parent_port=True, dir='inout')
         inst.add_port('adc_' + fmc + '_gpio4',          self.expand_name('adc_' + fmc + '_gpio4'),          parent_port=True, dir='inout')
+        inst.add_port('jesd_' + fmc + '_core_clk_p',    self.expand_name('jesd_' + fmc + '_core_clk_p'),    parent_port=True, dir='in')
+        inst.add_port('jesd_' + fmc + '_core_clk_n',    self.expand_name('jesd_' + fmc + '_core_clk_n'),    parent_port=True, dir='in')
         inst.add_port('jesd_' + fmc + '_ref_clk0_p',    self.expand_name('jesd_' + fmc + '_ref_clk0_p'),    parent_port=True, dir='in')
         inst.add_port('jesd_' + fmc + '_ref_clk0_n',    self.expand_name('jesd_' + fmc + '_ref_clk0_n'),    parent_port=True, dir='in')
         inst.add_port('jesd_' + fmc + '_ref_clk1_p',    self.expand_name('jesd_' + fmc + '_ref_clk1_p'),    parent_port=True, dir='in')
@@ -89,9 +91,9 @@ class htg_ad9213(YellowBlock):
         # Simulink Ports
         for i in range(32):
             inst.add_port('adc_' + fmc + '_dout_' + str(i), self.expand_name('adc_' + fmc + '_dout' + str(i)), width=12, parent_port=False)
-        inst.add_port('locked_' + fmc, self.expand_name('locked_' + fmc), width=3, parent_port=False)
-        # Data output clock
-        inst.add_port('adc_' + fmc + '_clkout', 'fmc_' + fmc + '_clk', parent_port=False)
+        inst.add_port('jesd_' + fmc + '_core_clk_out', 'fmc_' + fmc + '_clk', parent_port=False)
+        inst.add_port('core_clk_' + fmc, 'user_clk', parent_port=False) # Clock all JESD circuits from a single FMC's core_clk
+        inst.add_port('locked_' + fmc, self.expand_name('locked_' + fmc), width=2, parent_port=False)
         
     def expand_name(self, name):
         return self.fullname + '_' + name
@@ -100,11 +102,8 @@ class htg_ad9213(YellowBlock):
         inst = top.get_instance(entity='htg_ad9213_quad_top', name=self.expand_name('inst'))
 
         # Common ports
-        # 200M Clk
-        inst.add_port('clk_200_p', self.expand_name('clk_200_p'), dir='in', parent_port=True)
-        inst.add_port('clk_200_n', self.expand_name('clk_200_n'), dir='in', parent_port=True)
         inst.add_port('clk_100', 'sys_clk')  # Toolflow infrastructure should provide this
-        inst.add_port('clk_adc', 'user_clk') # MSSGE block should set this to be one of the adc_clkout signals
+        inst.add_port('user_clk', 'user_clk') 
 
         for fmc in ['a', 'b', 'c', 'd']:
             top.add_signal('fmc_%s_clk' % fmc) # Connected to core
@@ -214,6 +213,8 @@ class htg_ad9213(YellowBlock):
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_p'), 'fmc_' + fmc + '_clk_m2c_p', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_n'), 'fmc_' + fmc + '_clk_m2c_n', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_syncinb_p'),     'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=10)]
+        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_core_clk_p'),    'fmc_' + fmc + '_refclk_m2c_p', iogroup_index=0)]
+        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_core_clk_n'),    'fmc_' + fmc + '_refclk_m2c_n', iogroup_index=0)]
         # Set by IP
         #cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_serdes_0_p'),    'fmc_' + fmc + 'XXXXX', iogroup_index=2)]
         #cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_serdes_0_n'),    'fmc_' + fmc + 'XXXXX', iogroup_index=2)]
@@ -221,30 +222,29 @@ class htg_ad9213(YellowBlock):
         #cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_serdes_1_n'),    'fmc_' + fmc + 'XXXXX', iogroup_index=2)]
         cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_p'), freq=self.sample_rate / 32)]
         cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'), freq=self.sample_rate / 32)]
+        cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_core_clk_p'), name="jesd_core_clk_" + fmc, freq=self.sample_rate / 32)]
         return cons
 
 
     def gen_constraints(self):
         cons = []
         # Common constraints
-        cons += [PortConstraint(self.expand_name('clk_200_p'), 'sys_clk_200_p')]
-        cons += [PortConstraint(self.expand_name('clk_200_n'), 'sys_clk_200_n')]
-        cons += [ClockConstraint(self.expand_name('clk_200_p'), name=self.fullname+"_refclk", freq=200.0)]
-        cons += [ClockGroupConstraint('-include_generated_clocks %s_refclk' % self.fullname, '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
-
-
         if self.use_uart:
             cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_tx', iostd='LVCMOS18')]
             cons += [PortConstraint(self.expand_name('uart_rxd'), 'usb_rx', iostd='LVCMOS18')]
 
         if self.use_fmc_a:
             cons += self._gen_constraints_one_fmc_interface('a')
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_a', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
         if self.use_fmc_b:
             cons += self._gen_constraints_one_fmc_interface('b')
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_b', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
         if self.use_fmc_c:
             cons += self._gen_constraints_one_fmc_interface('c')
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_c', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
         if self.use_fmc_d:
             cons += self._gen_constraints_one_fmc_interface('d')
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_d', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
 
         return cons
 

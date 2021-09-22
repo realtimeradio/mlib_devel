@@ -6,11 +6,8 @@ module htg_ad9213_quad_top #(
   parameter USE_FMC_C=1'b1,
   parameter USE_FMC_D=1'b0
   ) (
-  // 200MHz external clock
-  input         clk_200_p,
-  input         clk_200_n,
-  input         clk_100, // 100M Async clock
-  input         clk_adc, // ADC sample clock / 32
+  input         clk_100,  // 100M Async clock
+  input         user_clk, // Currently unused. Potentially a FIFO read clock
   // Software reset, driven from Simulink
   input         reset,
   // External UART pins -- always on FMC C
@@ -39,6 +36,10 @@ module htg_ad9213_quad_top #(
   inout         adc_a_gpio3,
   inout         adc_a_gpio4,
   // JESD interface
+  input         core_clk_a,
+  input         jesd_a_core_clk_p,
+  input         jesd_a_core_clk_n,
+  output        jesd_a_core_clk,
   input         jesd_a_ref_clk0_p,
   input         jesd_a_ref_clk0_n,
   input         jesd_a_ref_clk1_p,
@@ -84,7 +85,7 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_a_dout_30,
   output [11:0] adc_a_dout_31,
   output        adc_a_clkout, // Clock domain for adc_a_dout*. (Hopefully all adc_*_dout are on the same domain)
-  output [2:0]  locked_a,
+  output [1:0]  locked_a,
   //// FMC B
   // HMC
   output        hmc_b_sync,
@@ -108,6 +109,10 @@ module htg_ad9213_quad_top #(
   inout         adc_b_gpio3,
   inout         adc_b_gpio4,
   // JESD interface
+  input         core_clk_b,
+  input         jesd_b_core_clk_p,
+  input         jesd_b_core_clk_n,
+  output        jesd_b_core_clk,
   input         jesd_b_ref_clk0_p,
   input         jesd_b_ref_clk0_n,
   input         jesd_b_ref_clk1_p,
@@ -153,7 +158,7 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_b_dout_30,
   output [11:0] adc_b_dout_31,
   output        adc_b_clkout, // Clock domain for adc_b_dout*. (Hopefully all adc_*_dout are on the same domain)
-  output [2:0]  locked_b,
+  output [1:0]  locked_b,
   //// FMC C
   // HMC
   output        hmc_c_sync,
@@ -177,6 +182,10 @@ module htg_ad9213_quad_top #(
   inout         adc_c_gpio3,
   inout         adc_c_gpio4,
   // JESD interface
+  input         core_clk_c,
+  input         jesd_c_core_clk_p,
+  input         jesd_c_core_clk_n,
+  output        jesd_c_core_clk,
   input         jesd_c_ref_clk0_p,
   input         jesd_c_ref_clk0_n,
   input         jesd_c_ref_clk1_p,
@@ -222,7 +231,7 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_c_dout_30,
   output [11:0] adc_c_dout_31,
   output        adc_c_clkout, // Clock domain for adc_c_dout*. (Hopefully all adc_*_dout are on the same domain)
-  output [2:0]  locked_c,
+  output [1:0]  locked_c,
   //// FMC D
   // HMC
   output        hmc_d_sync,
@@ -246,6 +255,10 @@ module htg_ad9213_quad_top #(
   inout         adc_d_gpio3,
   inout         adc_d_gpio4,
   // JESD interface
+  input         core_clk_d,
+  input         jesd_d_core_clk_p,
+  input         jesd_d_core_clk_n,
+  output        jesd_d_core_clk,
   input         jesd_d_ref_clk0_p,
   input         jesd_d_ref_clk0_n,
   input         jesd_d_ref_clk1_p,
@@ -291,31 +304,15 @@ module htg_ad9213_quad_top #(
   output [11:0] adc_d_dout_30,
   output [11:0] adc_d_dout_31,
   output        adc_d_clkout, // Clock domain for adc_d_dout*. (Hopefully all adc_*_dout are on the same domain)
-  output [2:0]  locked_d
-);
-
-wire clk_200_ibuf;
-wire clk_200;
-
-IBUFDS clk_200_ibuf_inst (
-  .I(clk_200_p),
-  .IB(clk_200_n),
-  .O(clk_200_ibuf)
-);
-
-BUFG clk_200_bufg (
-  .I(clk_200_ibuf),
-  .O(clk_200)
+  output [1:0]  locked_d
 );
 
 generate
 if (USE_FMC_A)
   ad9213_fmc_a_top ad9213_top_a_inst (
-    .clk_200(clk_200),
     .clk_100(clk_100),
-    .clk_adc(clk_adc),
+    .core_clk(core_clk_a),
     .reset(reset),
-    .adc_clkout(adc_a_clkout),
     .uart_txd(1'b0),
     .uart_rxd(),
 
@@ -340,6 +337,9 @@ if (USE_FMC_A)
     .adc_gpio3(adc_a_gpio3),
     .adc_gpio4(adc_a_gpio4),
 
+    .jesd_core_clk_p(jesd_a_core_clk_p),
+    .jesd_core_clk_n(jesd_a_core_clk_n),
+    .jesd_core_clk_out(jesd_a_core_clk_out),
     .jesd_ref_clk0_p(jesd_a_ref_clk0_p),
     .jesd_ref_clk0_n(jesd_a_ref_clk0_n),
     .jesd_ref_clk1_p(jesd_a_ref_clk1_p),
@@ -391,11 +391,9 @@ endgenerate
 generate
 if (USE_FMC_B)
   ad9213_fmc_b_top ad9213_top_b_inst (
-    .clk_200(clk_200),
     .clk_100(clk_100),
-    .clk_adc(clk_adc),
+    .core_clk(core_clk_b),
     .reset(reset),
-    .adc_clkout(adc_b_clkout),
     .uart_txd(1'b0),
     .uart_rxd(),
 
@@ -420,6 +418,9 @@ if (USE_FMC_B)
     .adc_gpio3(adc_b_gpio3),
     .adc_gpio4(adc_b_gpio4),
 
+    .jesd_core_clk_p(jesd_b_core_clk_p),
+    .jesd_core_clk_n(jesd_b_core_clk_n),
+    .jesd_core_clk_out(jesd_b_core_clk_out),
     .jesd_ref_clk0_p(jesd_b_ref_clk0_p),
     .jesd_ref_clk0_n(jesd_b_ref_clk0_n),
     .jesd_ref_clk1_p(jesd_b_ref_clk1_p),
@@ -471,11 +472,9 @@ endgenerate
 generate
 if (USE_FMC_C)
   ad9213_fmc_c_top ad9213_top_c_inst (
-    .clk_200(clk_200),
     .clk_100(clk_100),
-    .clk_adc(clk_adc),
+    .core_clk(core_clk_c),
     .reset(reset),
-    .adc_clkout(adc_c_clkout),
     .uart_txd(uart_txd),
     .uart_rxd(uart_rxd),
 
@@ -500,6 +499,9 @@ if (USE_FMC_C)
     .adc_gpio3(adc_c_gpio3),
     .adc_gpio4(adc_c_gpio4),
 
+    .jesd_core_clk_p(jesd_c_core_clk_p),
+    .jesd_core_clk_n(jesd_c_core_clk_n),
+    .jesd_core_clk_out(jesd_c_core_clk_out),
     .jesd_ref_clk0_p(jesd_c_ref_clk0_p),
     .jesd_ref_clk0_n(jesd_c_ref_clk0_n),
     .jesd_ref_clk1_p(jesd_c_ref_clk1_p),
@@ -551,11 +553,9 @@ endgenerate
 generate
 if (USE_FMC_D)
   ad9213_fmc_d_top ad9213_top_d_inst (
-    .clk_200(clk_200),
     .clk_100(clk_100),
-    .clk_adc(clk_adc),
+    .core_clk(core_clk_d),
     .reset(reset),
-    .adc_clkout(adc_d_clkout),
     .uart_txd(1'b0),
     .uart_rxd(),
 
@@ -580,6 +580,9 @@ if (USE_FMC_D)
     .adc_gpio3(adc_d_gpio3),
     .adc_gpio4(adc_d_gpio4),
 
+    .jesd_core_clk_p(jesd_d_core_clk_p),
+    .jesd_core_clk_n(jesd_d_core_clk_n),
+    .jesd_core_clk_out(jesd_d_core_clk_out),
     .jesd_ref_clk0_p(jesd_d_ref_clk0_p),
     .jesd_ref_clk0_n(jesd_d_ref_clk0_n),
     .jesd_ref_clk1_p(jesd_d_ref_clk1_p),
