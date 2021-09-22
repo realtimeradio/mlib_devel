@@ -408,14 +408,14 @@ pins:
   fmc_a_gbtclk_m2c_n:
     loc:
       - D10
-      - H11
+      - H10
       - M10
       - T10
       - Y10
   fmc_a_gbtclk_m2c_p:
     loc:
       - D11
-      - H10
+      - H11
       - M11
       - T11
       - Y11
