@@ -13,7 +13,7 @@ class microblaze(YellowBlock):
 
     def initialize(self):
         self.include_spi_ports = True
-        self.include_uart_ports = False#self.blockconf.get('use_uart', True)
+        self.include_uart_ports = self.blockconf.get('use_uart', True)
         if self.platform.name in ['snap2']:
             if self.platform.version == 1:
                 self.memfile= 'executable_no_xadc.mem'

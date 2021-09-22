@@ -114,7 +114,7 @@ class YellowBlock(object):
 
         #: Custom variables set in the platform's yaml file, under a key matching
         #: this block name
-        self.blockconf = platform.conf.get(self.blocktype, {})
+        self.blockconf = platform.conf.get(blk['tag'].split(':')[-1], {})
 
         #: A list of IP dictionaries defining user-supplied IP to include with this block
         #: Dictionaries in this list have keys `path` (the path to the library)
