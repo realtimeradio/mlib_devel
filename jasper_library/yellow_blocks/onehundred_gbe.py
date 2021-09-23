@@ -153,6 +153,7 @@ class onehundredgbe_usplus(onehundred_gbe):
             self.include_rs_fec = ethconf["include_rs_fec"]
         except KeyError:
             self.logger.warning("Missing `include_rs_fec` parameter in YAML file. Defaulting to 0")
+            self.include_rs_fec = 0
 
         if self.include_rs_fec:
             self.cmac_ip_name = 'EthMACPHY100GQSFP4x_rsfec'
