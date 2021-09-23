@@ -7,7 +7,7 @@ module htg_ad9213_quad_top #(
   parameter USE_FMC_D=1'b0
   ) (
   input         clk_100,  // 100M Async clock
-  input         user_clk, // Currently unused. Potentially a FIFO read clock
+  input         user_clk, // Currently used as the core clock for all ADCs
   // Software reset, driven from Simulink
   input         reset,
   // External UART pins -- always on FMC C
@@ -311,7 +311,7 @@ generate
 if (USE_FMC_A)
   ad9213_fmc_a_top ad9213_top_a_inst (
     .clk_100(clk_100),
-    .core_clk(core_clk_a),
+    .core_clk(user_clk),
     .reset(reset),
     .uart_txd(1'b0),
     .uart_rxd(),
@@ -392,7 +392,7 @@ generate
 if (USE_FMC_B)
   ad9213_fmc_b_top ad9213_top_b_inst (
     .clk_100(clk_100),
-    .core_clk(core_clk_b),
+    .core_clk(user_clk),
     .reset(reset),
     .uart_txd(1'b0),
     .uart_rxd(),
@@ -473,7 +473,7 @@ generate
 if (USE_FMC_C)
   ad9213_fmc_c_top ad9213_top_c_inst (
     .clk_100(clk_100),
-    .core_clk(core_clk_c),
+    .core_clk(user_clk),
     .reset(reset),
     .uart_txd(uart_txd),
     .uart_rxd(uart_rxd),
@@ -554,7 +554,7 @@ generate
 if (USE_FMC_D)
   ad9213_fmc_d_top ad9213_top_d_inst (
     .clk_100(clk_100),
-    .core_clk(core_clk_d),
+    .core_clk(user_clk),
     .reset(reset),
     .uart_txd(1'b0),
     .uart_rxd(),

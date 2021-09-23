@@ -92,7 +92,7 @@ class htg_ad9213(YellowBlock):
         for i in range(32):
             inst.add_port('adc_' + fmc + '_dout_' + str(i), self.expand_name('adc_' + fmc + '_dout' + str(i)), width=12, parent_port=False)
         inst.add_port('jesd_' + fmc + '_core_clk_out', 'fmc_' + fmc + '_clk', parent_port=False)
-        inst.add_port('core_clk_' + fmc, 'user_clk', parent_port=False) # Clock all JESD circuits from a single FMC's core_clk
+        inst.add_port('core_clk_' + fmc, 'fmc_' + fmc + '_clk', parent_port=False) # These clock's aren't actually used -- internally everything uses user_clk.
         inst.add_port('locked_' + fmc, self.expand_name('locked_' + fmc), width=2, parent_port=False)
         
     def expand_name(self, name):
