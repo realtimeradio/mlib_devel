@@ -236,7 +236,7 @@ class htg_ad9213(YellowBlock):
         if self.use_fmc_a:
             cons += self._gen_constraints_one_fmc_interface('a')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_a', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
-            cons += [RawConstraint('set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets %s]' % self.expand_name('inst/ad9213_top_a_inst/adc_test_inst/util_ibufdsgte_ref_clk_1/U0/IBUF_OUT[0]')]
+            cons += [RawConstraint('set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets %s]' % self.expand_name('inst/ad9213_top_a_inst/adc_test_inst/util_ibufdsgte_ref_clk_1/U0/IBUF_OUT[0]'))]
         if self.use_fmc_b:
             cons += self._gen_constraints_one_fmc_interface('b')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_b', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
