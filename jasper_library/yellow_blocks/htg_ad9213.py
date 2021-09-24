@@ -206,14 +206,27 @@ class htg_ad9213(YellowBlock):
         cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio3'),          'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=4)]
         cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio4'),          'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=12)]
 
-        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=0)]
-        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=0)]
         if fmc == 'a':
-            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=3)]
-            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=3)]
+            jesd_refclk0 = 1
+            jesd_refclk1 = 3
+        elif fmc == 'b':
+            jesd_refclk0 = 0
+            jesd_refclk1 = 1
+        elif fmc == 'c':
+            jesd_refclk0 = 0
+            jesd_refclk1 = 2
+        elif fmc == 'd':
+            jesd_refclk0 = 0
+            jesd_refclk1 = 1
         else:
-            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=1)]
-            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=1)]
+            print('Unknown FMC port!')
+            raise RuntimeError
+
+        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=jesd_refclk0)]
+        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=jesd_refclk0)]
+        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=jesd_refclk1)]
+        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=jesd_refclk1)]
+
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_p'), 'fmc_' + fmc + '_clk_m2c_p', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_n'), 'fmc_' + fmc + '_clk_m2c_n', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_syncinb_p'),     'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=10)]
