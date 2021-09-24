@@ -208,8 +208,12 @@ class htg_ad9213(YellowBlock):
 
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=0)]
-        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=1)]
-        cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=1)]
+        if fmc == 'a':
+            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=3)]
+            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=3)]
+        else:
+            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'),    'fmc_' + fmc + '_gbtclk_m2c_p', iogroup_index=1)]
+            cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_n'),    'fmc_' + fmc + '_gbtclk_m2c_n', iogroup_index=1)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_p'), 'fmc_' + fmc + '_clk_m2c_p', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_sysref1_clk_n'), 'fmc_' + fmc + '_clk_m2c_n', iogroup_index=0)]
         cons += [PortConstraint(self.expand_name('jesd_' + fmc + '_syncinb_p'),     'fmc_' + fmc + '_la_p', iostd='LVCMOS18', iogroup_index=10)]
@@ -236,7 +240,6 @@ class htg_ad9213(YellowBlock):
         if self.use_fmc_a:
             cons += self._gen_constraints_one_fmc_interface('a')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_a', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
-            cons += [RawConstraint('set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets %s]' % self.expand_name('inst/ad9213_top_a_inst/adc_test_inst/util_ibufdsgte_ref_clk_1/U0/IBUF_OUT[0]'))]
         if self.use_fmc_b:
             cons += self._gen_constraints_one_fmc_interface('b')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_b', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
