@@ -217,7 +217,7 @@ class htg_ad9213(YellowBlock):
             jesd_refclk1 = 2
         elif fmc == 'd':
             jesd_refclk0 = 0
-            jesd_refclk1 = 1
+            jesd_refclk1 = 2
         else:
             print('Unknown FMC port!')
             raise RuntimeError
