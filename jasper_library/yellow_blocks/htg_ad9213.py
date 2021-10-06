@@ -16,6 +16,7 @@ class htg_ad9213(YellowBlock):
         self.elf = os.path.join(self.source_path, 'src', 'sw', 'adc.elf')
 
         self.add_source('htg_ad9213/htg_ad9213_quad_top.v')
+        self.add_source('htg_ad9213/htg_ad9213_mmcm.v')
         self.add_source(os.path.join(hdl_path, 'd_ff.v'))
         self.add_source(os.path.join(hdl_path, 'ad_3w_spi.v'))
         self.add_source(os.path.join(hdl_path, 'jesd204_ad9213_demapper.v'))
@@ -23,6 +24,7 @@ class htg_ad9213(YellowBlock):
 
         self.provides = []
         # LIES: This core doesn't actually provide clocks other than 0-degrees
+        self.provides += ['ddr_refclk', 'ddr_refclk90', 'ddr_refclk180', 'ddr_refclk270']
         if self.use_fmc_a:
             self.provides += ['fmc_a_clk', 'fmc_a_clk90', 'fmc_a_clk180', 'fmc_a_clk270']
             self.add_source(os.path.join(hdl_path, 'ad9213_fmc_a_top.v'))
@@ -99,6 +101,13 @@ class htg_ad9213(YellowBlock):
         return self.fullname + '_' + name
 
     def modify_top(self,top):
+        mmcm_inst = top.get_instance(entity='htg_ad9213_mmcm', name=self.expand_name('mmcm'))
+        mmcm_inst.add_port('clk_in_p', self.expand_name('refclk_200_p'), parent_port=True, dir='in')
+        mmcm_inst.add_port('clk_in_n', self.expand_name('refclk_200_n'), parent_port=True, dir='in')
+        mmcm_inst.add_port('clk_out', 'ddr_refclk')
+        top.add_signal('ddr_refclk90')  # unconnected
+        top.add_signal('ddr_refclk180') # unconnected
+        top.add_signal('ddr_refclk270') # unconnected
         inst = top.get_instance(entity='htg_ad9213_quad_top', name=self.expand_name('inst'))
 
         # Common ports
@@ -240,12 +249,15 @@ class htg_ad9213(YellowBlock):
         cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_ref_clk0_p'), freq=self.sample_rate / 32)]
         cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_ref_clk1_p'), freq=self.sample_rate / 32)]
         cons += [ClockConstraint(self.expand_name('jesd_' + fmc + '_core_clk_p'), name="jesd_core_clk_" + fmc, freq=self.sample_rate / 32)]
+
         return cons
 
 
     def gen_constraints(self):
         cons = []
         # Common constraints
+        cons += [PortConstraint(self.expand_name('refclk_200_p'), 'sys_clk_200_p')]
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets sys_clk]', '-include_generated_clocks -of_objects [get_ports sys_clk_200_p]', 'asynchronous')]
         if self.use_uart:
             cons += [PortConstraint(self.expand_name('uart_txd'), 'usb_tx', iostd='LVCMOS18')]
             cons += [PortConstraint(self.expand_name('uart_rxd'), 'usb_rx', iostd='LVCMOS18')]
@@ -253,15 +265,19 @@ class htg_ad9213(YellowBlock):
         if self.use_fmc_a:
             cons += self._gen_constraints_one_fmc_interface('a')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_a', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_a', '-include_generated_clocks -of_objects [get_ports sys_clk_200_p]', 'asynchronous')]
         if self.use_fmc_b:
             cons += self._gen_constraints_one_fmc_interface('b')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_b', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_b', '-include_generated_clocks -of_objects [get_ports sys_clk_200_p]', 'asynchronous')]
         if self.use_fmc_c:
             cons += self._gen_constraints_one_fmc_interface('c')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_c', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_c', '-include_generated_clocks -of_objects [get_ports sys_clk_200_p]', 'asynchronous')]
         if self.use_fmc_d:
             cons += self._gen_constraints_one_fmc_interface('d')
             cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_d', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous')]
+            cons += [ClockGroupConstraint('-include_generated_clocks jesd_core_clk_d', '-include_generated_clocks -of_objects [get_ports sys_clk_200_p]', 'asynchronous')]
 
         return cons
 
