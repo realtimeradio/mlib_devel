@@ -18,7 +18,7 @@ tengbe:
   gt_quad: "X0Y9"
 onehundredgbe:
   refclk_freq_str: "156.25"
-  #include_rs_fec: 1
+  include_rs_fec: 1
   cmac_loc:
     - CMACE4_X0Y9 
     - CMACE4_X0Y8
