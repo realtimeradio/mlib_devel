@@ -13,14 +13,14 @@ class htg_ad9213(YellowBlock):
 
         hdl_path = os.path.join(self.source_path, 'src', 'hdl')
         bd_path = os.path.join(self.source_path, 'src', 'bd')
-        self.elf = os.path.join(self.source_path, 'src', 'sw', 'adc.elf')
+        self.elfs = {}
 
         self.add_source('htg_ad9213/htg_ad9213_quad_top.v')
         self.add_source('htg_ad9213/htg_ad9213_mmcm.v')
         self.add_source(os.path.join(hdl_path, 'd_ff.v'))
         self.add_source(os.path.join(hdl_path, 'ad_3w_spi.v'))
         self.add_source(os.path.join(hdl_path, 'jesd204_ad9213_demapper.v'))
-        self.add_source(self.elf)
+        self.add_source(self.elfs)
 
         self.provides = []
         # LIES: This core doesn't actually provide clocks other than 0-degrees
@@ -28,15 +28,27 @@ class htg_ad9213(YellowBlock):
         if self.use_fmc_a:
             self.provides += ['fmc_a_clk', 'fmc_a_clk90', 'fmc_a_clk180', 'fmc_a_clk270']
             self.add_source(os.path.join(hdl_path, 'ad9213_fmc_a_top.v'))
+            elf = os.path.join(self.source_path, 'src', 'sw', 'top_a.elf')
+            self.elfs['a'] = elf
+            self.add_source(elf)
         if self.use_fmc_b:
             self.provides += ['fmc_b_clk', 'fmc_b_clk90', 'fmc_b_clk180', 'fmc_b_clk270']
             self.add_source(os.path.join(hdl_path, 'ad9213_fmc_b_top.v'))
+            elf = os.path.join(self.source_path, 'src', 'sw', 'top_b.elf')
+            self.elfs['b'] = elf
+            self.add_source(elf)
         if self.use_fmc_c:
             self.provides += ['fmc_c_clk', 'fmc_c_clk90', 'fmc_c_clk180', 'fmc_c_clk270']
             self.add_source(os.path.join(hdl_path, 'ad9213_fmc_c_top.v'))
+            elf = os.path.join(self.source_path, 'src', 'sw', 'top_c.elf')
+            self.elfs['c'] = elf
+            self.add_source(elf)
         if self.use_fmc_d:
             self.provides += ['fmc_d_clk', 'fmc_d_clk90', 'fmc_d_clk180', 'fmc_d_clk270']
             self.add_source(os.path.join(hdl_path, 'ad9213_fmc_d_top.v'))
+            elf = os.path.join(self.source_path, 'src', 'sw', 'top_d.elf')
+            self.elfs['d'] = elf
+            self.add_source(elf)
 
         self.bd = {
             'a': os.path.join(bd_path, 'adc_fmc_a.tcl'),
@@ -154,7 +166,7 @@ class htg_ad9213(YellowBlock):
         def get_updatemem_cmd(fmc):
             cmd = ""
             cmd += "exec updatemem -bit ./myproj.runs/impl_1/top.bit -meminfo ./myproj.runs/impl_1/top.mmi"
-            cmd += " -data %s" % self.elf
+            cmd += " -data %s" % self.elfs[fmc]
             cmd += " -proc %s" % (self.expand_name("inst/ad9213_top_%s_inst/adc_test_inst/microblaze_adc_0" % fmc))
             cmd += " -out ./myproj.runs/impl_1/top.bit -force"
             return cmd
