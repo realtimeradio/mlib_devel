@@ -216,11 +216,11 @@ class htg_ad9213(YellowBlock):
         cons += [PortConstraint(self.expand_name('adc_' + fmc + '_gpio4'),          'fmc_' + fmc + '_la_n', iostd='LVCMOS18', iogroup_index=12)]
 
         if fmc == 'a':
-            jesd_refclk0 = 1
-            jesd_refclk1 = 3
+            jesd_refclk0 = 2
+            jesd_refclk1 = 1
         elif fmc == 'b':
             jesd_refclk0 = 0
-            jesd_refclk1 = 1
+            jesd_refclk1 = 2
         elif fmc == 'c':
             jesd_refclk0 = 0
             jesd_refclk1 = 2
