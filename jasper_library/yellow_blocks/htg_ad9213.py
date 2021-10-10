@@ -20,7 +20,6 @@ class htg_ad9213(YellowBlock):
         self.add_source(os.path.join(hdl_path, 'd_ff.v'))
         self.add_source(os.path.join(hdl_path, 'ad_3w_spi.v'))
         self.add_source(os.path.join(hdl_path, 'jesd204_ad9213_demapper.v'))
-        self.add_source(self.elfs)
 
         self.provides = []
         # LIES: This core doesn't actually provide clocks other than 0-degrees
