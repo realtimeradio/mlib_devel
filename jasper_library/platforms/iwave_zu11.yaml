@@ -24,3 +24,6 @@ pins:
   clk_100_n:
     iostd: LVDS
     loc: AN15
+  pmod1:
+    iostd: LVCMOS18
+    loc: [B16, A18, A13, B15]
