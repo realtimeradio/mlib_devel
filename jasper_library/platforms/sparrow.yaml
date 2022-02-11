@@ -7,7 +7,6 @@ mmbus_architecture: ['AXI4-Lite', 'wishbone']
 mmbus_base_address:  0x50000000
 # WB base addr
 dsp_wb_base_address: 0x51000000
-invert_sfp_disable: True
 sources: []
 constraints: []
 provides:

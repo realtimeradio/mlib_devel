@@ -308,11 +308,12 @@ class tengbaser_xilinx_k7(ten_gbe):
         phy.add_port('tx_fault', 'tx_fault%d'%self.port)
         top.assign_signal('tx_fault%d'%self.port, "1'b0") #snap doesn't wire this to SFP(?)
         phy.add_port('tx_disable', 'tx_disable%d_int'%self.port)
-        top.add_port('tx_disable%d'%self.port, '', dir='out', width=0)
-        if self.invert_sfp_disable:
-            top.assign_signal('tx_disable%d'%self.port, '~tx_disable%d_int'%self.port)
-        else:
-            top.assign_signal('tx_disable%d'%self.port, 'tx_disable%d_int'%self.port)
+        if self.platform.name == 'snap':
+            top.add_port('tx_disable%d'%self.port, '', dir='out', width=0)
+            if self.invert_sfp_disable:
+                top.assign_signal('tx_disable%d'%self.port, '~tx_disable%d_int'%self.port)
+            else:
+                top.assign_signal('tx_disable%d'%self.port, 'tx_disable%d_int'%self.port)
 
         phy.add_port('resetdone', 'resetdone%d'%self.port)
         phy.add_port('status_vector', '', parent_sig=False)
