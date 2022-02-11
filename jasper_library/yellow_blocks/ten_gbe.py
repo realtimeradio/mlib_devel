@@ -6,7 +6,7 @@ from .yellow_block_typecodes import *
 class ten_gbe(YellowBlock):
     @staticmethod
     def factory(blk, plat, hdl_root=None):
-        if plat.fpga.startswith('xc7k'):
+        if plat.fpga.startswith('xc7k') or plat.fpga.startswith('xc7z'):
             return tengbaser_xilinx_k7(blk, plat, hdl_root)
         elif plat.fpga.startswith('xc7v'):
             return tengbaser_xilinx_k7(blk, plat, hdl_root, use_gth=plat.name=='mx175')

@@ -1,0 +1,289 @@
+name: sparrow
+manufacturer: Xilinx
+fpga: xc7z030ffg676-2
+backend_target: vivado
+mmbus_architecture: ['AXI4-Lite', 'wishbone']
+# AXI base addr
+mmbus_base_address:  0x50000000
+# WB base addr
+dsp_wb_base_address: 0x51000000
+invert_sfp_disable: True
+sources: []
+constraints: []
+provides:
+  - sfp0
+  - sfp1
+  - sfp2
+  - sfp3
+  - white_rabbit
+  - sys_clk
+  - sys_clk90
+  - sys_clk180
+  - sys_clk270
+pins:
+  #sys_clk_p:
+  #  loc: 
+  #  iostd: LVDS_25
+  #sys_clk_n:
+  #  loc: 
+  #  iostd: LVDS_25
+  gpio:
+    iostd: LVCMOS18
+    loc:
+      - C16
+      - C17
+      - E15
+      - F15
+      - D6
+      - A5
+      - C6
+      - E7
+
+  led:
+    iostd: LVCMOS33
+    loc:
+      # LED0 R,G,B
+      - V18
+      - W18
+      - V19
+      # LED1 R,G,B
+      - Y18
+      - AA18
+      - AA19
+      # LED3
+      - AC24
+      # LED4
+      - AB25
+
+  # 10 GbE clock (schematic net MGTCLK0[P|N], OUT1 of SI5332)
+  # Should be 156.25 MHz
+  eth_clk_p:
+    loc:
+      - R6
+  eth_clk_n:
+    loc: 
+      - R5
+  # 1 GbE clock (schematic net MGTCLK1[P|N], OUT0 of SI5332)
+  # Should be 125 MHz
+  eth_clk_125_p:
+    loc:
+      - U6
+  eth_clk_125_n:
+    loc: 
+      - U5
+
+  mgt_tx_p:
+    loc: [AA2, W2, U2, R2]
+  mgt_tx_n:
+    loc: [AA1, W1, U1, R1]
+  mgt_rx_p:
+    loc: [AB4, Y4, V4, T4]
+  mgt_rx_n:
+    loc: [AB3, Y3, V3, T3]
+
+  wr_20m_vcxo:
+    loc: AC13
+    iostd: LVCMOS33
+
+  # WR refs as 1Gb
+  wr_125m_gtrefclk_p:
+    loc: U6
+  wr_125m_gtrefclk_n:
+    loc: U5
+
+  # The first SFP port
+  wr_sfp_tx_p:
+    loc: AA2
+  wr_sfp_tx_n:
+    loc: AA1
+  wr_sfp_rx_p:
+    loc: AB4
+  wr_sfp_rx_n:
+    loc: AB3
+
+  #wr_sfp_mod_def1:
+  #  loc: W21
+  #  iostd: LVCMOS25
+  #wr_sfp_mod_def2:
+  #  loc: W22
+  #  iostd: LVCMOS25
+  #wr_sfp_tx_fault:
+  #  loc: U17
+  #  iostd: LVCMOS25
+  #wr_sfp_los:
+  #  loc: V18
+  #  iostd: LVCMOS25
+
+  #wr_uart_rx:
+  #  loc: T20
+  #  iostd: LVCMOS25
+  #wr_uart_tx:
+  #  loc: U20
+  #  iostd: LVCMOS25
+
+  wr_spi_cs_n:
+    loc: Y21
+    iostd: LVCMOS33
+  #wr_spi_miso:
+  #  loc: 
+  #  iostd: LVCMOS33
+  wr_spi_mosi:
+    loc: AD10
+    iostd: LVCMOS33
+  wr_spi_sclk:
+    loc: AD13
+    iostd: LVCMOS33
+
+  #wr_dac_25m_cs_n:
+  #  loc: AA19
+  #  iostd: LVCMOS33
+  #wr_dac_20m_cs_n:
+  #  loc: AB20
+  #  iostd: LVCMOS33
+  wr_onewire:
+    loc: AB15
+    iostd: LVCMOS33
+
+  spi_flash_data:
+    iostd: LVCMOS33
+    loc: [AF13, AF10, AE11, AF12]
+  spi_flash_clk:
+    iostd: LVCMOS33
+    loc: AD11
+  spi_flash_csn:
+    iostd: LVCMOS33
+    loc: AE10
+  
+  #sfp_disable:
+  #  iostd: LVCMOS25
+  #  loc: [W20, V19, W19]
+
+
+  #adc_csn:
+  #  iostd: LVCMOS18
+  #  loc:
+  #    - AF3
+  #    - AF10
+  #    - V14
+  #adc_rst_n:
+  #  iostd: LVCMOS18
+  #  loc:
+  #    - AE5
+  #    - AF13
+  #    - V19
+  #adc_pd:
+  #  iostd: LVCMOS18
+  #  loc:
+  #    - AE3
+  #    - AE8
+  #    - W15
+  #adc_sdata:
+  #  iostd: LVCMOS18
+  #  loc:
+  #    - AF2
+  #    - AF9
+  #    - W14
+  #adc_sclk:
+  #  iostd: LVCMOS33
+  #  loc:
+  #    - M17
+  #    - L18
+  #    - K16
+  #adc_lclkp:
+  #  iostd: LVDS
+  #  loc:
+  #    - AA3
+  #adc_lclkn:
+  #  iostd: LVDS
+  #  loc:
+  #    - AA2
+  ## ADC data pins, named as per schematic.
+  ## Even pins are _p, odd are _n.
+  #adc0_out:
+  #  iostd: LVDS
+  #  loc:
+  #    - V2
+  #    - V1
+  #    - U2
+  #    - U1
+  #    - W6
+  #    - W5
+  #    - U7
+  #    - V6
+  #    - V3
+  #    - W3
+  #    - Y3
+  #    - Y2
+  #    - AD6
+  #    - AD5
+  #    - AD4
+  #    - AD3
+  #adc1_out:
+  #  iostd: LVDS
+  #  loc:
+  #    - V8
+  #    - V7
+  #    - W10
+  #    - W9
+  #    - Y8
+  #    - Y7
+  #    - Y11
+  #    - Y10
+  #    - AB12
+  #    - AC12
+  #    - AA13
+  #    - AA12
+  #    - AA8
+  #    - AA7
+  #    - AC8
+  #    - AD8
+  #adc2_out:
+  #  iostd: LVDS
+  #  loc:
+  #    - AF14
+  #    - AF15
+  #    - AD15
+  #    - AE15
+  #    - AE18
+  #    - AF18
+  #    - AF19
+  #    - AF20
+  #    - AA14
+  #    - AA15
+  #    - AC14
+  #    - AD14
+  #    - AB19
+  #    - AB20
+  #    - AA19
+  #    - AA20
+  #clk_sel_a:
+  #  iostd: LVCMOS33
+  #  loc:
+  #    - A18
+  #clk_sel_b:
+  #  iostd: LVCMOS33
+  #  loc:
+  #    - A19
+  #lmx2581_clk:
+  #  iostd: LVCMOS33
+  #  loc: H16
+  #lmx2581_data:
+  #  iostd: LVCMOS33
+  #  loc: J15
+  #lmx2581_muxout:
+  #  iostd: LVCMOS33
+  #  loc: J19
+  #lmx2581_le:
+  #  iostd: LVCMOS33
+  #  loc: J16
+  #lmx2581_ce:
+  #  iostd: LVCMOS33
+  #  loc: G15
+  #lmx2581_be:
+  #  iostd: LVCMOS33
+  #  loc: F15
+  #xadc_p:
+  #  loc: N12
+  #xadc_n:
+  #  loc: P11
+
