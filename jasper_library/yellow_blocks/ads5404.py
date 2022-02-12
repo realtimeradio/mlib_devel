@@ -57,10 +57,10 @@ class ads5404(YellowBlock):
         adc.add_port('ovra_1', self.fullname + '_overrange_a_1')
         adc.add_port('ovrb_0', self.fullname + '_overrange_b_0')
         adc.add_port('ovrb_1', self.fullname + '_overrange_b_1')
-        adc.add_port('da_0', self.fullname + '_data_a_0')
-        adc.add_port('da_1', self.fullname + '_data_a_1')
-        adc.add_port('db_0', self.fullname + '_data_b_0')
-        adc.add_port('db_1', self.fullname + '_data_b_1')
+        adc.add_port('da_0', self.fullname + '_data_a_0', width=self.NBITS)
+        adc.add_port('da_1', self.fullname + '_data_a_1', width=self.NBITS)
+        adc.add_port('db_0', self.fullname + '_data_b_0', width=self.NBITS)
+        adc.add_port('db_1', self.fullname + '_data_b_1', width=self.NBITS)
 
         # Internal clock
         adc.add_port('clkout', 'adc_clk')
