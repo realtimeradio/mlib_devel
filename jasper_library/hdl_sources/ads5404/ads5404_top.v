@@ -36,8 +36,8 @@ module ads5404_top #(
     // Clock out to user
     output clkout,
     // Sync to user logic
-    output syncout_0,
-    output syncout_1,
+    output sync_out_0,
+    output sync_out_1,
     // Overrange to user logic
     output ovra_0,
     output ovra_1,
@@ -105,8 +105,8 @@ module ads5404_top #(
     .CB(~adc_clk),
     .D({ovra, ovrb, syncout, da, db}),
     .R(user_rst),
-    .Q1({ovra_0, ovrb_0, syncout_0, da_0, db_0}),
-    .Q2({ovra_1, ovrb_1, syncout_1, da_1, db_1})
+    .Q1({ovra_0, ovrb_0, sync_out_0, da_0, db_0}),
+    .Q2({ovra_1, ovrb_1, sync_out_1, da_1, db_1})
   );
 
 endmodule
