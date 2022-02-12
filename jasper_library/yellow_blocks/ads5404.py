@@ -153,7 +153,7 @@ class ads5404(YellowBlock):
                                     name='ads5404_clk',
                                     freq=self.sample_rate // 2))
         cons.append(ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets sys_clk]',
-                      'ads5404_clk', 'asynchronous'))
+                      '-include_generated_clocks ads5404_clk', 'asynchronous'))
 
         # SPI interface
         cons.append(PortConstraint(self.port_prefix + '_cs',   'ads5404_sdenb'))
@@ -161,7 +161,7 @@ class ads5404(YellowBlock):
         cons.append(PortConstraint(self.port_prefix + '_mosi', 'ads5404_sdio'))
         cons.append(PortConstraint(self.port_prefix + '_miso', 'ads5404_sdo'))
 
-        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_da_clk_p]' % self.port_prefix))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_daclk_p]' % self.port_prefix))
         cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_syncout_p]' % self.port_prefix))
         cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_ovra_p]' % self.port_prefix))
         cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_ovrb_p]' % self.port_prefix))

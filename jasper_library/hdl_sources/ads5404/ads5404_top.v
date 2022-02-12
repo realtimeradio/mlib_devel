@@ -80,7 +80,8 @@ module ads5404_top #(
   wire pll_feedback_clk;
   PLLE2_BASE#(
     .BANDWIDTH("OPTIMIZED"),
-    .DIVCLK_DIVIDE(PLLMULT),
+    .DIVCLK_DIVIDE(1),
+    .CLKOUT0_DIVIDE(PLLMULT),
     .CLKFBOUT_MULT(PLLMULT),
     .CLKIN1_PERIOD(CLKPERIOD)
   ) mmcm_inst (
