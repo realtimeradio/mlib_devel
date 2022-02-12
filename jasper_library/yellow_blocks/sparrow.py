@@ -118,10 +118,13 @@ class sparrow(YellowBlock):
             top.assign_signal('wb_rst_i', '~axil_rst_n')
         
     def gen_children(self):
-        children = [YellowBlock.make_block({
-                                            'fullpath': self.fullpath, 'tag': 'xps:sys_block',
-                                            'board_id': str(HWTYPE_SPARROW), 'rev_maj': '1', 'rev_min': '0',
-                                            'rev_rcs': '1'}, self.platform)]
+        children =  [YellowBlock.make_block(
+                   		{'fullpath': self.fullpath, 'tag': 'xps:sys_block',
+                   		 'board_id': str(HWTYPE_SPARROW), 'rev_maj': '1', 'rev_min': '0',
+                   		 'rev_rcs': '1'},
+                      self.platform
+                    )]
+        children += [YellowBlock.make_block({'tag':'xps:xadc'}, self.platform)]
         return children
 
     def gen_constraints(self):
