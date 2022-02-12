@@ -14,14 +14,15 @@ class ads5404(YellowBlock):
         # Create a prefix for top-level ports which is independent of changes
         # in simulink yellow block name
         self.port_prefix = self.blocktype
+        self.rst_regname = 'ads5404_hardware_rst'
 
     def gen_children(self):
         # A reset register. Add here so that we can reset regardless
         # of whether we have an ADC clock present
         rst_reg = YellowBlock.make_block({'tag':'xps:sw_reg_sync',
-                                        'fullpath':'%s/ads5404_hardware_rst'%(self.name),
+                                        'fullpath': '%s/%s' % (self.name, self.rst_regname),
                                         'io_dir':'From Processor',
-                                        'name':'ads5404_hardware_rst'},
+                                        'name': self.rst_regname},
                                         self.platform)
         return [rst_reg]
 
@@ -33,7 +34,7 @@ class ads5404(YellowBlock):
         # User interfaces
         adc.add_port('user_sync', self.fullname + '_sync')
         # reset from embedded register
-        adc.add_port('user_rst', self.name + '_ads5404_hardware_reset_user_data_out[0]')
+        adc.add_port('user_rst', self.name + '_%s_user_data_out[0]' % self.rst_regname, parent_sig=False)
         # Hard code the enable to 1. We might want control of this,
         # but need to be careful if driving it form a source which
         # requires the ADC clock to be running
