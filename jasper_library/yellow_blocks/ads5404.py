@@ -167,4 +167,15 @@ class ads5404(YellowBlock):
         cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_ovrb_p]' % self.port_prefix))
         cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_da_p[*]]' % self.port_prefix))
 
+        # See https://support.xilinx.com/s/question/0D52E00006hpLUeSAM/input-delay-for-iddr-capture?language=en_US
+        tsu = 1 - 0.6
+        th =  0.6 - 1
+        trace_delay_max = 0.1
+        trace_delay_min = -0.1
+        delay_max = trace_delay_max + tsu
+        delay_min = trace_delay_min - th
+        cons.append(RawConstraint('set_input_delay -clock daclk_p -max %.3f [get_ports da_p[*]]' % delay_max))
+        cons.append(RawConstraint('set_input_delay -clock daclk_p -min %.3f [get_ports da_p[*]]' % delay_min))
+        cons.append(RawConstraint('set_input_delay -clock daclk_p -max %.3f -clock_fall -add_delay [get_ports da_p[*]]' % delay_max))
+        cons.append(RawConstraint('set_input_delay -clock daclk_p -min %.3f -clock_fall -add_delay [get_ports da_p[*]]' % delay_min))
         return cons
