@@ -29,24 +29,24 @@ module ads5404_top #(
     input ovrb_p,
     input ovrb_n,
     // Parallel data from ADC
-    input [NBITS-1:0] da_p;
-    input [NBITS-1:0] da_n;
-    input [NBITS-1:0] db_p;
-    input [NBITS-1:0] db_n;
+    input [NBITS-1:0] da_p,
+    input [NBITS-1:0] da_n,
+    input [NBITS-1:0] db_p,
+    input [NBITS-1:0] db_n,
     // Clock out to user
-    output clkout;
+    output clkout,
     // Sync to user logic
-    output syncout_0;
-    output syncout_1;
+    output syncout_0,
+    output syncout_1,
     // Overrange to user logic
-    output ovra_0;
-    output ovra_1;
-    output ovrb_0;
-    output ovrb_1;
+    output ovra_0,
+    output ovra_1,
+    output ovrb_0,
+    output ovrb_1,
     // Data to user logic
-    output [NBITS-1:0] da_0;
-    output [NBITS-1:0] da_1;
-    output [NBITS-1:0] db_0;
+    output [NBITS-1:0] da_0,
+    output [NBITS-1:0] da_1,
+    output [NBITS-1:0] db_0,
     output [NBITS-1:0] db_1
   );
 
@@ -63,12 +63,12 @@ module ads5404_top #(
   // Buffer the differential inputs
   wire daclk, ovra, ovrb, syncout;
   wire [NBITS-1:0] da;
-  wire [NBITS-1:0] dp;
+  wire [NBITS-1:0] db;
 
   IBUFDS ibuf_inst [4 + 2*NBITS - 1:0] (
-    .I ({daclk_p, ovra_p, ovrb_p, syncout_p, da_p, db_p),
-    .IB({daclk_n, ovra_n, ovrb_n, syncout_n, da_n, db_n),
-    .O({daclk, ovra, ovrb, syncout, da, db)
+    .I ({daclk_p, ovra_p, ovrb_p, syncout_p, da_p, db_p}),
+    .IB({daclk_n, ovra_n, ovrb_n, syncout_n, da_n, db_n}),
+    .O({daclk, ovra, ovrb, syncout, da, db})
   );
 
   // Put the clock in a clock net and (TODO) generate other clock phases
@@ -98,13 +98,6 @@ module ads5404_top #(
 
 
   // De-interleave the DDR streams
-  wire ovra_0, ovrb_0, syncout_0;
-  wire [NBITS-1:0] da_0;
-  wire [NBITS-1:0] dp_0;
-  wire ovra_1, ovrb_1, syncout_1;
-  wire [NBITS-1:0] da_1;
-  wire [NBITS-1:0] dp_1;
-
   IDDRE1 #(
     .DDR_CLK_EDGE("SAME_EDGE_PIPELINED")
   ) data_iddr_inst [3 + 2*NBITS - 1 : 0] (
