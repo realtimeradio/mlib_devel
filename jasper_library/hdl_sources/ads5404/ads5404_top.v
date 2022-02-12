@@ -102,9 +102,10 @@ module ads5404_top #(
     .DDR_CLK_EDGE("SAME_EDGE_PIPELINED")
   ) data_iddr_inst [3 + 2*NBITS - 1 : 0] (
     .C(adc_clk),
-    .CB(~adc_clk),
+    .CE(1'b1),
     .D({ovra, ovrb, syncout, da, db}),
     .R(user_rst),
+    .S(1'b0),
     .Q1({ovra_0, ovrb_0, sync_out_0, da_0, db_0}),
     .Q2({ovra_1, ovrb_1, sync_out_1, da_1, db_1})
   );
