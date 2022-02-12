@@ -53,14 +53,14 @@ class ads5404(YellowBlock):
         adc.add_port('user_enable', '1\'b1')
         adc.add_port('sync_out_0', self.fullname + '_sync_out_0')
         adc.add_port('sync_out_1', self.fullname + '_sync_out_1')
-        adc.add_port('ovra_0', self.fullname + '_a_overrange_0')
-        adc.add_port('ovra_1', self.fullname + '_a_overrange_1')
-        adc.add_port('ovrb_0', self.fullname + '_b_overrange_0')
-        adc.add_port('ovrb_1', self.fullname + '_b_overrange_1')
-        adc.add_port('da_0', self.fullname + '_a_data_0')
-        adc.add_port('da_1', self.fullname + '_a_data_1')
-        adc.add_port('db_0', self.fullname + '_b_data_0')
-        adc.add_port('db_1', self.fullname + '_b_data_1')
+        adc.add_port('ovra_0', self.fullname + '_overrange_a_0')
+        adc.add_port('ovra_1', self.fullname + '_overrange_a_1')
+        adc.add_port('ovrb_0', self.fullname + '_overrange_b_0')
+        adc.add_port('ovrb_1', self.fullname + '_overrange_b_1')
+        adc.add_port('da_0', self.fullname + '_data_a_0')
+        adc.add_port('da_1', self.fullname + '_data_a_1')
+        adc.add_port('db_0', self.fullname + '_data_b_0')
+        adc.add_port('db_1', self.fullname + '_data_b_1')
 
         # Internal clock
         adc.add_port('clkout', 'adc_clk')
@@ -154,10 +154,10 @@ class ads5404(YellowBlock):
         cons.append(PortConstraint(self.port_prefix + '_mosi', 'ads5404_sdio'))
         cons.append(PortConstraint(self.port_prefix + '_miso', 'ads5404_sdo'))
 
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports %s_da_clk_p]' % self.port_prefix))
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports %s_syncout_p]' % self.port_prefix))
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports %s_ovra_p]' % self.port_prefix))
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports %s_ovrb_p]' % self.port_prefix))
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports %s_da_p[*]]' % self.port_prefix))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_da_clk_p]' % self.port_prefix))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_syncout_p]' % self.port_prefix))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_ovra_p]' % self.port_prefix))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_ovrb_p]' % self.port_prefix))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_da_p[*]]' % self.port_prefix))
 
         return cons

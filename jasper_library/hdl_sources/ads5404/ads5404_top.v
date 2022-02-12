@@ -98,7 +98,7 @@ module ads5404_top #(
 
 
   // De-interleave the DDR streams
-  IDDRE1 #(
+  IDDR #(
     .DDR_CLK_EDGE("SAME_EDGE_PIPELINED")
   ) data_iddr_inst [3 + 2*NBITS - 1 : 0] (
     .C(adc_clk),

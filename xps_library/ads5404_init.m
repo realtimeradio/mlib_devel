@@ -40,14 +40,14 @@ try
   x =  0;
   y = 20;
 
-  sigs  = {'data', 'overrange', 'sync_out'};
-  types = {'Signed', 'Boolean', 'Boolean'};
-  widths = {'12', '1', '1'};
-  bps    = {'11', '0', '0'};
+  sigs  = {'data', 'overrange'};
+  types = {'Signed', 'Boolean'};
+  widths = {'12', '1'};
+  bps    = {'11', '0'};
   channels = {'a', 'b'};
 
   port_num = 1;
-  for sig=1:3
+  for sig=1:2
     for channel=1:2
       for lane=0:1
         inport_name  = sprintf('%s_%s_%d_sim', sigs{sig}, channels{channel}, lane);
@@ -82,6 +82,39 @@ try
     end
   end
 
+  % Sync output
+  for lane=0:1
+    inport_name  = sprintf('sync_out_%d_sim', lane);
+    gateway_name = sprintf('%s_sync_out_%d', gw_name, lane);
+    outport_name = sprintf('sync_out_%d', lane);
+
+    inport_pos  = [x+ 20, y,   x+ 20+30, y+14];
+    gateway_pos = [x+100, y-3, x+100+70, y+17];
+    outport_pos = [x+210, y,   x+210+30, y+14];
+    y = y + 50;
+
+    reuse_block(blk, inport_name, 'built-in/inport', ...
+      'Port', num2str(port_num), ...
+      'Position', inport_pos);
+
+    reuse_block(blk, gateway_name, 'xbsIndex_r4/Gateway In', ...
+      'arith_type', 'Boolean', ...
+      'n_bits', '1', ...
+      'bin_pt', '0', ...
+      'Position', gateway_pos);
+
+    reuse_block(blk, outport_name, 'built-in/outport', ...
+      'Port', num2str(port_num), ...
+      'Position', outport_pos);
+
+
+    add_line(blk, [inport_name,  '/1'], [gateway_name, '/1']);
+    h=add_line(blk, [gateway_name, '/1'], [outport_name, '/1']);
+    set_param(h, 'Name', outport_name);
+    port_num = port_num + 1;
+  end
+
+  % Reset input
   inport_name  = sprintf('sync');
   gateway_name = sprintf('%s_sync', gw_name);
   term_name = sprintf('sync_term');
