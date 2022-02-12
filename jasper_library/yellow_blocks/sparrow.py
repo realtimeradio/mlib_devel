@@ -132,7 +132,6 @@ class sparrow(YellowBlock):
         # We don't need IO constraints for any of the PS ports, because the IP
         # will generate these for us.
         cons.append(RawConstraint('set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]'))
-        cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
         return cons
 
     def gen_tcl_cmds(self):
