@@ -1,6 +1,6 @@
 from .yellow_block import YellowBlock
 from verilog import VerilogModule
-from constraints import PortConstraint, ClockConstraint, RawConstraint, InputDelayConstraint, FalsePathConstraint
+from constraints import PortConstraint, ClockConstraint, RawConstraint, InputDelayConstraint, ClockGroupConstraint
 from .yellow_block_typecodes import *
 
 
@@ -16,30 +16,35 @@ class ads5404(YellowBlock):
         self.port_prefix = self.blocktype
         self.rst_regname = 'ads5404_hardware_rst'
         self.lock_regname = 'ads5404_pll_lock'
+        self.clk_period_ns = 1./(self.sample_rate * 1e6) * 1e9
+        # PLL frequency must be between 800 and 1866 MHz
+        self.pllmult = int(1800. / self.sample_rate) * 2
 
     def gen_children(self):
         # A reset register. Add here so that we can reset regardless
         # of whether we have an ADC clock present
         rst_reg = YellowBlock.make_block(
-										{'tag':'xps:sw_reg_sync',
+                    {'tag':'xps:sw_reg_sync',
                     'fullpath': '%s/%s' % (self.name, self.rst_regname),
                     'io_dir':'From Processor',
                     'name': self.rst_regname},
                     self.platform
-									)
+                  )
         lock_reg= YellowBlock.make_block(
-										{'tag':'xps:sw_reg_sync',
+                    {'tag':'xps:sw_reg_sync',
                     'fullpath': '%s/%s' % (self.name, self.lock_regname),
                     'io_dir':'To Processor',
                     'name': self.lock_regname},
                     self.platform
-									)
+                  )
         return [rst_reg, lock_reg]
 
     def modify_top(self,top):
         module = 'ads5404_top'
         adc = top.get_instance(entity=module, name=self.fullname)
         adc.add_parameter('NBITS', self.NBITS)
+        adc.add_parameter('CLKPERIOD', self.clk_period_ns)
+        adc.add_parameter('PLLMULT', self.pllmult)
 
         # User interfaces
         adc.add_port('user_sync', self.fullname + '_sync')
@@ -147,6 +152,8 @@ class ads5404(YellowBlock):
         cons.append(ClockConstraint(self.port_prefix + '_' + 'daclk_p',
                                     name='ads5404_clk',
                                     freq=self.sample_rate // 2))
+        cons.append(ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets sys_clk]',
+                      'ads5404_clk', 'asynchronous'))
 
         # SPI interface
         cons.append(PortConstraint(self.port_prefix + '_cs',   'ads5404_sdenb'))

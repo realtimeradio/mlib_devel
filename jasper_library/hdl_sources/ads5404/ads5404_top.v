@@ -1,5 +1,7 @@
 module ads5404_top #(
-    parameter NBITS=12
+    parameter NBITS=12,
+    parameter PLLMULT=4,
+    parameter CLKPERIOD=4.00
  )(
     // ADC CONTROL INTERFACE
     // Control signals from user logic
@@ -78,9 +80,9 @@ module ads5404_top #(
   wire pll_feedback_clk;
   PLLE2_BASE#(
     .BANDWIDTH("OPTIMIZED"),
-    .DIVCLK_DIVIDE(8),
-    .CLKFBOUT_MULT(8),
-    .CLKIN1_PERIOD(4.000)
+    .DIVCLK_DIVIDE(PLLMULT),
+    .CLKFBOUT_MULT(PLLMULT),
+    .CLKIN1_PERIOD(CLKPERIOD)
   ) mmcm_inst (
     .CLKIN1(daclk),
     .RST(user_rst),
