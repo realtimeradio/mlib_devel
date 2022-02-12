@@ -124,7 +124,7 @@ class sparrow(YellowBlock):
                    		 'rev_rcs': '1'},
                       self.platform
                     )]
-        children += [YellowBlock.make_block({'tag':'xps:xadc'}, self.platform)]
+        #children += [YellowBlock.make_block({'tag':'xps:xadc'}, self.platform)]
         return children
 
     def gen_constraints(self):
