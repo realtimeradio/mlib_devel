@@ -80,7 +80,7 @@ module ads5404_top #(
     .BANDWIDTH("OPTIMIZED"),
     .DIVCLK_DIVIDE(2),
     .CLKFBOUT_MULT(2),
-    .CLKIN1_PERIOD(2.000),
+    .CLKIN1_PERIOD(2.000)
   ) mmcm_inst (
     .CLKIN1(daclk),
     .RST(user_rst),
@@ -88,7 +88,7 @@ module ads5404_top #(
     .CLKFBIN(pll_feedback_clk),
     .CLKFBOUT(pll_feedback_clk),
     .CLKOUT0(adc_clk_mmcm),
-    .LOCKED(pll_locked),
+    .LOCKED(pll_locked)
   );
 
   BUFG clk_buf_inst (
