@@ -7,6 +7,7 @@ module ads5404_top #(
     input user_rst,
     input user_sync,
     input user_enable,
+    output pll_locked,
     // Control signals to ADC chip
     output sync_p,
     output sync_n,
@@ -70,13 +71,31 @@ module ads5404_top #(
     .O({daclk, ovra, ovrb, syncout, da, db)
   );
 
-  // Put the clock in a clock net
+  // Put the clock in a clock net and (TODO) generate other clock phases
   wire adc_clk;
   assign clkout = adc_clk;
+  wire adc_clk_mmcm;
+  wire pll_feedback_clk;
+  PLLE2_BASE#(
+    .BANDWIDTH("OPTIMIZED"),
+    .DIVCLK_DIVIDE(2),
+    .CLKFBOUT_MULT(2),
+    .CLKIN1_PERIOD(2.000),
+  ) mmcm_inst (
+    .CLKIN1(daclk),
+    .RST(user_rst),
+    .PWRDWN(1'b0),
+    .CLKFBIN(pll_feedback_clk),
+    .CLKFBOUT(pll_feedback_clk),
+    .CLKOUT0(adc_clk_mmcm),
+    .LOCKED(pll_locked),
+  );
+
   BUFG clk_buf_inst (
-    .I(daclk),
+    .I(adc_clk_mmcm),
     .O(adc_clk)
   );
+
 
   // De-interleave the DDR streams
   wire ovra_0, ovrb_0, syncout_0;

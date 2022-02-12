@@ -15,16 +15,26 @@ class ads5404(YellowBlock):
         # in simulink yellow block name
         self.port_prefix = self.blocktype
         self.rst_regname = 'ads5404_hardware_rst'
+        self.lock_regname = 'ads5404_pll_lock'
 
     def gen_children(self):
         # A reset register. Add here so that we can reset regardless
         # of whether we have an ADC clock present
-        rst_reg = YellowBlock.make_block({'tag':'xps:sw_reg_sync',
-                                        'fullpath': '%s/%s' % (self.name, self.rst_regname),
-                                        'io_dir':'From Processor',
-                                        'name': self.rst_regname},
-                                        self.platform)
-        return [rst_reg]
+        rst_reg = YellowBlock.make_block(
+										{'tag':'xps:sw_reg_sync',
+                    'fullpath': '%s/%s' % (self.name, self.rst_regname),
+                    'io_dir':'From Processor',
+                    'name': self.rst_regname},
+                    self.platform
+									)
+        lock_reg= YellowBlock.make_block(
+										{'tag':'xps:sw_reg_sync',
+                    'fullpath': '%s/%s' % (self.name, self.lock_regname),
+                    'io_dir':'To Processor',
+                    'name': self.lock_regname},
+                    self.platform
+									)
+        return [rst_reg, lock_reg]
 
     def modify_top(self,top):
         module = 'ads5404_top'
@@ -35,6 +45,8 @@ class ads5404(YellowBlock):
         adc.add_port('user_sync', self.fullname + '_sync')
         # reset from embedded register
         adc.add_port('user_rst', self.name + '_%s_user_data_out[0]' % self.rst_regname, parent_sig=False)
+        # PLL lock to embedded register
+        adc.add_port('pll_locked', self.name + '_%s_user_data_in[0]' % self.lock_regname, parent_sig=False)
         # Hard code the enable to 1. We might want control of this,
         # but need to be careful if driving it form a source which
         # requires the ADC clock to be running
@@ -49,6 +61,9 @@ class ads5404(YellowBlock):
         adc.add_port('da_1', self.fullname + '_a_data_1')
         adc.add_port('db_0', self.fullname + '_b_data_0')
         adc.add_port('db_1', self.fullname + '_b_data_1')
+
+        # Internal clock
+        adc.add_port('clkout', 'adc_clk')
 
         # External interfaces
         def add_ext_port(name, iodir, width=0):
