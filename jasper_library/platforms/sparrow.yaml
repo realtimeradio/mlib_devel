@@ -80,6 +80,67 @@ pins:
   mgt_rx_n:
     loc: [AB3, Y3, V3, T3]
 
+  ads5404_sync_p:
+    iostd: LVDS
+    loc: J14
+  ads5404_sync_n:
+    iostd: LVDS
+    loc: H14
+  ads5404_sreset:
+    iostd: LVCMOS18
+    loc: C2
+  ads5404_enable:
+    iostd: LVCMOS18
+    loc: B1
+  ads5404_daclk_p:
+    iostd: LVDS
+    loc: D15
+  ads5404_daclk_n:
+    iostd: LVDS
+    loc: D14
+  ads5404_syncout_p:
+    iostd: LVDS
+    loc: G14
+  ads5404_syncout_n:
+    iostd: LVDS
+    loc: F14
+  ads5404_ovra_p:
+    iostd: LVDS
+    loc: K13
+  ads5404_ovra_n:
+    iostd: LVDS
+    loc: J13
+  ads5404_ovrb_p:
+    iostd: LVDS
+    loc: J10
+  ads5404_ovrb_n:
+    iostd: LVDS
+    loc: J9
+  ads5404_da_p:
+    iostd: LVDS
+    loc: [F12, C11, E11, H13, E10, C14, C12, B16, E16, A13, G16, B17]
+  ads5404_da_n:
+    iostd: LVDS
+    loc: [E12, B11, D11, H12, D10, B14, B12, B15, D16, A12, G15, A17]
+  ads5404_db_p:
+    iostd: LVDS
+    loc: [B2, A4, E6, F5, B5, G6, A9, B10, D9, H7, B7, J11]
+  ads5404_db_n:
+    iostd: LVDS
+    loc: [A2, A3, D5, E5, B4, G5, A8, A10, D8, H6, A7, H11]
+  ads5404_sclk:
+    iostd: LVCMOS18
+    loc: G7
+  ads5404_sdio:
+    iostd: LVCMOS18
+    loc: F7
+  ads5404_sdenb:
+    iostd: LVCMOS18
+    loc: C4
+  ads5404_sdo:
+    iostd: LVCMOS18
+    loc: F8
+
   wr_20m_vcxo:
     loc: AC13
     iostd: LVCMOS33
