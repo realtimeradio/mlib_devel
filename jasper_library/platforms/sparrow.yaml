@@ -98,6 +98,12 @@ pins:
   ads5404_daclk_n:
     iostd: LVDS
     loc: D14
+  ads5404_dbclk_p:
+    iostd: LVDS
+    loc: C8
+  ads5404_dbclk_n:
+    iostd: LVDS
+    loc: C7
   ads5404_syncout_p:
     iostd: LVDS
     loc: G14

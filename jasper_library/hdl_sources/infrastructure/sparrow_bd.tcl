@@ -128,6 +128,8 @@ xilinx.com:ip:clk_wiz:6.0\
 xilinx.com:ip:processing_system7:5.5\
 xilinx.com:ip:proc_sys_reset:5.0\
 xilinx.com:ip:smartconnect:1.0\
+xilinx.com:ip:util_idelay_ctrl:1.0\
+xilinx.com:ip:util_vector_logic:2.0\
 "
 
    set list_ips_missing ""
@@ -220,7 +222,6 @@ proc create_root_design { parentCell } {
   set SEL_O [ create_bd_port -dir O -from 3 -to 0 SEL_O ]
   set STB_O [ create_bd_port -dir O STB_O ]
   set WE_O [ create_bd_port -dir O WE_O ]
-  set axil_aresetn [ create_bd_port -dir O -from 0 -to 0 axil_aresetn ]
   set axil_aclk [ create_bd_port -dir O -type clk axil_aclk ]
   set_property -dict [ list \
    CONFIG.ASSOCIATED_BUSIF {m_axil} \
@@ -228,6 +229,8 @@ proc create_root_design { parentCell } {
   set axil_aclk90 [ create_bd_port -dir O -type clk axil_aclk90 ]
   set axil_aclk180 [ create_bd_port -dir O -type clk axil_aclk180 ]
   set axil_aclk270 [ create_bd_port -dir O -type clk axil_aclk270 ]
+  set axil_aresetn [ create_bd_port -dir O -from 0 -to 0 axil_aresetn ]
+  set clk_200 [ create_bd_port -dir O -type clk clk_200 ]
   set pll_locked [ create_bd_port -dir O pll_locked ]
 
   # Create instance: axi_slave_wishbone_c_0, and set properties
@@ -239,44 +242,57 @@ proc create_root_design { parentCell } {
   # Create instance: clk_wiz_0, and set properties
   set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
   set_property -dict [ list \
+   CONFIG.CLKIN2_JITTER_PS {124.99000000000001} \
    CONFIG.CLKOUT1_DRIVES {BUFG} \
-   CONFIG.CLKOUT1_JITTER {137.681} \
-   CONFIG.CLKOUT1_PHASE_ERROR {105.461} \
+   CONFIG.CLKOUT1_JITTER {130.958} \
+   CONFIG.CLKOUT1_PHASE_ERROR {98.575} \
    CONFIG.CLKOUT1_REQUESTED_PHASE {90} \
    CONFIG.CLKOUT2_DRIVES {BUFG} \
-   CONFIG.CLKOUT2_JITTER {137.681} \
-   CONFIG.CLKOUT2_PHASE_ERROR {105.461} \
+   CONFIG.CLKOUT2_JITTER {130.958} \
+   CONFIG.CLKOUT2_PHASE_ERROR {98.575} \
    CONFIG.CLKOUT2_REQUESTED_PHASE {180} \
    CONFIG.CLKOUT2_USED {true} \
    CONFIG.CLKOUT3_DRIVES {BUFG} \
-   CONFIG.CLKOUT3_JITTER {137.681} \
-   CONFIG.CLKOUT3_PHASE_ERROR {105.461} \
+   CONFIG.CLKOUT3_JITTER {130.958} \
+   CONFIG.CLKOUT3_PHASE_ERROR {98.575} \
    CONFIG.CLKOUT3_REQUESTED_PHASE {270} \
    CONFIG.CLKOUT3_USED {true} \
    CONFIG.CLKOUT4_DRIVES {BUFG} \
+   CONFIG.CLKOUT4_JITTER {114.829} \
+   CONFIG.CLKOUT4_PHASE_ERROR {98.575} \
+   CONFIG.CLKOUT4_REQUESTED_OUT_FREQ {200.0} \
+   CONFIG.CLKOUT4_USED {true} \
    CONFIG.CLKOUT5_DRIVES {BUFG} \
    CONFIG.CLKOUT6_DRIVES {BUFG} \
    CONFIG.CLKOUT7_DRIVES {BUFG} \
    CONFIG.CLK_OUT1_PORT {out90} \
    CONFIG.CLK_OUT2_PORT {out180} \
    CONFIG.CLK_OUT3_PORT {out270} \
+   CONFIG.CLK_OUT4_PORT {clk200} \
    CONFIG.JITTER_SEL {No_Jitter} \
    CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
-   CONFIG.MMCM_CLKFBOUT_MULT_F {9} \
-   CONFIG.MMCM_CLKOUT0_DIVIDE_F {9} \
+   CONFIG.MMCM_CLKFBOUT_MULT_F {10} \
+   CONFIG.MMCM_CLKIN2_PERIOD {10.000} \
+   CONFIG.MMCM_CLKOUT0_DIVIDE_F {10} \
    CONFIG.MMCM_CLKOUT0_DUTY_CYCLE {0.5} \
    CONFIG.MMCM_CLKOUT0_PHASE {90.000} \
-   CONFIG.MMCM_CLKOUT1_DIVIDE {9} \
+   CONFIG.MMCM_CLKOUT1_DIVIDE {10} \
    CONFIG.MMCM_CLKOUT1_DUTY_CYCLE {0.5} \
    CONFIG.MMCM_CLKOUT1_PHASE {180.000} \
-   CONFIG.MMCM_CLKOUT2_DIVIDE {9} \
+   CONFIG.MMCM_CLKOUT2_DIVIDE {10} \
    CONFIG.MMCM_CLKOUT2_DUTY_CYCLE {0.5} \
    CONFIG.MMCM_CLKOUT2_PHASE {270.000} \
+   CONFIG.MMCM_CLKOUT3_DIVIDE {5} \
+   CONFIG.MMCM_CLKOUT3_DUTY_CYCLE {0.5} \
    CONFIG.MMCM_COMPENSATION {ZHOLD} \
-   CONFIG.NUM_OUT_CLKS {3} \
+   CONFIG.NUM_OUT_CLKS {4} \
    CONFIG.PRIMITIVE {PLL} \
+   CONFIG.PRIM_SOURCE {Global_buffer} \
    CONFIG.RESET_PORT {resetn} \
    CONFIG.RESET_TYPE {ACTIVE_LOW} \
+   CONFIG.SECONDARY_IN_FREQ {100.000} \
+   CONFIG.SECONDARY_SOURCE {Single_ended_clock_capable_pin} \
+   CONFIG.USE_INCLK_SWITCHOVER {false} \
    CONFIG.USE_MIN_POWER {true} \
  ] $clk_wiz_0
 
@@ -688,6 +704,16 @@ proc create_root_design { parentCell } {
    CONFIG.NUM_SI {1} \
  ] $smartconnect_0
 
+  # Create instance: util_idelay_ctrl_0, and set properties
+  set util_idelay_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_idelay_ctrl:1.0 util_idelay_ctrl_0 ]
+
+  # Create instance: util_vector_logic_0, and set properties
+  set util_vector_logic_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 util_vector_logic_0 ]
+  set_property -dict [ list \
+   CONFIG.C_OPERATION {not} \
+   CONFIG.C_SIZE {1} \
+ ] $util_vector_logic_0
+
   # Create interface connections
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
@@ -706,13 +732,15 @@ proc create_root_design { parentCell } {
   connect_bd_net -net axi_slave_wishbone_c_0_SEL_O [get_bd_ports SEL_O] [get_bd_pins axi_slave_wishbone_c_0/SEL_O]
   connect_bd_net -net axi_slave_wishbone_c_0_STB_O [get_bd_ports STB_O] [get_bd_pins axi_slave_wishbone_c_0/STB_O]
   connect_bd_net -net axi_slave_wishbone_c_0_WE_O [get_bd_ports WE_O] [get_bd_pins axi_slave_wishbone_c_0/WE_O]
-  connect_bd_net -net clk_wiz_0_locked [get_bd_ports pll_locked] [get_bd_pins clk_wiz_0/locked]
+  connect_bd_net -net clk_wiz_0_clk200 [get_bd_ports clk_200] [get_bd_pins clk_wiz_0/clk200] [get_bd_pins util_idelay_ctrl_0/ref_clk]
+  connect_bd_net -net clk_wiz_0_locked [get_bd_ports pll_locked] [get_bd_pins clk_wiz_0/locked] [get_bd_pins util_vector_logic_0/Op1]
   connect_bd_net -net clk_wiz_0_out90 [get_bd_ports axil_aclk90] [get_bd_pins clk_wiz_0/out90]
   connect_bd_net -net clk_wiz_0_out180 [get_bd_ports axil_aclk180] [get_bd_pins clk_wiz_0/out180]
   connect_bd_net -net clk_wiz_0_out270 [get_bd_ports axil_aclk270] [get_bd_pins clk_wiz_0/out270]
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_ports axil_aclk] [get_bd_pins axi_slave_wishbone_c_0/S_AXI_ACLK] [get_bd_pins clk_wiz_0/clk_in1] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK] [get_bd_pins rst_ps7_0_100M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk]
   connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_pins processing_system7_0/FCLK_RESET0_N] [get_bd_pins rst_ps7_0_100M/ext_reset_in]
   connect_bd_net -net rst_ps7_0_100M_peripheral_aresetn [get_bd_ports axil_aresetn] [get_bd_pins axi_slave_wishbone_c_0/S_AXI_ARESETN] [get_bd_pins clk_wiz_0/resetn] [get_bd_pins rst_ps7_0_100M/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
+  connect_bd_net -net util_vector_logic_0_Res [get_bd_pins util_idelay_ctrl_0/rst] [get_bd_pins util_vector_logic_0/Res]
 
   # Create address segments
   create_bd_addr_seg -range 0x01000000 -offset 0x50000000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs m_axil/Reg] SEG_M_AXI_Reg
@@ -722,6 +750,7 @@ proc create_root_design { parentCell } {
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -733,6 +762,4 @@ proc create_root_design { parentCell } {
 
 create_root_design ""
 
-
-common::send_msg_id "BD_TCL-1000" "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
