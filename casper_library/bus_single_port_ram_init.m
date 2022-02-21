@@ -107,7 +107,8 @@ function bus_single_port_ram_init(blk, varargin)
   if strcmp(bram_optimization, 'Area'), 
     if      (riv >= 2^11), max_word_size = 9;
     elseif  (riv >= 2^10), max_word_size = 18;
-    else,                  max_word_size = 36;
+    elseif  (riv >= 2^9),  max_word_size = 36;
+    else,                  max_word_size = 72;
     end
   %if optimising for Speed, keep splitting word size even if wasting BRAM resources
   else, 
@@ -116,7 +117,8 @@ function bus_single_port_ram_init(blk, varargin)
     elseif  (riv >= 2^12), max_word_size = 4;
     elseif  (riv >= 2^11), max_word_size = 9;
     elseif  (riv >= 2^10), max_word_size = 18;
-    else,                  max_word_size = 36;
+    elseif  (riv >= 2^9),  max_word_size = 36;
+    else,                  max_word_size = 72;
     end
   end
  
@@ -131,7 +133,8 @@ function bus_single_port_ram_init(blk, varargin)
       elseif  (max_word_size == 2), max_word_size = 4;
       elseif  (max_word_size == 4), max_word_size = 9;
       elseif  (max_word_size == 9), max_word_size = 18;
-      else,                         max_word_size = 36;
+      elseif  (max_word_size == 18), max_word_size = 36;
+      else,                          max_word_size = 72;
       end %if
     end %if
  
