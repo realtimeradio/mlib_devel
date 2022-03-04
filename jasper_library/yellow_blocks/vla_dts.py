@@ -36,7 +36,6 @@ class vla_dts(YellowBlock):
                 self.unique_clocks += [c]
         self.n_clocks = len(self.unique_clocks)
         self.clock_indices = [self.unique_clocks.index(c) for c in self.pinconf['phys_clocks']]
-        self.mux_factor_bits = 2
 
     def modify_top(self,top):
         module = 'dts_gty_rx'
@@ -160,23 +159,25 @@ class vla_dts(YellowBlock):
             pass
 
         # OUTPUT FIFO
+        INPUT_WIDTH = 144
+        INPUT_DEPTH_BITS = 6
 
         config = {
             'Fifo_Implementation': 'Independent_Clocks_Block_RAM',
             'asymmetric_port_width': 'true',
-            'Input_Data_Width': '144',
-            'Input_Depth': '64',
+            'Input_Data_Width': '%d' % INPUT_WIDTH,
+            'Input_Depth': '%d' % (2**INPUT_DEPTH_BITS),
             'Output_Data_Width': '%d' % (144 // (2**self.mux_factor_bits)),
-            'Output_Depth': '128',
+            'Output_Depth': '%d' % (2**(INPUT_DEPTH_BITS + self.mux_factor_bits)),
             'Reset_Type': 'Asynchronous_Reset',
             'Full_Flags_Reset_Value': '1',
             'Almost_Full_Flag': 'true',
             'Almost_Empty_Flag': 'true',
             'Underflow_Flag': 'true',
             'Overflow_Flag': 'true',
-            'Data_Count_Width': '6',
-            'Write_Data_Count_Width': '6',
-            'Read_Data_Count_Width': '7',
+            'Data_Count_Width': '%d' % INPUT_DEPTH_BITS,
+            'Write_Data_Count_Width': '%d' % INPUT_DEPTH_BITS,
+            'Read_Data_Count_Width': '%d' % (INPUT_DEPTH_BITS + self.mux_factor_bits),
             'Full_Threshold_Assert_Value': '61',
             'Full_Threshold_Negate_Value': '60',
             'Enable_Safety_Circuit': 'true',
