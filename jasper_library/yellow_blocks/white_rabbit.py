@@ -28,6 +28,12 @@ class white_rabbit(YellowBlock):
                      'library': library,
                      'version': version,
                      }]
+
+        try:
+            self.conf = self.platform.conf["white_rabbit"]
+        except KeyError:
+            self.conf = {}
+        self.separate_dac_i2c = self.conf.get("separaate_dac_i2c", False)
         
     def gen_children(self):
         """
@@ -71,8 +77,16 @@ class white_rabbit(YellowBlock):
         inst.add_port('spi_mosi_o', 'wr_spi_mosi', dir='out', parent_port=True)
         inst.add_port('spi_sclk_o', 'wr_spi_sclk', dir='out', parent_port=True)
         # PLL DACs
-        inst.add_port('plldac_sclk_o', 'wr_dac_sclk', dir='out', parent_port=True)
-        inst.add_port('plldac_din_o', 'wr_dac_mosi', dir='out', parent_port=True)
+        if self.separate_dac_i2c:
+            inst.add_port('plldac_sclk_o', 'wr_dac_sclk', parent_port=False, parent_signal=True)
+            inst.add_port('plldac_din_o', 'wr_dac_mosi', parent_port=False, parent_signal=True)
+            top.add_port('wr_dac_20m_sclk', 'wr_dac_sclk', dir='out', parent_port=True)
+            top.add_port('wr_dac_20m_mosi', 'wr_dac_mosi', dir='out', parent_port=True)
+            top.add_port('wr_dac_25m_sclk', 'wr_dac_sclk', dir='out', parent_port=True)
+            top.add_port('wr_dac_25m_mosi', 'wr_dac_mosi', dir='out', parent_port=True)
+        else:
+            inst.add_port('plldac_sclk_o', 'wr_dac_sclk', dir='out', parent_port=True)
+            inst.add_port('plldac_din_o', 'wr_dac_mosi', dir='out', parent_port=True)
         inst.add_port('pll25dac_cs_n_o', 'wr_dac_25m_cs_n', dir='out', parent_port=True)
         inst.add_port('pll20dac_cs_n_o', 'wr_dac_20m_cs_n', dir='out', parent_port=True)
         # onewire to ???
@@ -111,8 +125,14 @@ class white_rabbit(YellowBlock):
         cons += [PortConstraint('wr_spi_mosi', 'wr_spi_mosi')]
         cons += [PortConstraint('wr_spi_sclk', 'wr_spi_sclk')]
                                                 
-        cons += [PortConstraint('wr_dac_sclk', 'wr_dac_sclk')]
-        cons += [PortConstraint('wr_dac_mosi', 'wr_dac_mosi')]
+        if self.separate_dac_i2c:
+            cons += [PortConstraint('wr_dac_20m_sclk', 'wr_dac_20m_sclk')]
+            cons += [PortConstraint('wr_dac_20m_mosi', 'wr_dac_20m_mosi')]
+            cons += [PortConstraint('wr_dac_25m_sclk', 'wr_dac_25m_sclk')]
+            cons += [PortConstraint('wr_dac_25m_mosi', 'wr_dac_25m_mosi')]
+        else:
+            cons += [PortConstraint('wr_dac_sclk', 'wr_dac_sclk')]
+            cons += [PortConstraint('wr_dac_mosi', 'wr_dac_mosi')]
         cons += [PortConstraint('wr_dac_25m_cs_n', 'wr_dac_25m_cs_n')]
         cons += [PortConstraint('wr_dac_20m_cs_n', 'wr_dac_20m_cs_n')]
 

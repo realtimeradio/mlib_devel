@@ -14,13 +14,15 @@ provides:
   - sys_clk90
   - sys_clk180
   - sys_clk270
+white_rabbit:
+  separate_dac_i2c: True
 pins:
   sys_clk_p:
-    loc: G11
-    iostd: LVDS_25
+    loc: U10
+    iostd: LVDS
   sys_clk_n:
-    loc: G10
-    iostd: LVDS_25
+    loc: V9
+    iostd: LVDS
 
   miso:
     loc: C22
