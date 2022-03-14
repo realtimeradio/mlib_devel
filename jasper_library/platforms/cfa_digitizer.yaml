@@ -21,72 +21,73 @@ pins:
   sys_clk_n:
     loc: G10
     iostd: LVDS_25
+
   miso:
-    loc: U22
-    iostd: LVCMOS25
+    loc: C22
+    iostd: LVCMOS33
   mosi:
-    loc: V22
-    iostd: LVCMOS25
+    loc: D22
+    iostd: LVCMOS33
   sclk:
-    loc: T18
-    iostd: LVCMOS25
+    loc: D21
+    iostd: LVCMOS33
   cs_n:
-    loc: U18
-    iostd: LVCMOS25
+    loc: D20
+    iostd: LVCMOS33
+
   gpio:
-    iostd: LVCMOS18
+    iostd: LVCMOS33
     loc:
-      - B21
-      - C21
-      - B20
-      - A20
-      - H24
-      - H23
-      - B26
-      - R25
-      - L17
-      - K18
+      - Y18
+      - Y19
+      - W17
+      - Y17
+      - AB15
+      - AB16
+      - AA14
+      - AA15
+      # DIP switches 0..3. No external pull. Closed = GND
+      - W16
+      - U16
+      - V17
+      - T16
+
+  # Check direction (used for uBlaze)
   usb_tx:
-    iostd: LVCMOS25
-    loc: J8
-  usb_cts:
-    iostd: LVCMOS25
-    loc: F10
-  usb_rts:
-    iostd: LVCMOS25
-    loc: J13
+    iostd: LVCMOS33
+    loc: H22
   usb_rx:
-    iostd: LVCMOS25
-    loc: H13
+    iostd: LVCMOS33
+    loc: J22
+
   led:
-    iostd: LVCMOS25
+    iostd: LVCMOS33
     loc:
-      - C13
-      - C14
-      - D13
-      - D14 
-      - E12
-      - E13
+      - Y16
+      - Y14
+      - W14
+      - V14
+
+  # 10G (156.25 refclk)
   eth_clk_p:
     loc:
       - F6
   eth_clk_n:
     loc: 
       - F5
-
   mgt_tx_p:
-    loc: [B2, D2, F2]
+    loc: [D2, A4]
   mgt_tx_n:
-    loc: [B1, D1, F1]
+    loc: [D1, A3]
   mgt_rx_p:
-    loc: [C4, E4, G4]
+    loc: [E4, B6]
   mgt_rx_n:
-    loc: [C3, E3, G3]
+    loc: [E3, B5]
 
+  # 1G / WR
   wr_20m_vcxo:
-    loc: Y8
-    iostd: LVCMOS18
-
+    loc: V19
+    iostd: LVCMOS33
   wr_125m_gtrefclk_p:
     loc: D6
   wr_125m_gtrefclk_n:
@@ -100,58 +101,84 @@ pins:
   wr_sfp_rx_n:
     loc: B5
 
-  wr_sfp_mod_def1:
-    loc: W21
-    iostd: LVCMOS25
-  wr_sfp_mod_def2:
-    loc: W22
-    iostd: LVCMOS25
+  wr_sfp_mod_def1: #AKA SCL
+    loc: B15
+    iostd: LVCMOS33
+  wr_sfp_mod_def2: #AKA SDA
+    loc: C14
+    iostd: LVCMOS33
   wr_sfp_tx_fault:
-    loc: U17
-    iostd: LVCMOS25
+    loc: B21
+    iostd: LVCMOS33
   wr_sfp_los:
-    loc: V18
-    iostd: LVCMOS25
+    loc: B16
+    iostd: LVCMOS33
 
+  # TODO: check direction
   wr_uart_rx:
-    loc: T20
-    iostd: LVCMOS25
+    loc: H22
+    iostd: LVCMOS33
   wr_uart_tx:
-    loc: U20
-    iostd: LVCMOS25
+    loc: J22
+    iostd: LVCMOS33
 
   wr_spi_cs_n:
-    loc: Y21
-    iostd: LVCMOS25
-  wr_spi_miso:
-    loc: Y22
-    iostd: LVCMOS25
-  wr_spi_mosi:
-    loc: AA20
-    iostd: LVCMOS25
-  wr_spi_sclk:
     loc: AB21
-    iostd: LVCMOS25
-
-  wr_dac_sclk:
-    loc: AA21
-    iostd: LVCMOS25
-  wr_dac_mosi:
+    iostd: LVCMOS33
+  wr_spi_miso: # flash chip IO1 / schematic SPI_DO
     loc: AB22
-    iostd: LVCMOS25
-  wr_dac_25m_cs_n:
+    iostd: LVCMOS33
+  wr_spi_mosi: # flash chip IO0 / schematic SPI_DI
     loc: AA19
-    iostd: LVCMOS25
+    iostd: LVCMOS33
+  wr_spi_sclk:
+    loc: AA20
+    iostd: LVCMOS33
+
+  wr_dac_25m_sclk:
+    loc: W15
+    iostd: LVCMOS33
+  wr_dac_25m_mosi:
+    loc: U15
+    iostd: LVCMOS33
+  wr_dac_25m_cs_n:
+    loc: V15
+    iostd: LVCMOS33
+
+  wr_dac_20m_sclk:
+    loc: W22
+    iostd: LVCMOS33
+  wr_dac_20m_mosi:
+    loc: Y22
+    iostd: LVCMOS33
   wr_dac_20m_cs_n:
-    loc: AB20
-    iostd: LVCMOS25
+    loc: V22
+    iostd: LVCMOS33
+
   wr_onewire:
-    loc: V20
-    iostd: LVCMOS25
+    loc: T18
+    iostd: LVCMOS33
   
   sfp_disable:
-    iostd: LVCMOS25
-    loc: [W20, V19, W19]
+    iostd: LVCMOS33
+    loc: [A21, B20] #10G, 1G
+
+  sfp_sda:
+    iostd: LVCMOS33
+    loc: [A20, C14] #10G, 1G
+
+  sfp_scl:
+    iostd: LVCMOS33
+    loc: [C19, B15] #10G, 1G
+
+  # 2x MAC eeprom. Addresses 0x50, 0x51
+  mac_sda:
+    iostd: LVCMOS33
+    loc: N17
+
+  mac_scl:
+    iostd: LVCMOS33
+    loc: P16
 
 
   adc_csn:
