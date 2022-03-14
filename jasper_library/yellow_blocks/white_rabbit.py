@@ -33,7 +33,7 @@ class white_rabbit(YellowBlock):
             self.conf = self.platform.conf["white_rabbit"]
         except KeyError:
             self.conf = {}
-        self.separate_dac_i2c = self.conf.get("separaate_dac_i2c", False)
+        self.separate_dac_i2c = self.conf.get("separate_dac_i2c", False)
         
     def gen_children(self):
         """
