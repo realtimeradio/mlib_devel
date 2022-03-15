@@ -89,10 +89,10 @@ class white_rabbit(YellowBlock):
             inst.add_port('plldac_din_o', 'wr_dac_mosi', dir='out', parent_port=True)
         inst.add_port('pll25dac_cs_n_o', 'wr_dac_25m_cs_n', dir='out', parent_port=True)
         inst.add_port('pll20dac_cs_n_o', 'wr_dac_20m_cs_n', dir='out', parent_port=True)
-        # onewire to ???
+        # onewire to temperature sensor (used for MAC address as well as temp)
         inst.add_port('onewire_b', 'wr_onewire', dir='inout', parent_port=True)
         # Recovered PPS
-        inst.add_port('pps_o', 'wr_pps')
+        inst.add_port('pps_o', self.fullname + '_pps')
         # Recovered clock (62.5 MHz). Manually add this signal so we can
         # add the keep attribute and use it as a clock identifier in constraints
         inst.add_port('clk_sys_o', 'wr_clk', parent_signal=False)
