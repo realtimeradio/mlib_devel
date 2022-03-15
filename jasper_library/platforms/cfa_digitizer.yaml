@@ -14,8 +14,16 @@ provides:
   - sys_clk90
   - sys_clk180
   - sys_clk270
+  - ads41_0
+  - ads41_1
 white_rabbit:
   separate_dac_i2c: True
+ads41_0:
+  flip_pn: "7'b0001110"
+  clock_region: "X1Y0"
+ads41_1:
+  flip_pn: "7'b1111111"
+  clock_region: "X1Y0"
 pins:
   sys_clk_p:
     loc: U10
@@ -182,147 +190,100 @@ pins:
     iostd: LVCMOS33
     loc: P16
 
-
-  adc_csn:
+  # ADCs
+  ads41_0_dfs:
     iostd: LVCMOS18
-    loc:
-      - AF3
-      - AF10
-      - V14
-  adc_rst_n:
+    loc: U6
+  ads41_0_reset:
     iostd: LVCMOS18
-    loc:
-      - AE5
-      - AF13
-      - V19
-  adc_pd:
+    loc: V7
+  ads41_0_oe:
     iostd: LVCMOS18
-    loc:
-      - AE3
-      - AE8
-      - W15
-  adc_sdata:
+    loc: R6
+  ads41_0_dclk_p:
+    iostd: LVDS
+    loc: Y8
+  ads41_0_dclk_n:
+    iostd: LVDS
+    loc: Y7
+  ads41_0_ovr:
     iostd: LVCMOS18
-    loc:
-      - AF2
-      - AF9
-      - W14
-  adc_sclk:
-    iostd: LVCMOS33
-    loc:
-      - M17
-      - L18
-      - K16
-  adc_lclkp:
+    loc: U7
+  ads41_0_d_p:
     iostd: LVDS
     loc:
-      - AA3
-  adc_lclkn:
-    iostd: LVDS
-    loc:
-      - AA2
-  # ADC data pins, named as per schematic.
-  # Even pins are _p, odd are _n.
-  adc0_out:
-    iostd: LVDS
-    loc:
-      - V2
-      - V1
-      - U2
-      - U1
+      - AA10
+      - AA9 #P/N swapped
+      - AB8 #P/N swapped
+      - AA6 #P/N swapped
       - W6
-      - W5
-      - U7
-      - V6
-      - V3
-      - W3
-      - Y3
-      - Y2
-      - AD6
-      - AD5
-      - AD4
-      - AD3
-  adc1_out:
+      - AA5
+      - AA11
+  ads41_0_d_n:
     iostd: LVDS
     loc:
-      - V8
-      - V7
-      - W10
-      - W9
-      - Y8
-      - Y7
-      - Y11
-      - Y10
-      - AB12
-      - AC12
-      - AA13
-      - AA12
-      - AA8
-      - AA7
-      - AC8
-      - AD8
-  adc2_out:
+      - AB10
+      - AA8 #P/N swapped
+      - AB7 #P/N swapped
+      - AB6 #P/N swapped
+      - Y6
+      - AB5
+      - AB11
+  ads41_0_sclk:
+    iostd: LVCMOS18
+    loc: R7
+  ads41_0_sdata:
+    iostd: LVCMOS18
+    loc: V8
+  ads41_0_sen:
+    iostd: LVCMOS18
+    loc: U8
+
+  # ADCs
+  ads41_1_dfs:
+    iostd: LVCMOS18
+    loc: Y11
+  ads41_1_reset:
+    iostd: LVCMOS18
+    loc: U13
+  ads41_1_oe:
+    iostd: LVCMOS18
+    loc: W11
+  ads41_1_dclk_p:
+    iostd: LVDS
+    loc: W9
+  ads41_1_dclk_n:
+    iostd: LVDS
+    loc: Y9
+  ads41_1_ovr:
+    iostd: LVCMOS18
+    loc: AB12
+  ads41_1_d_p:
     iostd: LVDS
     loc:
-      - AF14
-      - AF15
-      - AD15
-      - AE15
-      - AE18
-      - AF18
-      - AF19
-      - AF20
-      - AA14
-      - AA15
-      - AC14
-      - AD14
-      - AB19
-      - AB20
-      - AA19
-      - AA20
-  clk_sel_a:
-    iostd: LVCMOS33
+      - Y13 #P/N swapped
+      - W12 #P/N swapped
+      - U12 #P/N swapped
+      - T11 #P/N swapped
+      - V10 #P/N swapped
+      - T9  #P/N swapped
+      - V13 #P/N swapped
+  ads41_1_d_n:
+    iostd: LVDS
     loc:
-      - A18
-  clk_sel_b:
-    iostd: LVCMOS33
-    loc:
-      - A19
-  lmx2581_clk:
-    iostd: LVCMOS33
-    loc: H16
-  lmx2581_data:
-    iostd: LVCMOS33
-    loc: J15
-  lmx2581_muxout:
-    iostd: LVCMOS33
-    loc: J19
-  lmx2581_le:
-    iostd: LVCMOS33
-    loc: J16
-  lmx2581_ce:
-    iostd: LVCMOS33
-    loc: G15
-  lmx2581_be:
-    iostd: LVCMOS33
-    loc: F15
-  xadc_p:
-    loc: N12
-  xadc_n:
-    loc: P11
-  spi_flash_data:
-    iostd: LVCMOS25
-    loc:
-      - B24
-      - A25
-      - B22
-      - A22
-  #spi_flash_clk:
-  #  iostd: LVCMOS25
-  #  loc: 
-  spi_flash_csn:
-    iostd: LVCMOS25
-    loc: C23
-      
-
-
+      - AA13 #P/N swapped
+      - Y12 #P/N swapped
+      - U11 #P/N swapped
+      - T10 #P/N swapped
+      - W10 #P/N swapped
+      - T8  #P/N swapped
+      - V12 #P/N swapped
+  ads41_1_sclk:
+    iostd: LVCMOS18
+    loc: AB13
+  ads41_1_sdata:
+    iostd: LVCMOS18
+    loc: T13
+  ads41_1_sen:
+    iostd: LVCMOS18
+    loc: T14

@@ -2,7 +2,8 @@
 
 module ads41_single #(
     parameter NBITS=12,
-    parameter IDELAY_VALUE = 8
+    parameter IDELAY_VALUE = 8,
+    parameter FLIP_PN = 16'b0
   )(
     // External controls
     input rst,
@@ -57,7 +58,7 @@ module ads41_single #(
     .C(idelay_clk),
     .CNTVALUEIN(idelay_val[4:0]),
     .LD(idelay_ctrl[1+NBITS/2-1:0]),
-    .IDATAIN({ovr, d}),
+    .IDATAIN({ovr_buf, d_buf}),
     .DATAOUT({ovr_delayed, d_delayed})
   );
   
@@ -72,7 +73,7 @@ module ads41_single #(
   reg ovr_reg; // Not time aligned with data
   always @(posedge dclk_bufr) begin
     ovr_reg <= ovr_delayed;
-  end;
+  end
 
   wire [NBITS/2-1:0] d_rise, d_fall; // seperate rising/falling DDR words
   wire [NBITS-1:0] d_int; // Assembled NBIT-wide word
@@ -91,9 +92,9 @@ module ads41_single #(
 
   genvar i;
   generate
-  for (i=0; i<NBITS/2; i++) begin : bit_assemble
-    assign d_int[2*i] = d_rise[i];
-    assign d_int[2*i+1] = d_fall[i];
+  for (i=0; i<NBITS/2; i=i+1) begin : bit_assemble
+    assign d_int[2*i]   = FLIP_PN[i] ? ~d_rise[i] : d_rise[i];
+    assign d_int[2*i+1] = FLIP_PN[i] ? ~d_fall[i] : d_fall[i];
   end
   endgenerate
   
@@ -101,7 +102,7 @@ module ads41_single #(
   reg [16-NBITS-1-1:0] paddingi = 0;
   wire [16-NBITS-1-1:0] paddingo;
   
-  fifo_16x128 fifo_inst (
+  fifo_16x32 fifo_inst (
     .rst(rst),
     .wr_clk(dclk_bufr),
     .rd_clk(clk),
@@ -111,9 +112,7 @@ module ads41_single #(
     .dout({paddingo, ovr_out, d_out}),
     .full(),
     .empty(),
-    .prog_empty(fifo_empty),
-    .wr_rst_busy(),
-    .rd_rst_busy()
+    .prog_empty(fifo_empty)
   );
   
   assign dclk_out = dclk_bufr;
