@@ -71,11 +71,11 @@ class ads41(YellowBlock):
         module = 'ads41_top'
         adc = top.get_instance(entity=module, name=self.fullname)
         adc.add_parameter('NBITS', self.NBITS)
-        adc.add_parameter('CLKPERIOD', self.clk_period_ns)
-        adc.add_parameter('PLLMULT', self.pllmult)
         adc.add_parameter('FLIP_PN', self.flip_pn)
         if self.inc_pll:
             adc.add_parameter('INC_PLL', "1'b1")
+            adc.add_parameter('CLKPERIOD', self.clk_period_ns)
+            adc.add_parameter('PLLMULT', self.pllmult)
         else:
             adc.add_parameter('INC_PLL', "1'b0")
 
