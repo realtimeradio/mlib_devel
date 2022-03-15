@@ -4,7 +4,7 @@ from constraints import PortConstraint, ClockConstraint
 class spi_wb_bridge(YellowBlock):
     def initialize(self):
         self.provides.append('wb_master')
-        self.add_source('spi_wb_bridge')
+        self.add_source('spi_wb_bridge/spi_wb_bridge.v')
 
     def modify_top(self,top):
         inst = top.get_instance('spi_wb_bridge', 'spi_wb_bridge_inst')
