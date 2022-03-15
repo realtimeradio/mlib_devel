@@ -37,7 +37,7 @@ class cfa_digitizer(YellowBlock):
         cons =[
             PortConstraint('sys_clk_n', 'sys_clk_n'),
             PortConstraint('sys_clk_p', 'sys_clk_p'),
-            ClockConstraint('sys_clk_p', period=5.0),
+            ClockConstraint('sys_clk_p', period=10.0),
             RawConstraint('set_property DIFF_TERM TRUE [get_ports sys_clk_p]'),
             RawConstraint('set_property CONFIG_VOLTAGE 3.3 [current_design]'),
             RawConstraint('set_property CFGBVS VCCO [current_design]'),
