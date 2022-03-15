@@ -2,7 +2,8 @@ module ads41_top #(
     parameter NBITS=12,
     parameter PLLMULT=4,
     parameter CLKPERIOD=4.00,
-    parameter INC_PLL=1'b0
+    parameter INC_PLL=1'b0,
+    parameter FLIP_PN=16'b0
  )(
     // ADC CONTROL INTERFACE
     // Control signals from user logic
@@ -50,7 +51,8 @@ module ads41_top #(
 
   ads41_single #(
     .NBITS(NBITS),
-    .IDELAY_VALUE(8)
+    .IDELAY_VALUE(11),
+    .FLIP_PN(FLIP_PN)
   ) ads41_inst (
     .rst(rst_localclk),
     .clk(rd_clk),

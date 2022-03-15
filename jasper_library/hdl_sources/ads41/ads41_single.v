@@ -49,15 +49,22 @@ module ads41_single #(
   wire ovr_delayed;
   wire [NBITS/2-1:0] d_delayed;
   
+  reg [15:0] idelay_ctrl_reg = 0;
+  wire [15:0] idelay_ctrl_strobe = idelay_ctrl & ~idelay_ctrl_reg; // posedge. Was 0, now 1
+  always @(posedge idelay_clk) begin
+    idelay_ctrl_reg <= idelay_ctrl;
+  end
+  
   IDELAYE2 #(
-    .IDELAY_TYPE("VAR_LOAD"),
+    .IDELAY_TYPE("VARIABLE"),
     .DELAY_SRC("IDATAIN"),
     .IDELAY_VALUE(IDELAY_VALUE),
     .SIGNAL_PATTERN("DATA")
   ) idelay_inst [1 + NBITS/2 - 1: 0] (
     .C(idelay_clk),
-    .CNTVALUEIN(idelay_val[4:0]),
-    .LD(idelay_ctrl[1+NBITS/2-1:0]),
+    .LD(rst),
+    .CE(idelay_ctrl_strobe[1+NBITS/2-1:0]),
+    .INC(idelay_val[1+NBITS/2-1:0]),
     .IDATAIN({ovr_buf, d_buf}),
     .DATAOUT({ovr_delayed, d_delayed})
   );

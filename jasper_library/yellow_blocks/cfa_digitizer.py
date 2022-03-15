@@ -3,14 +3,14 @@ from constraints import ClockConstraint, PortConstraint, RawConstraint
 
 class cfa_digitizer(YellowBlock):
     def initialize(self):
-        self.add_source('infrastructure/snap_infrastructure.v')
+        self.add_source('infrastructure/cfa_digitizer_infrastructure.v')
         self.add_source('wbs_arbiter')
         # 32-bit addressing => second half of 32 MByte memory. See UG470 v1.11 Table 7.2, Note 1
         self.usermemaddr = 0x800000  >> 8 
         self.golden = False
 
     def modify_top(self,top):
-        inst = top.get_instance('snap_infrastructure', 'snap_infrastructure_inst')
+        inst = top.get_instance('cfa_digitizer_infrastructure', 'cfa_digitizer_infrastructure_inst')
         inst.add_port('sys_clk_buf_n', 'sys_clk_n', parent_port=True, dir='in')
         inst.add_port('sys_clk_buf_p', 'sys_clk_p', parent_port=True, dir='in')
         inst.add_port('sys_clk0     ', 'sys_clk   ')
@@ -38,6 +38,7 @@ class cfa_digitizer(YellowBlock):
             PortConstraint('sys_clk_n', 'sys_clk_n'),
             PortConstraint('sys_clk_p', 'sys_clk_p'),
             ClockConstraint('sys_clk_p', period=5.0),
+            RawConstraint('set_property DIFF_TERM TRUE [get_ports sys_clk_p]')
             RawConstraint('set_property CONFIG_VOLTAGE 3.3 [current_design]'),
             RawConstraint('set_property CFGBVS VCCO [current_design]'),
             RawConstraint('set_property BITSTREAM.CONFIG.CONFIGRATE 33 [current_design]'),

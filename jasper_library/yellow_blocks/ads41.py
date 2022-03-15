@@ -139,13 +139,14 @@ class ads41(YellowBlock):
         spi.add_port('mosi', self.port_prefix + '_mosi', dir='out', parent_port=True)
         spi.add_port('miso', "1\'b0",  dir='in',  parent_port=False) # This is the same pin as ovr. Ignore for now
 
-        # Tie phased clocks to zero for now. TODO
-        top.add_signal(self.clock + "90")
-        top.add_signal(self.clock + "180")
-        top.add_signal(self.clock + "270")
-        top.assign_signal(self.clock + "90", "1'b0")
-        top.assign_signal(self.clock + "180", "~" + self.clock)
-        top.assign_signal(self.clock + "270", "1'b0")
+        if self.inc_pll:
+            # Tie phased clocks to zero for now. TODO
+            top.add_signal(self.clock + "90")
+            top.add_signal(self.clock + "180")
+            top.add_signal(self.clock + "270")
+            top.assign_signal(self.clock + "90", "1'b0")
+            top.assign_signal(self.clock + "180", "~" + self.clock)
+            top.assign_signal(self.clock + "270", "1'b0")
 
     def gen_constraints(self):
         cons = []
@@ -204,11 +205,11 @@ class ads41(YellowBlock):
         cons.append(RawConstraint('set_input_delay -clock %s -max %.3f [get_ports %s_ovr]' % (clk, delay_max, self.port_prefix)))
         cons.append(RawConstraint('set_input_delay -clock %s -min %.3f [get_ports %s_ovr]' % (clk, delay_min, self.port_prefix)))
 
-        #if self.clock_region is not None:
-        #    pblock = 'ads41_%d_pblock' % self.chip_number
-        #    pc = 'create_pblock %s\n' % pblock
-        #    pc += 'resize_pblock [get_pblocks %s] -add {CLOCKREGION_%s:CLOCKREGION_%s}\n' % (pblock, self.clock_region, self.clock_region)
-        #    pc += 'add_cells_to_pblock [get_pblocks %s] [get_cells -quiet [list %s]]\n' % (pblock, self.fullname)
-        #    cons.append(RawConstraint(pc))
+        if self.clock_region is not None:
+            pblock = 'ads41_%d_pblock' % self.chip_number
+            pc = 'create_pblock %s\n' % pblock
+            pc += 'resize_pblock [get_pblocks %s] -add {CLOCKREGION_%s:CLOCKREGION_%s}\n' % (pblock, self.clock_region, self.clock_region)
+            pc += 'add_cells_to_pblock [get_pblocks %s] [get_cells -quiet [list %s]]\n' % (pblock, self.fullname)
+            cons.append(RawConstraint(pc))
 
         return cons
