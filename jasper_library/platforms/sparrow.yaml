@@ -2,6 +2,8 @@ name: sparrow
 manufacturer: Xilinx
 fpga: xc7z030ffg676-2
 backend_target: vivado
+config_voltage: 1.8
+cfgbvs: GND
 mmbus_architecture: ['AXI4-Lite', 'wishbone']
 # AXI base addr
 mmbus_base_address:  0x50000000

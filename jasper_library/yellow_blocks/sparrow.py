@@ -133,17 +133,14 @@ class sparrow(YellowBlock):
         # We don't need IO constraints for any of the PS ports, because the IP
         # will generate these for us.
         cons.append(RawConstraint('set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]'))
+        cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
         return cons
 
     def gen_tcl_cmds(self):
         tcl_cmds = {}
         tcl_cmds['pre_synth'] = []
-        """
-        Add a block design to project with wrapper via its exported tcl script.
-        1. Source the tcl script.
-        2. Generate the block design via generate_target.
-        3. Have vivado make an HDL wrapper around the block design.
-        4. Add the wrapper HDL file to project.
-        """
+        tcl_cmds['promgen'] = []
         tcl_cmds['pre_synth'] += ['source {}'.format(self.hdl_root + '/infrastructure/sparrow_bd.tcl')]
+        #force byte swap
+        tcl_cmds['promgen'] += ['write_cfgmem -force -format bin -interface SMAPx32 -disablebitswap -loadbit "up 0x0 $bit_file" $bin_file']
         return tcl_cmds
