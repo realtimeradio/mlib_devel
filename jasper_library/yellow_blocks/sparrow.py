@@ -23,6 +23,15 @@ class sparrow(YellowBlock):
         self.provides.append('sys_clk180')
         self.provides.append('sys_clk270')
 
+        if self.enable_wishbone:
+            # For controlling PLL
+            self.add_source('spi_master/spi_master.v')
+            self.add_source('spi_master/wb_spi_master.v')
+            self.use_pll_ctrl = True
+            self.pll_port_base = 'adc_pll_ctrl_'
+        else:
+            self.use_pll_ctrl = False
+
     def modify_top(self,top):
         inst = top.get_instance('sparrow_bd', 'sparrow_bd_inst')
         inst.add_port('axil_aclk',    'axil_clk')
@@ -63,6 +72,27 @@ class sparrow(YellowBlock):
             inst.add_port('DAT_I', 'wbm_dat_i', width=32)
             inst.add_port('ACK_I', 'wbm_ack_i')
             inst.add_port('RST_O', 'wbm_rst_o')
+
+        if self.use_pll_ctrl:
+            pllctrl = top.get_instance(entity='wb_spi_master', name='sparrow_pll_ctrl_wbspi')
+            # Configure SPI settings.
+            # Watch out for wishbone timeouts! The core assumes the spi response comes
+            # before the wishbone arbitration core times out.
+            # If the delay needs to be longer, the wb_spi_master core should be modified so it
+            # acks the WB bus immediately, and then lets the user poll a register to see if the SPI transaction
+            # has finished.
+            pllctrl.add_parameter("NBITS", 32)
+            pllctrl.add_parameter("NCSBITS", 1)
+            pllctrl.add_parameter("NCLKDIVBITS", 3)
+            pllctrl.add_wb_interface(nbytes=4*4, regname='sparrow_pll_ctrl', mode='rw', typecode=self.typecode)
+            pllctrl.add_port('cs',   self.pll_port_base + 'cs',   dir='out', parent_port=True)
+            pllctrl.add_port('sclk', self.pll_port_base + 'sclk', dir='out', parent_port=True)
+            pllctrl.add_port('mosi', self.pll_port_base + 'mosi', dir='out', parent_port=True)
+            pllctrl.add_port('miso', self.pll_port_base + 'miso', dir='in',  parent_port=True)
+
+            # PSU enable
+            top.add_port(self.pll_port_base + 'adc_en', dir='out')
+            top.assign_signal(self.pll_port_base + 'adc_en', '%s_sparrow_adc_en[0]' % self.name) 
 
         # PS IO to top-level
         # shortcut port add & propagate
@@ -124,13 +154,22 @@ class sparrow(YellowBlock):
         top.assign_signal('wr_osc_en', "1'b1")
         
     def gen_children(self):
-        children =  [YellowBlock.make_block(
+        children = []
+        sys_block =  YellowBlock.make_block(
                    		{'fullpath': self.fullpath, 'tag': 'xps:sys_block',
                    		 'board_id': str(HWTYPE_SPARROW), 'rev_maj': '1', 'rev_min': '0',
                    		 'rev_rcs': '1'},
                       self.platform
-                    )]
-        #children += [YellowBlock.make_block({'tag':'xps:xadc'}, self.platform)]
+                    )
+        children += [sys_block]
+        adc_en_reg = YellowBlock.make_block(
+                      {'tag':'xps:sw_reg_sync',
+                       'fullpath':'%s/sparrow_adc_en'%(self.name),
+                       'io_dir':'From Processor',
+                       'name':'sparrow_adc_en'},
+                      self.platform)
+        if self.use_pll_ctrl:
+            children += [adc_en_reg]
         return children
 
     def gen_constraints(self):
@@ -140,6 +179,15 @@ class sparrow(YellowBlock):
         cons.append(PortConstraint('wr_osc_en', 'wr_osc_en'))
         cons.append(RawConstraint('set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]'))
         cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
+
+        if self.use_pll_ctrl:
+            cons.append(PortConstraint(self.pll_port_base + 'cs',   'pll_sen'))
+            cons.append(PortConstraint(self.pll_port_base + 'sclk', 'pll_sclk'))
+            cons.append(PortConstraint(self.pll_port_base + 'mosi', 'pll_sdi'))
+            cons.append(PortConstraint(self.pll_port_base + 'miso', 'pll_sdo'))
+            cons.append(PortConstraint(self.pll_port_base + 'adc_en', 'adc_en'))
+
+
         return cons
 
     def gen_tcl_cmds(self):
