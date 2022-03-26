@@ -117,6 +117,11 @@ class sparrow(YellowBlock):
             top.add_signal('wb_rst_i')
             top.assign_signal('wb_clk_i', 'axil_clk')
             top.assign_signal('wb_rst_i', '~axil_rst_n')
+
+        # Always enable WR oscillators. Necessary if not using an external
+        # clock reference for the Silabs PLL
+        top.add_port('wr_osc_en', dir='out')
+        top.assign_signal('wr_osc_en', "1'b1")
         
     def gen_children(self):
         children =  [YellowBlock.make_block(
@@ -132,6 +137,7 @@ class sparrow(YellowBlock):
         cons = []
         # We don't need IO constraints for any of the PS ports, because the IP
         # will generate these for us.
+        cons.append(PortConstraint('wr_osc_en', 'wr_osc_en'))
         cons.append(RawConstraint('set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]'))
         cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
         return cons

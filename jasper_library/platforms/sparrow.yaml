@@ -82,6 +82,10 @@ pins:
   mgt_rx_n:
     loc: [AB3, Y3, V3, T3]
 
+  sfp_npresent:
+    iostd: LVCMOS33
+    loc: [AF25, AD25, AE20, AF23]
+
   ads5404_sync_p:
     iostd: LVDS
     loc: J14
@@ -148,6 +152,27 @@ pins:
   ads5404_sdo:
     iostd: LVCMOS18
     loc: F8
+
+  adc_en:
+    loc: AE17
+    iostd: LVCMOS33
+
+  pll_sdi:
+    iostd: LVCMOS33
+    loc: Y17
+  pll_sdo:
+    iostd: LVCMOS33
+    loc: AB17
+  pll_sen:
+    iostd: LVCMOS33
+    loc: AA15
+  pll_sclk:
+    iostd: LVCMOS33
+    loc: AB14
+
+  wr_osc_en:
+    loc: AF15
+    iostd: LVCMOS33
 
   wr_20m_vcxo:
     loc: AC13
