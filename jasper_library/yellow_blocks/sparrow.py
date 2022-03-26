@@ -92,7 +92,7 @@ class sparrow(YellowBlock):
 
             # PSU enable
             top.add_port(self.pll_port_base + 'adc_en', dir='out')
-            top.assign_signal(self.pll_port_base + 'adc_en', '%s_sparrow_adc_en[0]' % self.name) 
+            top.assign_signal(self.pll_port_base + 'adc_en', '%s_sparrow_adc_en_user_data_out[0]' % self.name)
 
         # PS IO to top-level
         # shortcut port add & propagate
