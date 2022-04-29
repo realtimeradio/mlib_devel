@@ -51,7 +51,7 @@ function [] = rfdc_mask(gcb,force)
   [gen, tile_arch, fs_max, fs_min] = get_rfsoc_properties(gcb);
 
   adcbits = 16;
-  gw_arith_type = 'Signed';
+  gw_arith_type = 'Unsigned';
   gw_bin_pt = 0;
 
   maxis_template = 'm%d%d_axis_tdata';
