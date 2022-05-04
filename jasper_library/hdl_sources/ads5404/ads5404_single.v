@@ -88,7 +88,9 @@ module ads5404_single #(
   
   BUFR clk_buf_inst (
     .I(dclk),
-    .O(dclk_bufr)
+    .O(dclk_bufr),
+    .CE(1'b1),
+    .CLR(1'b0)
   );
   
   wire [NBITS-1:0] d_0_int, d_1_int;

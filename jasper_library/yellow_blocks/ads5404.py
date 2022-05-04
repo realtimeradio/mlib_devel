@@ -68,8 +68,10 @@ class ads5404(YellowBlock):
         adc.add_port('user_sync', self.fullname + '_sync')
         # reset from embedded register
         adc.add_port('user_rst', self.name + '_%s_user_data_out[0]' % self.rst_regname, parent_sig=False)
+        adc.add_port('user_hw_nrst', self.name + '_%s_user_data_out[1]' % self.rst_regname, parent_sig=False)
         # PLL lock to embedded register
         adc.add_port('pll_locked', self.name + '_%s_user_data_in[0]' % self.lock_regname, parent_sig=False)
+        adc.add_port('clk_ctr', self.name + '_%s_user_data_in[31:1]' % self.lock_regname, parent_sig=False)
         # Delay controls from embedded registers
         adc.add_port('idelay_val', self.name + '_%s_user_data_out' % self.idelay_val_regname, parent_sig=False)
         adc.add_port('idelay_ctrl', self.name + '_%s_user_data_out' % self.idelay_ctrl_regname, parent_sig=False)
@@ -77,7 +79,8 @@ class ads5404(YellowBlock):
         # Hard code the enable to 1. We might want control of this,
         # but need to be careful if driving it form a source which
         # requires the ADC clock to be running
-        adc.add_port('user_enable', '1\'b1')
+        adc.add_port('user_enable', self.name + '_%s_user_data_out[2]' % self.rst_regname, parent_sig=False)
+        #adc.add_port('user_enable', '1\'b1')
         adc.add_port('sync_out_0', self.fullname + '_sync_out_0')
         adc.add_port('sync_out_1', self.fullname + '_sync_out_1')
         adc.add_port('ovra_0', self.fullname + '_overrange_a_0')
@@ -99,8 +102,18 @@ class ads5404(YellowBlock):
 
         add_ext_port('sync_p', 'out')
         add_ext_port('sync_n', 'out')
-        add_ext_port('sreset', 'out')
-        add_ext_port('enable', 'out')
+        #add_ext_port('sreset', 'out')
+        adc.add_port('sreset', 'adc_sreset')
+        top.add_port(self.port_prefix + '_sreset', dir='out', width=0)
+        top.add_port('sreset_led', dir='out', width=0)
+        top.assign_signal(self.port_prefix + '_sreset', '~adc_sreset') # default reset not asserted
+        top.assign_signal('sreset_led', '~adc_sreset')
+        #add_ext_port('enable', 'out')
+        adc.add_port('enable', 'adc_enable')
+        top.add_port(self.port_prefix + '_enable', dir='out', width=0)
+        top.add_port('enable_led', dir='out', width=0)
+        top.assign_signal(self.port_prefix + '_enable', '~adc_enable') # default enabled
+        top.assign_signal('enable_led', '~adc_enable')
         add_ext_port('daclk_p', 'in')
         add_ext_port('daclk_n', 'in')
         add_ext_port('dbclk_p', 'in')
@@ -173,6 +186,9 @@ class ads5404(YellowBlock):
         add_con('da_n', width=self.NBITS)
         add_con('db_p', width=self.NBITS)
         add_con('db_n', width=self.NBITS)
+
+        cons.append(PortConstraint('sreset_led', 'led', iogroup_index=6))
+        cons.append(PortConstraint('enable_led', 'led', iogroup_index=7))
 
         # Clock rate
         cons.append(ClockConstraint(self.port_prefix + '_' + 'daclk_p',

@@ -7,9 +7,11 @@ module ads5404_top #(
     // Control signals from user logic
     // (on clkout domain)
     input user_rst,
+    input user_hw_nrst,
     input user_sync,
     input user_enable,
     output pll_locked,
+    output [30:0] clk_ctr,
     // IDELAY controls
     input idelay_clk,
     input [31:0] idelay_val,
@@ -57,7 +59,7 @@ module ads5404_top #(
   );
 
   // Control signals
-  assign sreset = ~user_rst; // ADC reset is active low
+  assign sreset = user_hw_nrst; // ADC reset is active low
   assign enable = user_enable;
   OBUFDS obuf_sync_inst (
     .I(user_sync),
@@ -119,6 +121,16 @@ module ads5404_top #(
     .d_0(da_0),
     .d_1(da_1)
   );
+
+  reg [15:0] clk_cnt_rega = 16'b0;
+  always @(posedge daclk) begin
+    clk_cnt_rega <= clk_cnt_rega + 1'b1;
+  end
+  reg [15:0] clk_cnt_regb = 16'b0;
+  always @(posedge dbclk) begin
+    clk_cnt_regb <= clk_cnt_regb + 1'b1;
+  end
+  assign clk_ctr = {clk_cnt_rega[15:0], clk_cnt_regb[14:0]};
   
   ads5404_single #(
     .NBITS(NBITS),
