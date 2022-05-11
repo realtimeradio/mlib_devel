@@ -805,7 +805,8 @@ class tengbaser_xilinx_ultrascale(ten_gbe):
         #cons.append(PortConstraint('tx_disable%d'%self.port, 'sfp_disable', iogroup_index=self.port))
 
         cons.append(ClockConstraint('ref_clk_p%d'%num, name='ethclk%d'%num, freq=156.25))
-        cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth0 -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets sys_clk]] -group [get_clocks -include_generated_clocks ethclk%d]' % num))
+        cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d_sys -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets sys_clk]] -group [get_clocks -include_generated_clocks ethclk%d]' % (num, num)))
+        cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth%d_user -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets user_clk]] -group [get_clocks -include_generated_clocks ethclk%d]' % (num, num)))
         #cons.append(RawConstraint('set_clock_groups -name asyncclocks_eth1 -asynchronous -group [get_clocks -of_objects [get_pins zcu111_inst/zynq_ultra_ps_e_0/U0/PS8_i/PLCLK[0]]] -group [get_clocks -include_generated_clocks ethclk0]'))
         return cons
 
