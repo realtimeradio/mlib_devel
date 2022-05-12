@@ -80,14 +80,10 @@ module ads5296_unit (
   end
   
   // Copy the shift register again into the FIFO write clock domain.
-  // We could use lclk for this domain with a multicycle constraint
+  // We could (should?) use lclk for this domain with a multicycle constraint
   // to achieve the same 5x timing relaxation. 
-  // Abuse the ASYNC_REG attribute to encourage the placer to keep
-  // a short path between these registers. In reality, the path
-  // is synchronous (though _is_ inter-clock) but has a challenging timing
-  // constraint
-  (* async_reg = "true" *) reg [9:0] shreg0RR;
-  (* async_reg = "true" *) reg [9:0] shreg1RR;
+  reg [9:0] shreg0RR;
+  reg [9:0] shreg1RR;
   always @(posedge clk_in) begin
     shreg0RR <= shreg0R;
     shreg1RR <= shreg1R;

@@ -229,7 +229,7 @@ module ads5296x4_interface_demux2 #(
       .CLKOUT1_DIVIDE(5),
       //.CLKOUT0_PHASE(36), // Advance 1 bit time (empirically determined)
       //.CLKOUT1_PHASE(72), // Advance 1
-      //.CLKOUT2_PHASE(180), // Advance 1
+      //.CLKOUT2_PHASE(0), // Advance to help timing in cross to sclk domain
       .CLKOUT2_DIVIDE(2),
       .CLKIN1_PERIOD(10.000)
     ) mmcm_inst (

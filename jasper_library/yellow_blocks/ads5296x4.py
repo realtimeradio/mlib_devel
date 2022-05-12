@@ -432,9 +432,13 @@ class ads5296x4(YellowBlock):
         # Don't constrain IO delays -- rely on runtime dynamic link training.
         # Explicitly set as false path to keep compiler from issuing warnings
         for b in range(self.board_count):
-            cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='min', constdelay_ns=1.3, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
-            cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='max', constdelay_ns=1.3, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
+            cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='min', constdelay_ns=1.4, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
+            cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='max', constdelay_ns=1.4, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
             cons.append(FalsePathConstraint(sourcepath="[get_ports %s_%d_din_p[*]]" % (self.port_prefix, b)))
+
+        cons.append(RawConstraint('set_multicycle_path -setup -start -from [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT2]] -to [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT0]] 5' % (self.fullname, self.fullname)))
+        cons.append(RawConstraint('set_multicycle_path -hold -start -from [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT2]] -to [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT0]] 4' % (self.fullname, self.fullname)))
+
         
         #for b in range(self.board_count):
         #    # See https://forums.xilinx.com/t5/Timing-Analysis/Input-Delay-Timing-Constraints-Doubts/m-p/652627/highlight/true#M8652
