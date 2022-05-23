@@ -193,10 +193,10 @@ class ads41(YellowBlock):
         cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports %s_d_p[*]]' % self.port_prefix))
 
         # See https://support.xilinx.com/s/question/0D52E00006hpPQ9SAM/setinputdelay-ddr-constraints-confusion-clear-definition-of-xdc-syntax?language=en_US
-        # Typical cases from ADS41 data sheet
-        # Worst cases from data sheet probably won't meet timing
-        tsu = 1.1   # data valid to zero crossing of DCLK
-        th  = 0.6   # zero crossing of DCLK to data invalid
+        # Typical cases from ADS41 data sheet: tsu 1.1; th 0.6
+        # Worst cases: tsu 0.75; th 0.35
+        tsu = 0.95   # data valid to zero crossing of DCLK
+        th  = 0.55   # zero crossing of DCLK to data invalid
         trace_delay_margin = 0.0 # Should be length matched
         # The minimum time after a clock for data to change. (i.e., it is stable for times < min)
         delay_min = th - trace_delay_margin
