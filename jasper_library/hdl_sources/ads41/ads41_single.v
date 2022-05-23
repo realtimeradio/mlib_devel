@@ -86,7 +86,7 @@ module ads41_single #(
   wire [NBITS-1:0] d_int; // Assembled NBIT-wide word
   
   IDDR #(
-    .DDR_CLK_EDGE("SAME_EDGE_PIPELINED")
+    .DDR_CLK_EDGE("SAME_EDGE")
   ) data_iddr_inst [NBITS/2 - 1 : 0] (
     .C(dclk_bufr),
     .CE(1'b1),
