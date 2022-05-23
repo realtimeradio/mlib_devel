@@ -133,8 +133,9 @@ class ads41(YellowBlock):
         # acks the WB bus immediately, and then lets the user poll a register to see if the SPI transaction
         # has finished.
         NCHIP = 1
-        spi.add_parameter("NBITS", 24)
+        spi.add_parameter("NBITS", 16)
         spi.add_parameter("NCSBITS", NCHIP)
+        spi.add_parameter("INVERT_CLOCK", "1'b1")
         spi.add_parameter("NCLKDIVBITS", 4)
         spi.add_wb_interface(nbytes=4*4, regname='ads41_spi_controller%d' % self.chip_number,
                              mode='rw', typecode=self.typecode)

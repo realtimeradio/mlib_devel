@@ -1,6 +1,7 @@
 module spi_master#(
     parameter NBITS = 24,
     parameter NCLKDIVBITS = 8,
+    parameter INVERT_CLOCK = 1'b0, // if 1, latch on clock negedge
     parameter NCSBITS = 3
     )(
     /* Control Inputs */
@@ -28,7 +29,7 @@ module spi_master#(
     reg [NBITS - 1 : 0] dout_reg;
     reg dvld_reg;
     assign cs = cs_reg;
-    assign sclk = sclk_reg;
+    assign sclk = INVERT_CLOCK == 1'b0 ? sclk_reg : ~sclk_reg;
     assign mosi = mosi_reg;
     assign dout = dout_reg;
     assign dvld = dvld_reg;
