@@ -76,14 +76,17 @@ class ads41(YellowBlock):
             adc.add_parameter('INC_PLL', "1'b1")
             adc.add_parameter('CLKPERIOD', self.clk_period_ns)
             adc.add_parameter('PLLMULT', self.pllmult)
+            # PLL lock to embedded register and global signal
+            adc.add_port('pll_locked', 'user_clock_locked')
+            top.assign_signal(self.name + '_%s_user_data_in[0]' % self.lock_regname, 'user_clock_locked')
         else:
             adc.add_parameter('INC_PLL', "1'b0")
+            # PLL lock to embedded register
+            adc.add_port('pll_locked', self.name + '_%s_user_data_in[0]' % self.lock_regname, parent_sig=False)
 
         # User interfaces
         # reset from embedded register
         adc.add_port('user_rst', self.name + '_%s_user_data_out[0]' % self.rst_regname, parent_sig=False)
-        # PLL lock to embedded register
-        adc.add_port('pll_locked', self.name + '_%s_user_data_in[0]' % self.lock_regname, parent_sig=False)
         # Delay controls from embedded registers
         adc.add_port('idelay_val', self.name + '_%s_user_data_out' % self.idelay_val_regname, parent_sig=False)
         adc.add_port('idelay_ctrl', self.name + '_%s_user_data_out' % self.idelay_ctrl_regname, parent_sig=False)
@@ -98,6 +101,7 @@ class ads41(YellowBlock):
             adc.add_port('clk_out', '')
         # Read clock (main simulink domain)
         adc.add_port('rd_clk', 'user_clk')
+        adc.add_port('rd_clk_locked', 'user_clock_locked')
 
         # External interfaces
         def add_ext_port(name, iodir, width=0):

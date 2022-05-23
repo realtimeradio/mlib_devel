@@ -9,6 +9,7 @@ module ads41_top #(
     // Control signals from user logic
     // (on rd_clk domain)
     input rd_clk,
+    input rd_clk_locked,
     input user_rst,
     output pll_locked,
     // IDELAY controls
@@ -45,7 +46,7 @@ module ads41_top #(
   always @(posedge localclk) begin
     rst_localclk_unstable <= user_rst;
     rst_localclk_stable <= rst_localclk_unstable;
-    fifo_we_localclk_unstable <= pll_locked;
+    fifo_we_localclk_unstable <= rd_clk_locked;
     fifo_we_localclk_stable <= fifo_we_localclk_unstable;
   end
 
