@@ -100,8 +100,8 @@ module ads41_single #(
   genvar i;
   generate
   for (i=0; i<NBITS/2; i=i+1) begin : bit_assemble
-    assign d_int[2*i]   = FLIP_PN[i] ? ~d_rise[i] : d_rise[i];
-    assign d_int[2*i+1] = FLIP_PN[i] ? ~d_fall[i] : d_fall[i];
+    assign d_int[2*i]   = FLIP_PN[i] ? ~d_fall[i] : d_fall[i];
+    assign d_int[2*i+1] = FLIP_PN[i] ? ~d_rise[i] : d_rise[i];
   end
   endgenerate
   
