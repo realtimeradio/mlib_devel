@@ -34,14 +34,19 @@ class white_rabbit(YellowBlock):
         except KeyError:
             self.conf = {}
         self.separate_dac_i2c = self.conf.get("separate_dac_i2c", False)
+        self.use_sfp_disable = self.conf.get("use_sfp_disable", False)
         
     def gen_children(self):
         """
         Add software registers connected to counters
         """
         ybs = []
-        ybs += [YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'io_dir':'To Processor', 'name':'wr_clk_counter'}, self.platform)]
-        ybs += [YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'io_dir':'To Processor', 'name':'wr_pps_counter'}, self.platform)]
+        ybs += [YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'io_dir':'To Processor',
+                                        'fullpath':'%s/wr_clk_counter' % self.name,
+                                        'name':'wr_clk_counter'}, self.platform)]
+        ybs += [YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'io_dir':'To Processor',
+                                        'fullpath':'%s/wr_pps_counter' % self.name,
+                                        'name':'wr_pps_counter'}, self.platform)]
         return ybs
 
     def modify_top(self,top):
@@ -98,12 +103,18 @@ class white_rabbit(YellowBlock):
         inst.add_port('clk_sys_o', 'wr_clk', parent_signal=False)
         top.add_signal('wr_clk', attributes={'keep':'"true"'})
         # Counters to software registers
-        inst.add_port('clk_counter_o', 'wr_clk_counter_user_data_in', width=32)
-        inst.add_port('pps_counter_o', 'wr_pps_counter_user_data_in', width=32)
+        inst.add_port('clk_counter_o', '%s_wr_clk_counter_user_data_in' % self.name, width=32)
+        inst.add_port('pps_counter_o', '%s_wr_pps_counter_user_data_in' % self.name, width=32)
+
+        if self.use_sfp_disable:
+            top.add_port('wr_sfp_disable', dir='out')
+            top.assign_signal('wr_sfp_disable', "1'b0")
 
 
     def gen_constraints(self):
         cons = []
+        if self.use_sfp_disable:
+            cons += [PortConstraint('wr_sfp_disable', 'wr_sfp_disable')]
         cons += [PortConstraint('wr_20m_vcxo', 'wr_20m_vcxo')]
         cons += [PortConstraint('wr_125m_gtrefclk_p', 'wr_125m_gtrefclk_p')]
         cons += [PortConstraint('wr_125m_gtrefclk_n', 'wr_125m_gtrefclk_n')]

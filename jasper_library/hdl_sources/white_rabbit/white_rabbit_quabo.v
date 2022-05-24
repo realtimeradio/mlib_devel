@@ -29,8 +29,8 @@ module white_rabbit_quabo (
   output pps_o,
   output clk_sys_o,
   // Counters
-  output pps_counter_o,
-  output clk_counter_o
+  output [31:0] pps_counter_o,
+  output [31:0] clk_counter_o
   );
   
   wrc_board_quabo_Light_ip quabo_wrc_inst (
