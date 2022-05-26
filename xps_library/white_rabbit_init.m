@@ -40,13 +40,13 @@ try
   x =  0;
   y = 20;
 
-  sigs  = {'pps'};
-  types = {'Boolean'};
-  widths = {'1'};
-  bps    = {'0'};
+  sigs  = {'pps', 'led_link', 'led_act'};
+  types = {'Boolean', 'Boolean', 'Boolean'};
+  widths = {'1', '1', '1'};
+  bps    = {'0', '0', '0'};
 
   port_num = 1;
-  for sig=1:1
+  for sig=1:3
     inport_name  = sprintf('%s_sim', sigs{sig});
     gateway_name = sprintf('%s_%s', gw_name, sigs{sig});
     outport_name = sprintf('%s', sigs{sig});

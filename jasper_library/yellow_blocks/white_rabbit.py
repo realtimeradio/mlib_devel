@@ -18,7 +18,7 @@ class white_rabbit(YellowBlock):
         ip_name = 'wrc_board_quabo_Light'
         vendor = 'user.org'
         library = 'user'
-        version = '1.2'
+        version = '1.4'
         self.module_name = 'wrc_board_quabo_Light_ip'
         self.add_source('white_rabbit/white_rabbit_quabo.v')
         self.ips = [{'path': path,
@@ -47,6 +47,9 @@ class white_rabbit(YellowBlock):
         ybs += [YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'io_dir':'To Processor',
                                         'fullpath':'%s/wr_pps_counter' % self.name,
                                         'name':'wr_pps_counter'}, self.platform)]
+        ybs += [YellowBlock.make_block({'tag':'xps:sw_reg_sync', 'io_dir':'To Processor',
+                                        'fullpath':'%s/wr_tm_tai' % self.name,
+                                        'name':'wr_tm_tai'}, self.platform)]
         return ybs
 
     def modify_top(self,top):
@@ -57,7 +60,7 @@ class white_rabbit(YellowBlock):
         inst.add_port('clk_125m_gtx_p_i', 'wr_125m_gtrefclk_p', dir='in', parent_port=True)
         inst.add_port('clk_125m_gtx_n_i', 'wr_125m_gtrefclk_n', dir='in', parent_port=True)
         # Active-low reset
-        inst.add_port('reset_i', '~sys_rst')
+        inst.add_port('reset_n_i', '~sys_rst')
         # External 10MHz reference. WL says not needed if this device is always a WR slave
         inst.add_port('clk_ext_10m', "1'b1")
 
@@ -96,13 +99,18 @@ class white_rabbit(YellowBlock):
         inst.add_port('pll20dac_cs_n_o', 'wr_dac_20m_cs_n', dir='out', parent_port=True)
         # onewire to temperature sensor (used for MAC address as well as temp)
         inst.add_port('onewire_b', 'wr_onewire', dir='inout', parent_port=True)
-        # Recovered PPS
+        # Recovered PPS -> Simulink
         inst.add_port('pps_o', self.fullname + '_pps')
+        # Link LEDs -> Simulink
+        inst.add_port('led_act_o', self.fullname + '_led_act')
+        inst.add_port('led_link_o', self.fullname + '_led_link')
         # Recovered clock (62.5 MHz). Manually add this signal so we can
         # add the keep attribute and use it as a clock identifier in constraints
         inst.add_port('clk_sys_o', 'wr_clk', parent_signal=False)
         top.add_signal('wr_clk', attributes={'keep':'"true"'})
-        # Counters to software registers
+        # Counters / TAI to software registers
+        inst.add_port('tm_tai_o', '%s_tm_tai' % self.name, width=10)
+        top.assign_signal('%s_wr_tm_tai_user_data_in[9:0]' % self.name, '%s_tm_tai' % self.name)
         inst.add_port('clk_counter_o', '%s_wr_clk_counter_user_data_in' % self.name, width=32)
         inst.add_port('pps_counter_o', '%s_wr_pps_counter_user_data_in' % self.name, width=32)
 
@@ -149,12 +157,13 @@ class white_rabbit(YellowBlock):
 
         cons += [PortConstraint('wr_onewire', 'wr_onewire')]
 
-        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
-                                      '-include_generated_clocks -of_objects [get_nets sys_clk]',
-                                      'asynchronous')]
-        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
-                                      '-include_generated_clocks -of_objects [get_nets user_clk]',
-                                      'asynchronous')]
+        # Might need to declare WR async to other clocks if there is crossing.
+        #cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
+        #                              '-include_generated_clocks -of_objects [get_nets sys_clk]',
+        #                              'asynchronous')]
+        #cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
+        #                              '-include_generated_clocks -of_objects [get_nets user_clk]',
+        #                              'asynchronous')]
 
         return cons
 
