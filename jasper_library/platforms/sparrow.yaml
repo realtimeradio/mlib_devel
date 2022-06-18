@@ -27,6 +27,7 @@ white_rabbit:
   use_osc_enable: True
   use_tx_fault: False
   use_flash_wp: True
+  master_ref_signal: clk_10
 pins:
   #sys_clk_p:
   #  loc: 

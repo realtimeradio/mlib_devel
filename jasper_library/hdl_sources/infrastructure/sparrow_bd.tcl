@@ -230,6 +230,7 @@ proc create_root_design { parentCell } {
   set axil_aclk180 [ create_bd_port -dir O -type clk axil_aclk180 ]
   set axil_aclk270 [ create_bd_port -dir O -type clk axil_aclk270 ]
   set axil_aresetn [ create_bd_port -dir O -from 0 -to 0 axil_aresetn ]
+  set clk_10 [ create_bd_port -dir O -type clk clk_10 ]
   set clk_200 [ create_bd_port -dir O -type clk clk_200 ]
   set pll_locked [ create_bd_port -dir O pll_locked ]
 
@@ -263,12 +264,17 @@ proc create_root_design { parentCell } {
    CONFIG.CLKOUT4_REQUESTED_OUT_FREQ {200.0} \
    CONFIG.CLKOUT4_USED {true} \
    CONFIG.CLKOUT5_DRIVES {BUFG} \
+   CONFIG.CLKOUT5_JITTER {209.588} \
+   CONFIG.CLKOUT5_PHASE_ERROR {98.575} \
+   CONFIG.CLKOUT5_REQUESTED_OUT_FREQ {10.000} \
+   CONFIG.CLKOUT5_USED {true} \
    CONFIG.CLKOUT6_DRIVES {BUFG} \
    CONFIG.CLKOUT7_DRIVES {BUFG} \
    CONFIG.CLK_OUT1_PORT {out90} \
    CONFIG.CLK_OUT2_PORT {out180} \
    CONFIG.CLK_OUT3_PORT {out270} \
    CONFIG.CLK_OUT4_PORT {clk200} \
+   CONFIG.CLK_OUT5_PORT {clk10} \
    CONFIG.JITTER_SEL {No_Jitter} \
    CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
    CONFIG.MMCM_CLKFBOUT_MULT_F {10} \
@@ -284,8 +290,10 @@ proc create_root_design { parentCell } {
    CONFIG.MMCM_CLKOUT2_PHASE {270.000} \
    CONFIG.MMCM_CLKOUT3_DIVIDE {5} \
    CONFIG.MMCM_CLKOUT3_DUTY_CYCLE {0.5} \
+   CONFIG.MMCM_CLKOUT4_DIVIDE {100} \
+   CONFIG.MMCM_CLKOUT4_DUTY_CYCLE {0.5} \
    CONFIG.MMCM_COMPENSATION {ZHOLD} \
-   CONFIG.NUM_OUT_CLKS {4} \
+   CONFIG.NUM_OUT_CLKS {5} \
    CONFIG.PRIMITIVE {PLL} \
    CONFIG.PRIM_SOURCE {Global_buffer} \
    CONFIG.RESET_PORT {resetn} \
@@ -732,6 +740,7 @@ proc create_root_design { parentCell } {
   connect_bd_net -net axi_slave_wishbone_c_0_SEL_O [get_bd_ports SEL_O] [get_bd_pins axi_slave_wishbone_c_0/SEL_O]
   connect_bd_net -net axi_slave_wishbone_c_0_STB_O [get_bd_ports STB_O] [get_bd_pins axi_slave_wishbone_c_0/STB_O]
   connect_bd_net -net axi_slave_wishbone_c_0_WE_O [get_bd_ports WE_O] [get_bd_pins axi_slave_wishbone_c_0/WE_O]
+  connect_bd_net -net clk_wiz_0_clk10 [get_bd_ports clk_10] [get_bd_pins clk_wiz_0/clk10]
   connect_bd_net -net clk_wiz_0_clk200 [get_bd_ports clk_200] [get_bd_pins clk_wiz_0/clk200] [get_bd_pins util_idelay_ctrl_0/ref_clk]
   connect_bd_net -net clk_wiz_0_locked [get_bd_ports pll_locked] [get_bd_pins clk_wiz_0/locked] [get_bd_pins util_vector_logic_0/Op1]
   connect_bd_net -net clk_wiz_0_out90 [get_bd_ports axil_aclk90] [get_bd_pins clk_wiz_0/out90]

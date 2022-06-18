@@ -38,6 +38,7 @@ class white_rabbit(YellowBlock):
         self.use_osc_enable = self.conf.get("use_osc_enable", False)
         self.use_tx_fault = self.conf.get("use_tx_fault", True)
         self.use_flash_wp = self.conf.get("use_flash_wp", False)
+        self.master_ref_signal = self.conf.get("master_ref_signal", "1'b1")
         
     def gen_children(self):
         """
@@ -65,7 +66,7 @@ class white_rabbit(YellowBlock):
         # Active-low reset
         inst.add_port('reset_n_i', '~sys_rst')
         # External 10MHz reference. WL says not needed if this device is always a WR slave
-        inst.add_port('clk_ext_10m', "1'b1")
+        inst.add_port('clk_ext_10m', self.master_ref_signal)
 
         # SFP ports
         # TODO: parameterize port number?
