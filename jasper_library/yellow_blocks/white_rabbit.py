@@ -120,9 +120,9 @@ class white_rabbit(YellowBlock):
         inst.add_port('led_act_o', self.fullname + '_led_act')
         inst.add_port('led_link_o', self.fullname + '_led_link')
         # Recovered clock (62.5 MHz). Manually add this signal so we can
-        # add the keep attribute and use it as a clock identifier in constraints
+        # add the dont_touch attribute and use it as a clock identifier in constraints
         inst.add_port('clk_sys_o', 'wr_clk', parent_signal=False)
-        top.add_signal('wr_clk', attributes={'keep':'"true"'})
+        top.add_signal('wr_clk', attributes={'dont_touch':'"true"'})
         # Counters / TAI to software registers
         inst.add_port('tm_tai_o', '%s_tm_tai' % self.name, width=10)
         top.assign_signal('%s_wr_tm_tai_user_data_in[9:0]' % self.name, '%s_tm_tai' % self.name)
@@ -187,12 +187,12 @@ class white_rabbit(YellowBlock):
         cons += [ClockConstraint('wr_125m_gtrefclk_p', period=8.0)]
 
         # Might need to declare WR async to other clocks if there is crossing.
-        #cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
-        #                              '-include_generated_clocks -of_objects [get_nets sys_clk]',
-        #                              'asynchronous')]
-        #cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
-        #                              '-include_generated_clocks -of_objects [get_nets user_clk]',
-        #                              'asynchronous')]
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
+                                      '-include_generated_clocks -of_objects [get_nets sys_clk]',
+                                      'asynchronous')]
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
+                                      '-include_generated_clocks -of_objects [get_nets user_clk]',
+                                      'asynchronous')]
 
         return cons
 

@@ -62,7 +62,7 @@ class pci_dma_axilite_master(YellowBlock):
         inst = top.get_instance(entity=self.module_name, name=self.module_name+'_inst')
 
         inst.add_port('axi_aclk',   'axil_clk', parent_signal=False)
-        top.add_signal('axil_clk', attributes={'keep': '"true"'}) # keep so we can use for constraints
+        top.add_signal('axil_clk', attributes={'dont_touch': '"true"'}) # keep so we can use for constraints
         inst.add_port('axi_aresetn', 'axil_rst_n')
         # Create a non-inverted clock too. 
         top.add_signal('axil_rst')

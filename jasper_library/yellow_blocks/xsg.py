@@ -69,15 +69,14 @@ class xsg(YellowBlock):
             top.add_signal('user_clk')
             top.assign_signal('user_clk', self.clk_src)
         else:
-            top.add_signal('sys_clk', attributes={'keep': '"true"'})
-            top.add_signal('user_clk', attributes={'keep': '"true"'})
-            top.add_signal('user_clk90', attributes={'keep': '"true"'})
-            top.add_signal('user_clk180', attributes={'keep': '"true"'})
-            top.add_signal('user_clk270', attributes={'keep': '"true"'})
+            top.add_signal('sys_clk', attributes={'dont_touch': '"true"'})
+            top.add_signal('user_clk', attributes={'dont_touch': '"true"'})
+            top.add_signal('user_clk90', attributes={'dont_touch': '"true"'})
+            top.add_signal('user_clk180', attributes={'dont_touch': '"true"'})
+            top.add_signal('user_clk270', attributes={'dont_touch': '"true"'})
 
             top.assign_signal('user_clk',   self.clk_src)
             top.assign_signal('user_clk90', self.clk_src+'90')
             top.assign_signal('user_clk180',self.clk_src+'180')
             top.assign_signal('user_clk270',self.clk_src+'270')
 
-            top.add_signal('sys_clk', attributes={'keep': '"true"'})
