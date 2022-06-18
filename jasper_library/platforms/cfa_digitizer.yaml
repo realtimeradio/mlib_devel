@@ -1,0 +1,293 @@
+name: cfa_digitizer
+manufacturer: Xilinx
+fpga: xc7k70tfbg484-2
+#fpga: xc7k410tffg676-2
+backend_target: vivado
+invert_sfp_disable: False
+sources: []
+constraints: []
+provides:
+  - sfp0
+  - sfp1
+  - white_rabbit
+  - sys_clk
+  - sys_clk90
+  - sys_clk180
+  - sys_clk270
+  - ads41_0
+  - ads41_1
+white_rabbit:
+  separate_dac_i2c: True
+  use_sfp_disable: True
+ads41_0:
+  flip_pn: "7'b0001110"
+  clock_region: "X1Y0"
+ads41_1:
+  flip_pn: "7'b1111111"
+  clock_region: "X1Y0"
+pins:
+  sys_clk_p:
+    loc: U10
+    iostd: LVDS
+  sys_clk_n:
+    loc: V9
+    iostd: LVDS
+
+  miso:
+    loc: C22
+    iostd: LVCMOS33
+  mosi:
+    loc: D22
+    iostd: LVCMOS33
+  sclk:
+    loc: D21
+    iostd: LVCMOS33
+  cs_n:
+    loc: D20
+    iostd: LVCMOS33
+
+  gpio:
+    iostd: LVCMOS33
+    loc:
+      - Y18
+      - Y19
+      - W17
+      - Y17
+      - AB15
+      - AB16
+      - AA14
+      - AA15
+      # DIP switches 0..3. No external pull. Closed = GND
+      - W16
+      - U16
+      - V17
+      - T16
+
+  # Check direction (used for uBlaze)
+  usb_tx:
+    iostd: LVCMOS33
+    loc: H22
+  usb_rx:
+    iostd: LVCMOS33
+    loc: J22
+
+  led:
+    iostd: LVCMOS33
+    loc:
+      - Y16
+      - Y14
+      - W14
+      - V14
+
+  # 10G (156.25 refclk)
+  eth_clk_p:
+    loc:
+      - F6
+  eth_clk_n:
+    loc: 
+      - F5
+  mgt_tx_p:
+    loc: [D2, A4]
+  mgt_tx_n:
+    loc: [D1, A3]
+  mgt_rx_p:
+    loc: [E4, B6]
+  mgt_rx_n:
+    loc: [E3, B5]
+
+  # 1G / WR
+  wr_20m_vcxo:
+    loc: V19
+    iostd: LVCMOS33
+  wr_125m_gtrefclk_p:
+    loc: D6
+  wr_125m_gtrefclk_n:
+    loc: D5
+  wr_sfp_tx_p:
+    loc: A4
+  wr_sfp_tx_n:
+    loc: A3
+  wr_sfp_rx_p:
+    loc: B6
+  wr_sfp_rx_n:
+    loc: B5
+
+  wr_sfp_mod_def1: #AKA SCL
+    loc: B15
+    iostd: LVCMOS33
+  wr_sfp_mod_def2: #AKA SDA
+    loc: C14
+    iostd: LVCMOS33
+  wr_sfp_tx_fault:
+    loc: B21
+    iostd: LVCMOS33
+  wr_sfp_los:
+    loc: B16
+    iostd: LVCMOS33
+  wr_sfp_disable:
+    loc: B20
+    iostd: LVCMOS33
+
+  # TODO: check direction
+  wr_uart_rx:
+    loc: H22
+    iostd: LVCMOS33
+  wr_uart_tx:
+    loc: J22
+    iostd: LVCMOS33
+
+  wr_spi_cs_n:
+    loc: AB21
+    iostd: LVCMOS33
+  wr_spi_miso: # flash chip IO1 / schematic SPI_DO
+    loc: AB22
+    iostd: LVCMOS33
+  wr_spi_mosi: # flash chip IO0 / schematic SPI_DI
+    loc: AA19
+    iostd: LVCMOS33
+  wr_spi_sclk:
+    loc: AA20
+    iostd: LVCMOS33
+
+  wr_dac_25m_sclk:
+    loc: W15
+    iostd: LVCMOS33
+  wr_dac_25m_mosi:
+    loc: U15
+    iostd: LVCMOS33
+  wr_dac_25m_cs_n:
+    loc: V15
+    iostd: LVCMOS33
+
+  wr_dac_20m_sclk:
+    loc: W22
+    iostd: LVCMOS33
+  wr_dac_20m_mosi:
+    loc: Y22
+    iostd: LVCMOS33
+  wr_dac_20m_cs_n:
+    loc: V22
+    iostd: LVCMOS33
+
+  wr_onewire:
+    loc: T18
+    iostd: LVCMOS33
+  
+  sfp_disable:
+    iostd: LVCMOS33
+    loc: [A21, B20] #10G, 1G
+
+  sfp_sda:
+    iostd: LVCMOS33
+    loc: [A20, C14] #10G, 1G
+
+  sfp_scl:
+    iostd: LVCMOS33
+    loc: [C19, B15] #10G, 1G
+
+  # 2x MAC eeprom. Addresses 0x50, 0x51
+  mac_sda:
+    iostd: LVCMOS33
+    loc: N17
+
+  mac_scl:
+    iostd: LVCMOS33
+    loc: P16
+
+  # ADCs
+  ads41_0_dfs:
+    iostd: LVCMOS18
+    loc: U6
+  ads41_0_reset:
+    iostd: LVCMOS18
+    loc: V7
+  ads41_0_oe:
+    iostd: LVCMOS18
+    loc: R6
+  ads41_0_dclk_p:
+    iostd: LVDS
+    loc: Y8
+  ads41_0_dclk_n:
+    iostd: LVDS
+    loc: Y7
+  ads41_0_ovr:
+    iostd: LVCMOS18
+    loc: U7
+  ads41_0_d_p:
+    iostd: LVDS
+    loc:
+      - AA10
+      - AA9 #P/N swapped
+      - AB8 #P/N swapped
+      - AA6 #P/N swapped
+      - W6
+      - AA5
+      - AA11
+  ads41_0_d_n:
+    iostd: LVDS
+    loc:
+      - AB10
+      - AA8 #P/N swapped
+      - AB7 #P/N swapped
+      - AB6 #P/N swapped
+      - Y6
+      - AB5
+      - AB11
+  ads41_0_sclk:
+    iostd: LVCMOS18
+    loc: R7
+  ads41_0_sdata:
+    iostd: LVCMOS18
+    loc: V8
+  ads41_0_sen:
+    iostd: LVCMOS18
+    loc: U8
+
+  # ADCs
+  ads41_1_dfs:
+    iostd: LVCMOS18
+    loc: Y11
+  ads41_1_reset:
+    iostd: LVCMOS18
+    loc: U13
+  ads41_1_oe:
+    iostd: LVCMOS18
+    loc: W11
+  ads41_1_dclk_p:
+    iostd: LVDS
+    loc: W9
+  ads41_1_dclk_n:
+    iostd: LVDS
+    loc: Y9
+  ads41_1_ovr:
+    iostd: LVCMOS18
+    loc: AB12
+  ads41_1_d_p:
+    iostd: LVDS
+    loc:
+      - Y13 #P/N swapped
+      - W12 #P/N swapped
+      - U12 #P/N swapped
+      - T11 #P/N swapped
+      - V10 #P/N swapped
+      - T9  #P/N swapped
+      - V13 #P/N swapped
+  ads41_1_d_n:
+    iostd: LVDS
+    loc:
+      - AA13 #P/N swapped
+      - Y12 #P/N swapped
+      - U11 #P/N swapped
+      - T10 #P/N swapped
+      - W10 #P/N swapped
+      - T8  #P/N swapped
+      - V12 #P/N swapped
+  ads41_1_sclk:
+    iostd: LVCMOS18
+    loc: AB13
+  ads41_1_sdata:
+    iostd: LVCMOS18
+    loc: T13
+  ads41_1_sen:
+    iostd: LVCMOS18
+    loc: T14

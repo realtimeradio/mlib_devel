@@ -5,6 +5,7 @@
 module wb_spi_master#(
     parameter NBITS = 24,
     parameter NCLKDIVBITS = 5,
+    parameter INVERT_CLOCK = 1'b0, // if 1, latch on clock negedge
     parameter NCSBITS = 3
     )(
 
@@ -138,6 +139,7 @@ module wb_spi_master#(
   spi_master #(
     .NCLKDIVBITS(NCLKDIVBITS),
     .NBITS(NBITS),
+    .INVERT_CLOCK(INVERT_CLOCK),
     .NCSBITS(NCSBITS)
     ) spi_master_inst (
     .clk(wb_clk_i),
