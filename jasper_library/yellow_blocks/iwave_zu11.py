@@ -21,9 +21,14 @@ class iwave_zu11(YellowBlock):
         self.provides.append('sys_clk90')
         self.provides.append('sys_clk180')
         self.provides.append('sys_clk270')
+        self.provides.append('clk300mhz')
+        self.provides.append('clk300mhz90')
+        self.provides.append('clk300mhz180')
+        self.provides.append('clk300mhz270')
 
     def modify_top(self,top):
         inst = top.get_instance('iwave_zu11_bd', 'iwave_zu11_bd_inst')
+        inst.add_port('clk300',    'clk300mhz')
         inst.add_port('axil_aclk',    'axil_clk')
         inst.add_port('axil_aclk90',  'axil_clk90')
         inst.add_port('axil_aclk180', 'axil_clk180')
@@ -79,6 +84,12 @@ class iwave_zu11(YellowBlock):
         top.assign_signal('sys_clk90',  'axil_clk90')
         top.assign_signal('sys_clk180', 'axil_clk180')
         top.assign_signal('sys_clk270', 'axil_clk270')
+        top.add_signal('clk300mhz90')
+        top.add_signal('clk300mhz180')
+        top.add_signal('clk300mhz270')
+        top.assign_signal('clk300mhz90', 'clk300mhz')  # LIES!
+        top.assign_signal('clk300mhz180', 'clk300mhz') # LIES!
+        top.assign_signal('clk300mhz270', 'clk300mhz') # LIES!
 		
     def gen_children(self):
         children = [YellowBlock.make_block({

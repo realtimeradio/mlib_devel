@@ -223,6 +223,10 @@ proc create_root_design { parentCell } {
   set axil_aclk180 [ create_bd_port -dir O -type clk axil_aclk180 ]
   set axil_aclk270 [ create_bd_port -dir O -type clk axil_aclk270 ]
   set axil_aresetn [ create_bd_port -dir O -from 0 -to 0 -type rst axil_aresetn ]
+  set clk300 [ create_bd_port -dir O -type clk clk300 ]
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {} \
+ ] $clk300
 
   # Create instance: axi_slave_wishbone_c_0, and set properties
   set axi_slave_wishbone_c_0 [ create_bd_cell -type ip -vlnv peralex.com:user:axi_slave_wishbone_classic_master:1.0 axi_slave_wishbone_c_0 ]
@@ -233,42 +237,56 @@ proc create_root_design { parentCell } {
   # Create instance: clk_wiz_0, and set properties
   set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
   set_property -dict [ list \
-   CONFIG.AUTO_PRIMITIVE {PLL} \
-   CONFIG.CLKOUT1_DRIVES {Buffer} \
-   CONFIG.CLKOUT1_JITTER {144.719} \
-   CONFIG.CLKOUT1_PHASE_ERROR {114.212} \
+   CONFIG.AUTO_PRIMITIVE {MMCM} \
+   CONFIG.CLKOUT1_DRIVES {BUFGCE} \
+   CONFIG.CLKOUT1_JITTER {115.831} \
+   CONFIG.CLKOUT1_PHASE_ERROR {87.180} \
    CONFIG.CLKOUT1_REQUESTED_PHASE {90} \
-   CONFIG.CLKOUT2_DRIVES {Buffer} \
-   CONFIG.CLKOUT2_JITTER {144.719} \
-   CONFIG.CLKOUT2_PHASE_ERROR {114.212} \
+   CONFIG.CLKOUT2_DRIVES {BUFGCE} \
+   CONFIG.CLKOUT2_JITTER {115.831} \
+   CONFIG.CLKOUT2_PHASE_ERROR {87.180} \
    CONFIG.CLKOUT2_REQUESTED_PHASE {180} \
    CONFIG.CLKOUT2_USED {true} \
-   CONFIG.CLKOUT3_DRIVES {Buffer} \
-   CONFIG.CLKOUT3_JITTER {144.719} \
-   CONFIG.CLKOUT3_PHASE_ERROR {114.212} \
+   CONFIG.CLKOUT3_DRIVES {BUFGCE} \
+   CONFIG.CLKOUT3_JITTER {115.831} \
+   CONFIG.CLKOUT3_PHASE_ERROR {87.180} \
    CONFIG.CLKOUT3_REQUESTED_PHASE {270} \
    CONFIG.CLKOUT3_USED {true} \
-   CONFIG.CLKOUT4_DRIVES {Buffer} \
-   CONFIG.CLKOUT5_DRIVES {Buffer} \
-   CONFIG.CLKOUT6_DRIVES {Buffer} \
-   CONFIG.CLKOUT7_DRIVES {Buffer} \
+   CONFIG.CLKOUT4_DRIVES {BUFGCE} \
+   CONFIG.CLKOUT4_JITTER {94.862} \
+   CONFIG.CLKOUT4_PHASE_ERROR {87.180} \
+   CONFIG.CLKOUT4_REQUESTED_OUT_FREQ {300.0} \
+   CONFIG.CLKOUT4_USED {true} \
+   CONFIG.CLKOUT5_DRIVES {BUFGCE} \
+   CONFIG.CLKOUT5_JITTER {115.831} \
+   CONFIG.CLKOUT5_PHASE_ERROR {87.180} \
+   CONFIG.CLKOUT5_USED {true} \
+   CONFIG.CLKOUT6_DRIVES {BUFGCE} \
+   CONFIG.CLKOUT7_DRIVES {BUFGCE} \
    CONFIG.CLK_OUT1_PORT {clk90} \
    CONFIG.CLK_OUT2_PORT {clk180} \
    CONFIG.CLK_OUT3_PORT {clk270} \
+   CONFIG.CLK_OUT4_PORT {clk300} \
+   CONFIG.CLK_OUT5_PORT {clk0} \
    CONFIG.FEEDBACK_SOURCE {FDBK_AUTO} \
    CONFIG.MMCM_BANDWIDTH {OPTIMIZED} \
-   CONFIG.MMCM_CLKFBOUT_MULT_F {8} \
-   CONFIG.MMCM_CLKOUT0_DIVIDE_F {8} \
+   CONFIG.MMCM_CLKFBOUT_MULT_F {12.000} \
+   CONFIG.MMCM_CLKOUT0_DIVIDE_F {12.000} \
    CONFIG.MMCM_CLKOUT0_PHASE {90.000} \
-   CONFIG.MMCM_CLKOUT1_DIVIDE {8} \
+   CONFIG.MMCM_CLKOUT1_DIVIDE {12} \
    CONFIG.MMCM_CLKOUT1_PHASE {180.000} \
-   CONFIG.MMCM_CLKOUT2_DIVIDE {8} \
+   CONFIG.MMCM_CLKOUT2_DIVIDE {12} \
    CONFIG.MMCM_CLKOUT2_PHASE {270.000} \
+   CONFIG.MMCM_CLKOUT3_DIVIDE {4} \
+   CONFIG.MMCM_CLKOUT4_DIVIDE {12} \
    CONFIG.MMCM_COMPENSATION {AUTO} \
-   CONFIG.NUM_OUT_CLKS {3} \
+   CONFIG.NUM_OUT_CLKS {5} \
    CONFIG.PRIMITIVE {Auto} \
-   CONFIG.USE_LOCKED {false} \
+   CONFIG.SECONDARY_SOURCE {Single_ended_clock_capable_pin} \
+   CONFIG.USE_LOCKED {true} \
+   CONFIG.USE_PHASE_ALIGNMENT {true} \
    CONFIG.USE_RESET {false} \
+   CONFIG.USE_SAFE_CLOCK_STARTUP {true} \
  ] $clk_wiz_0
 
   # Create instance: rst_ps8_0_100M, and set properties
@@ -1825,12 +1843,15 @@ proc create_root_design { parentCell } {
   connect_bd_net -net axi_slave_wishbone_c_0_SEL_O [get_bd_ports SEL_O] [get_bd_pins axi_slave_wishbone_c_0/SEL_O]
   connect_bd_net -net axi_slave_wishbone_c_0_STB_O [get_bd_ports STB_O] [get_bd_pins axi_slave_wishbone_c_0/STB_O]
   connect_bd_net -net axi_slave_wishbone_c_0_WE_O [get_bd_ports WE_O] [get_bd_pins axi_slave_wishbone_c_0/WE_O]
+  connect_bd_net -net clk_wiz_0_clk0 [get_bd_ports axil_aclk] [get_bd_pins axi_slave_wishbone_c_0/S_AXI_ACLK] [get_bd_pins clk_wiz_0/clk0] [get_bd_pins rst_ps8_0_100M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk]
   connect_bd_net -net clk_wiz_0_clk90 [get_bd_ports axil_aclk90] [get_bd_pins clk_wiz_0/clk90]
   connect_bd_net -net clk_wiz_0_clk180 [get_bd_ports axil_aclk180] [get_bd_pins clk_wiz_0/clk180]
   connect_bd_net -net clk_wiz_0_clk270 [get_bd_ports axil_aclk270] [get_bd_pins clk_wiz_0/clk270]
-  connect_bd_net -net rst_ps8_0_100M_peripheral_aresetn [get_bd_ports axil_aresetn] [get_bd_pins axi_slave_wishbone_c_0/S_AXI_ARESETN] [get_bd_pins rst_ps8_0_100M/peripheral_aresetn]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_ports axil_aclk] [get_bd_pins axi_slave_wishbone_c_0/S_AXI_ACLK] [get_bd_pins clk_wiz_0/clk_in1] [get_bd_pins rst_ps8_0_100M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins rst_ps8_0_100M/ext_reset_in] [get_bd_pins smartconnect_0/aresetn] [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0]
+  connect_bd_net -net clk_wiz_0_clk300 [get_bd_ports clk300] [get_bd_pins clk_wiz_0/clk300]
+  connect_bd_net -net clk_wiz_0_locked [get_bd_pins clk_wiz_0/locked] [get_bd_pins rst_ps8_0_100M/dcm_locked]
+  connect_bd_net -net rst_ps8_0_100M_peripheral_aresetn [get_bd_ports axil_aresetn] [get_bd_pins axi_slave_wishbone_c_0/S_AXI_ARESETN] [get_bd_pins rst_ps8_0_100M/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins clk_wiz_0/clk_in1] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins rst_ps8_0_100M/ext_reset_in] [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0]
 
   # Create address segments
   assign_bd_address -offset 0xA1000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_slave_wishbone_c_0/S_AXI/reg0] -force
