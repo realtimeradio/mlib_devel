@@ -28,6 +28,7 @@ white_rabbit:
   use_tx_fault: False
   use_flash_wp: True
   master_ref_signal: clk_10
+  vcxo_freq_mhz: 25
 pins:
   #sys_clk_p:
   #  loc: 

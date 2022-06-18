@@ -1,7 +1,7 @@
 import os
 
 from .yellow_block import YellowBlock
-from constraints import PortConstraint, ClockGroupConstraint
+from constraints import PortConstraint, ClockGroupConstraint, ClockConstraint
 
 class white_rabbit(YellowBlock):
     def initialize(self):
@@ -39,6 +39,12 @@ class white_rabbit(YellowBlock):
         self.use_tx_fault = self.conf.get("use_tx_fault", True)
         self.use_flash_wp = self.conf.get("use_flash_wp", False)
         self.master_ref_signal = self.conf.get("master_ref_signal", "1'b1")
+        self.vcxo_freq_mhz  = self.conf.get("vcxo_freq_mhz", 20.0)
+        self.vcxo_period_ns = 1000.0 / self.vcxo_freq_mhz
+        # Modify the default mult factors based on how far from
+        # 20 MHz we have strayed
+        assert (50 * 20) % self.vcxo_freq_mhz == 0
+        self.vcxo_mult_factor = (50 * 20) // self.vcxo_freq_mhz
         
     def gen_children(self):
         """
@@ -58,6 +64,8 @@ class white_rabbit(YellowBlock):
 
     def modify_top(self,top):
         inst = top.get_instance(entity=self.top_module, name=self.fullname)
+        inst.add_parameter('g_dmdt_mult_factor', self.vcxo_mult_factor)
+        inst.add_parameter('g_dmdt_period_ns', self.vcxo_period_ns)
         # 20 MHz reference VCXO
         inst.add_port('clk_20m_vcxo_i', 'wr_20m_vcxo', dir='in', parent_port=True)
         # 125 MHz GT refclk, which should be driven by a VCXO
@@ -175,6 +183,9 @@ class white_rabbit(YellowBlock):
 
         cons += [PortConstraint('wr_onewire', 'wr_onewire')]
 
+        cons += [ClockConstraint('wr_20m_vcxo', period=self.vcxo_period_ns)]
+        cons += [ClockConstraint('wr_125m_gtrefclk_p', period=8.0)]
+
         # Might need to declare WR async to other clocks if there is crossing.
         #cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
         #                              '-include_generated_clocks -of_objects [get_nets sys_clk]',
@@ -188,5 +199,6 @@ class white_rabbit(YellowBlock):
     def gen_tcl_cmds(self):
         cmds = {}
         cmds['pre_synth'] = ['set_property -dict [list CONFIG.g_dpram_initf {%s}] [get_ips %s]' % (self.init_ram, self.module_name)]
+        cmds['pre_synth'] += ['set_property -dict [list CONFIG.g_dmdt_mult_factor {%d} CONFIG.g_dmdt_period_ns {%f}] [get_ips wrc_board_quabo_Light_ip]' % (self.vcxo_mult_factor, self.vcxo_period_ns)]
         return cmds
 

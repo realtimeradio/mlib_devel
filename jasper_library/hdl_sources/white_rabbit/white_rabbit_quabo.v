@@ -1,4 +1,8 @@
-module white_rabbit_quabo (
+module white_rabbit_quabo #(
+  parameter g_dmdt_mult_factor=50,
+  parameter g_dmdt_div_factor=16,
+  parameter g_dmdt_period_ns=50.0
+  ) (
   input clk_20m_vcxo_i,
   input clk_125m_gtx_n_i,
   input clk_125m_gtx_p_i,
@@ -48,7 +52,11 @@ module white_rabbit_quabo (
   wire onewire_o;
   wire onewire_t_o;
   
-  wrc_board_quabo_Light_ip quabo_wrc_inst (
+  wrc_board_quabo_Light_ip #(
+    .g_dmdt_mult_factor(g_dmdt_mult_factor),
+    .g_dmdt_div_factor(g_dmdt_div_factor),
+    .g_dmdt_period_ns(g_dmdt_period_ns)
+  ) quabo_wrc_inst (
     .clk_20m_vcxo_i(clk_20m_vcxo_i),        // input wire clk_20m_vcxo_i
     .clk_125m_gtx_n_i(clk_125m_gtx_n_i),    // input wire clk_125m_gtx_n_i
     .clk_125m_gtx_p_i(clk_125m_gtx_p_i),    // input wire clk_125m_gtx_p_i
