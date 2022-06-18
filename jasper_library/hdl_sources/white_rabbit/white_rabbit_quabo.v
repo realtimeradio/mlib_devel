@@ -1,7 +1,7 @@
 module white_rabbit_quabo #(
   parameter g_dmdt_mult_factor=50,
   parameter g_dmdt_div_factor=16,
-  parameter g_dmdt_period_ns=50.0
+  parameter g_dmdt_period_ns=50
   ) (
   input clk_20m_vcxo_i,
   input clk_125m_gtx_n_i,

@@ -18,7 +18,7 @@ class white_rabbit(YellowBlock):
         ip_name = 'wrc_board_quabo_Light'
         vendor = 'user.org'
         library = 'user'
-        version = '1.4'
+        version = '1.5'
         self.module_name = 'wrc_board_quabo_Light_ip'
         self.add_source('white_rabbit/white_rabbit_quabo.v')
         self.ips = [{'path': path,
@@ -199,6 +199,6 @@ class white_rabbit(YellowBlock):
     def gen_tcl_cmds(self):
         cmds = {}
         cmds['pre_synth'] = ['set_property -dict [list CONFIG.g_dpram_initf {%s}] [get_ips %s]' % (self.init_ram, self.module_name)]
-        cmds['pre_synth'] += ['set_property -dict [list CONFIG.g_dmdt_mult_factor {%d} CONFIG.g_dmdt_period_ns {%f}] [get_ips wrc_board_quabo_Light_ip]' % (self.vcxo_mult_factor, self.vcxo_period_ns)]
+        cmds['pre_synth'] += ['set_property -dict [list CONFIG.g_dmdt_mult_factor {%d} CONFIG.g_dmdt_period_ns {%d}] [get_ips %s]' % (self.vcxo_mult_factor, self.vcxo_period_ns, self.module_name)]
         return cmds
 
