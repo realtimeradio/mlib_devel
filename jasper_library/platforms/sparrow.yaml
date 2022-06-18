@@ -21,6 +21,12 @@ provides:
   - sys_clk90
   - sys_clk180
   - sys_clk270
+white_rabbit:
+  separate_dac_i2c: False
+  use_sfp_disable: False
+  use_osc_enable: True
+  use_tx_fault: False
+  use_flash_wp: True
 pins:
   #sys_clk_p:
   #  loc: 
@@ -170,6 +176,7 @@ pins:
     iostd: LVCMOS33
     loc: AB14
 
+  # White Rabbit
   wr_osc_en:
     loc: AF15
     iostd: LVCMOS33
@@ -194,45 +201,54 @@ pins:
   wr_sfp_rx_n:
     loc: AB3
 
-  #wr_sfp_mod_def1:
-  #  loc: W21
-  #  iostd: LVCMOS25
-  #wr_sfp_mod_def2:
-  #  loc: W22
-  #  iostd: LVCMOS25
-  #wr_sfp_tx_fault:
-  #  loc: U17
-  #  iostd: LVCMOS25
-  #wr_sfp_los:
-  #  loc: V18
-  #  iostd: LVCMOS25
-
-  #wr_uart_rx:
-  #  loc: T20
-  #  iostd: LVCMOS25
-  #wr_uart_tx:
-  #  loc: U20
-  #  iostd: LVCMOS25
-
-  wr_spi_cs_n:
-    loc: Y21
+  wr_sfp_mod_def1: # AKA SCL
+    loc: AD24
     iostd: LVCMOS33
-  #wr_spi_miso:
-  #  loc: 
-  #  iostd: LVCMOS33
+  wr_sfp_mod_def2: # AKA SDA
+    loc: AD26
+    iostd: LVCMOS33
+  wr_sfp_los:
+    loc: AF25 # This is really nPresent
+    iostd: LVCMOS33
+
+  # D-sub GPIO for now
+  wr_uart_rx:
+    loc: C16
+    iostd: LVCMOS18
+  wr_uart_tx:
+    loc: C17
+    iostd: LVCMOS18
+
+  # Flash interface
+  wr_spi_cs_n:
+    loc: AE10
+    iostd: LVCMOS33
+  wr_spi_miso:
+    loc: AF10
+    iostd: LVCMOS33
   wr_spi_mosi:
-    loc: AD10
+    loc: AF13
     iostd: LVCMOS33
   wr_spi_sclk:
+    loc: AD11
+    iostd: LVCMOS33
+  wr_flash_wp:
+    loc: AE11
+    iostd: LVCMOS33
+
+  wr_dac_25m_cs_n:
+    loc: AE12
+    iostd: LVCMOS33
+  wr_dac_20m_cs_n: # Really 25 MHz as well...
+    loc: AE13
+    iostd: LVCMOS33
+  wr_dac_mosi:
+    loc: AD10
+    iostd: LVCMOS33
+  wr_dac_sclk:
     loc: AD13
     iostd: LVCMOS33
 
-  #wr_dac_25m_cs_n:
-  #  loc: AA19
-  #  iostd: LVCMOS33
-  #wr_dac_20m_cs_n:
-  #  loc: AB20
-  #  iostd: LVCMOS33
   wr_onewire:
     loc: AB15
     iostd: LVCMOS33

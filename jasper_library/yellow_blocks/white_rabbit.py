@@ -35,6 +35,9 @@ class white_rabbit(YellowBlock):
             self.conf = {}
         self.separate_dac_i2c = self.conf.get("separate_dac_i2c", False)
         self.use_sfp_disable = self.conf.get("use_sfp_disable", False)
+        self.use_osc_enable = self.conf.get("use_osc_enable", False)
+        self.use_tx_fault = self.conf.get("use_tx_fault", True)
+        self.use_flash_wp = self.conf.get("use_flash_wp", False)
         
     def gen_children(self):
         """
@@ -74,7 +77,10 @@ class white_rabbit(YellowBlock):
         inst.add_port('sfp_mod_def0_i', "1'b0")
         inst.add_port('sfp_mod_def1_b', 'wr_sfp_mod_def1', dir='inout', parent_port=True)
         inst.add_port('sfp_mod_def2_b', 'wr_sfp_mod_def2', dir='inout', parent_port=True)
-        inst.add_port('sfp_tx_fault_i', 'wr_sfp_tx_fault', dir='in', parent_port=True)
+        if self.use_tx_fault:
+            inst.add_port('sfp_tx_fault_i', 'wr_sfp_tx_fault', dir='in', parent_port=True)
+        else:
+            inst.add_port('sfp_tx_fault_i', '1\'b0')
         inst.add_port('sfp_los_i', 'wr_sfp_los', dir='in', parent_port=True)
         # UART
         inst.add_port('uart_rxd_i', 'wr_uart_rx', dir='in', parent_port=True)
@@ -117,12 +123,22 @@ class white_rabbit(YellowBlock):
         if self.use_sfp_disable:
             top.add_port('wr_sfp_disable', dir='out')
             top.assign_signal('wr_sfp_disable', "1'b0")
+        if self.use_osc_enable:
+            top.add_port('wr_osc_en', dir='out')
+            top.assign_signal('wr_osc_en', '1\'b1')
+        if self.use_flash_wp:
+            top.add_port('wr_flash_wp', dir='out')
+            top.assign_signal('wr_flash_wp', '1\'b1')
 
 
     def gen_constraints(self):
         cons = []
+        if self.use_osc_enable:
+            cons += [PortConstraint('wr_osc_en', 'wr_osc_en')]
         if self.use_sfp_disable:
             cons += [PortConstraint('wr_sfp_disable', 'wr_sfp_disable')]
+        if self.use_flash_wp:
+            cons += [PortConstraint('wr_flash_wp', 'wr_flash_wp')]
         cons += [PortConstraint('wr_20m_vcxo', 'wr_20m_vcxo')]
         cons += [PortConstraint('wr_125m_gtrefclk_p', 'wr_125m_gtrefclk_p')]
         cons += [PortConstraint('wr_125m_gtrefclk_n', 'wr_125m_gtrefclk_n')]
@@ -133,7 +149,8 @@ class white_rabbit(YellowBlock):
 
         cons += [PortConstraint('wr_sfp_mod_def1', 'wr_sfp_mod_def1')]
         cons += [PortConstraint('wr_sfp_mod_def2', 'wr_sfp_mod_def2')]
-        cons += [PortConstraint('wr_sfp_tx_fault', 'wr_sfp_tx_fault')]
+        if self.use_tx_fault:
+            cons += [PortConstraint('wr_sfp_tx_fault', 'wr_sfp_tx_fault')]
         cons += [PortConstraint('wr_sfp_los', 'wr_sfp_los')]
 
         cons += [PortConstraint('wr_uart_rx', 'wr_uart_rx')]
