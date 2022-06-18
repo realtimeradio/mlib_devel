@@ -74,25 +74,36 @@ module ads5404_top #(
   // Pull user reset onto one of the local domains
   (* async_reg = "true" *) reg rst_daclk_unstable;
   (* async_reg = "true" *) reg rst_daclk_stable;
-  (* async_reg = "true" *) reg fifo_we_daclk_unstable;
-  (* async_reg = "true" *) reg fifo_we_daclk_stable;
   always @(posedge daclk) begin
     rst_daclk_unstable <= user_rst;
     rst_daclk_stable <= rst_daclk_unstable;
-    fifo_we_daclk_unstable <= pll_locked;
-    fifo_we_daclk_stable <= fifo_we_daclk_unstable;
   end
+
   reg rst_daclk, rst_dbclk;
-  reg fifo_we_daclk, fifo_we_dbclk;
+  reg [11:0] fifo_wen_sr_a = 12'hfff;
+  reg [11:0] fifo_wen_sr_b;
+  (* async_reg = "true" *) reg pll_locked_a;
+  (* async_reg = "true" *) reg pll_locked_b;
+  wire fifo_we_daclk = fifo_wen_sr_a == 12'h0;
+  wire fifo_we_dbclk = fifo_wen_sr_b == 12'h0;
+
   always @(posedge daclk) begin
+    fifo_wen_sr_a[11:0] <= {fifo_wen_sr_a[10:0], 1'b0};
     rst_daclk <= rst_daclk_stable;
-    fifo_we_daclk <= fifo_we_daclk_stable;
+    pll_locked_a <= pll_locked;
+    if (rst_daclk || ~pll_locked_a) begin
+      fifo_wen_sr_a[0] = 1'b1;
+    end
   end
+
   always @(posedge dbclk) begin
+    fifo_wen_sr_b[11:0] <= {fifo_wen_sr_b[10:0], 1'b0};
     rst_dbclk <= rst_daclk_stable;
-    fifo_we_dbclk <= fifo_we_daclk_stable;
+    pll_locked_b <= pll_locked;
+    if (rst_dbclk || ~pll_locked_b) begin
+      fifo_wen_sr_b[0] = 1'b1;
+    end
   end
-  
 
   ads5404_single #(
     .NBITS(NBITS),
@@ -122,15 +133,15 @@ module ads5404_top #(
     .d_1(da_1)
   );
 
-  reg [15:0] clk_cnt_rega = 16'b0;
+  reg [31:0] clk_cnt_rega = 32'b0;
   always @(posedge daclk) begin
     clk_cnt_rega <= clk_cnt_rega + 1'b1;
   end
-  reg [15:0] clk_cnt_regb = 16'b0;
+  reg [31:0] clk_cnt_regb = 32'b0;
   always @(posedge dbclk) begin
     clk_cnt_regb <= clk_cnt_regb + 1'b1;
   end
-  assign clk_ctr = {clk_cnt_rega[15:0], clk_cnt_regb[14:0]};
+  assign clk_ctr = {1'b0, clk_cnt_rega[14+10:10], clk_cnt_regb[14+10:10]};
   
   ads5404_single #(
     .NBITS(NBITS),
