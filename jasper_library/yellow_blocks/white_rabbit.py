@@ -187,10 +187,11 @@ class white_rabbit(YellowBlock):
         cons += [ClockConstraint('wr_125m_gtrefclk_p', period=8.0)]
 
         # Might need to declare WR async to other clocks if there is crossing.
-        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_ports wr_125m_gtrefclk_p]',
                                       '-include_generated_clocks -of_objects [get_nets sys_clk]',
                                       'asynchronous')]
-        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets wr_clk]',
+
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_ports wr_125m_gtrefclk_p]',
                                       '-include_generated_clocks -of_objects [get_nets user_clk]',
                                       'asynchronous')]
 
