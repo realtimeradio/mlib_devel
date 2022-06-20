@@ -103,10 +103,14 @@ class white_rabbit(YellowBlock):
         if self.separate_dac_i2c:
             inst.add_port('plldac_sclk_o', 'wr_dac_sclk', parent_port=False, parent_signal=True)
             inst.add_port('plldac_din_o', 'wr_dac_mosi', parent_port=False, parent_signal=True)
-            top.add_port('wr_dac_20m_sclk', 'wr_dac_sclk', dir='out', parent_port=True)
-            top.add_port('wr_dac_20m_mosi', 'wr_dac_mosi', dir='out', parent_port=True)
-            top.add_port('wr_dac_25m_sclk', 'wr_dac_sclk', dir='out', parent_port=True)
-            top.add_port('wr_dac_25m_mosi', 'wr_dac_mosi', dir='out', parent_port=True)
+            top.add_port('wr_dac_20m_sclk', dir='out')
+            top.assign_signal('wr_dac_20m_sclk', 'wr_dac_sclk')
+            top.add_port('wr_dac_20m_mosi', dir='out')
+            top.assign_signal('wr_dac_20m_mosi', 'wr_dac_mosi')
+            top.add_port('wr_dac_25m_sclk', dir='out')
+            top.assign_signal('wr_dac_25m_sclk', 'wr_dac_sclk')
+            top.add_port('wr_dac_25m_mosi', dir='out')
+            top.assign_signal('wr_dac_25m_mosi', 'wr_dac_mosi')
         else:
             inst.add_port('plldac_sclk_o', 'wr_dac_sclk', dir='out', parent_port=True)
             inst.add_port('plldac_din_o', 'wr_dac_mosi', dir='out', parent_port=True)
