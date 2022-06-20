@@ -19,6 +19,7 @@ provides:
 white_rabbit:
   separate_dac_i2c: True
   use_sfp_disable: True
+  master_ref_signal: clk_10
 ads41_0:
   flip_pn: "7'b0001110"
   clock_region: "X1Y0"
@@ -34,16 +35,20 @@ pins:
     iostd: LVDS
 
   miso:
-    loc: C22
+    #loc: C22
+    loc: AA15
     iostd: LVCMOS33
   mosi:
-    loc: D22
+    #loc: D22
+    loc: AA14
     iostd: LVCMOS33
   sclk:
-    loc: D21
+    #loc: D21
+    loc: AB16
     iostd: LVCMOS33
   cs_n:
-    loc: D20
+    #loc: D20
+    loc: AB15
     iostd: LVCMOS33
 
   gpio:
@@ -130,10 +135,12 @@ pins:
 
   # TODO: check direction
   wr_uart_rx:
-    loc: H22
+    #loc: H22
+    loc: Y19
     iostd: LVCMOS33
   wr_uart_tx:
-    loc: J22
+    #loc: J22
+    loc: Y18
     iostd: LVCMOS33
 
   wr_spi_cs_n:

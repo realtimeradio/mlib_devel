@@ -7,6 +7,7 @@ module cfa_digitizer_infrastructure(
     output sys_clk270,
 
     output clk_200,
+    output clk_10,
 
     output sys_rst,
 
@@ -56,7 +57,7 @@ module cfa_digitizer_infrastructure(
    .CLKOUT1_DIVIDE     (12),
    .CLKOUT2_DIVIDE     (12),
    .CLKOUT3_DIVIDE     (6),
-   .CLKOUT4_DIVIDE     (1),
+   .CLKOUT4_DIVIDE     (120),
    .CLKOUT5_DIVIDE     (1),
    .CLKOUT6_DIVIDE     (1),
    .CLKOUT4_CASCADE    ("FALSE"),
@@ -79,7 +80,7 @@ module cfa_digitizer_infrastructure(
    .CLKOUT2B (),
    .CLKOUT3  (clk_200_dcm),
    .CLKOUT3B (),
-   .CLKOUT4  (),
+   .CLKOUT4  (clk_10_dcm),
    .CLKOUT5  (),
    .CLKOUT6  (),
    .LOCKED   (pll_lock),
@@ -90,9 +91,9 @@ module cfa_digitizer_infrastructure(
   );
 
 
-  BUFG bufg_sysclk[3:0](
-    .I({sys_clk0_dcm, sys_clk180_dcm, sys_clk270_dcm, clk_200_dcm}),
-    .O({sys_clk0,     sys_clk180,     sys_clk270,     clk_200})
+  BUFG bufg_sysclk[4:0](
+    .I({sys_clk0_dcm, sys_clk180_dcm, sys_clk270_dcm, clk_200_dcm, clk_10_dcm}),
+    .O({sys_clk0,     sys_clk180,     sys_clk270,     clk_200,     clk_10})
   );
   
   /* reset gen */

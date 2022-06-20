@@ -17,6 +17,7 @@ class cfa_digitizer(YellowBlock):
         inst.add_port('sys_clk180   ', 'sys_clk180')
         inst.add_port('sys_clk270   ', 'sys_clk270')
         inst.add_port('clk_200      ', 'clk_200   ')
+        inst.add_port('clk_10       ', 'clk_10    ')
         inst.add_port('sys_rst      ', 'sys_rst   ')
         inst.add_port('idelay_rdy   ', 'idelay_rdy')
 
