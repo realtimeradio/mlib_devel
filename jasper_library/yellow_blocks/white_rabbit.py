@@ -195,6 +195,10 @@ class white_rabbit(YellowBlock):
                                       '-include_generated_clocks -of_objects [get_nets user_clk]',
                                       'asynchronous')]
 
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_ports wr_125m_gtrefclk_p]',
+                                      '-include_generated_clocks -of_objects [get_ports wr_20m_vcxo]',
+                                      'asynchronous')]
+
         return cons
 
     def gen_tcl_cmds(self):
