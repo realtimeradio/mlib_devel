@@ -20,6 +20,8 @@ white_rabbit:
   separate_dac_i2c: True
   use_sfp_disable: True
   master_ref_signal: clk_10
+  wr_clk_output_pin: gpio
+  wr_clk_output_pin_index: 0
 ads41_0:
   flip_pn: "7'b0001110"
   clock_region: "X1Y0"

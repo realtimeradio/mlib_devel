@@ -40,6 +40,8 @@ class white_rabbit(YellowBlock):
         self.use_flash_wp = self.conf.get("use_flash_wp", False)
         self.master_ref_signal = self.conf.get("master_ref_signal", "1'b1")
         self.use_external_uart = self.conf.get("use_external_uart", True)
+        self.wr_clk_output_pin = self.conf.get("wr_clk_output_pin", None)
+        self.wr_clk_output_pin_index = self.conf.get("wr_clk_output_pin_index", 0)
         self.vcxo_freq_mhz  = self.conf.get("vcxo_freq_mhz", 20.0)
         self.vcxo_period_ns = 1000.0 / self.vcxo_freq_mhz
         # Modify the default mult factors based on how far from
@@ -128,6 +130,9 @@ class white_rabbit(YellowBlock):
         # add the dont_touch attribute and use it as a clock identifier in constraints
         inst.add_port('clk_sys_o', 'wr_clk', parent_signal=False)
         top.add_signal('wr_clk', attributes={'dont_touch':'"true"'})
+        if self.wr_clk_output_pin is not None:
+            top.add_port('wr_clk_output', '', dir='out')
+            top.assign_signal('wr_clk_output', 'wr_clk')
         # Counters / TAI to software registers
         inst.add_port('tm_tai_o', '%s_tm_tai' % self.name, width=10)
         top.assign_signal('%s_wr_tm_tai_user_data_in[9:0]' % self.name, '%s_tm_tai' % self.name)
@@ -188,6 +193,9 @@ class white_rabbit(YellowBlock):
         cons += [PortConstraint('wr_dac_20m_cs_n', 'wr_dac_20m_cs_n')]
 
         cons += [PortConstraint('wr_onewire', 'wr_onewire')]
+
+        if self.wr_clk_output_pin is not None:
+            cons += [PortConstraint('wr_output_clk', self.wr_clk_output_pin, iogroup_index=self.wr_clk_output_pin_index)]
 
         cons += [ClockConstraint('wr_20m_vcxo', period=self.vcxo_period_ns)]
         cons += [ClockConstraint('wr_125m_gtrefclk_p', period=8.0)]
