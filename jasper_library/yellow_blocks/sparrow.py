@@ -41,6 +41,8 @@ class sparrow(YellowBlock):
         inst.add_port('axil_aresetn',   'axil_rst_n')
         inst.add_port('clk_200',   'clk_200')
         inst.add_port('clk_10',    'clk_10')
+        inst.add_port('UART1_rxd', 'wr_uart_tx')
+        inst.add_port('UART1_txd', 'wr_uart_rx')
 
         inst.add_port('m_axil_araddr', 'M_AXI_araddr', width=32)
         inst.add_port('m_axil_arprot', 'M_AXI_arprot', width=3)

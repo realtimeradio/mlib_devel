@@ -39,6 +39,7 @@ class white_rabbit(YellowBlock):
         self.use_tx_fault = self.conf.get("use_tx_fault", True)
         self.use_flash_wp = self.conf.get("use_flash_wp", False)
         self.master_ref_signal = self.conf.get("master_ref_signal", "1'b1")
+        self.use_external_uart = self.conf.get("use_external_uart", True)
         self.vcxo_freq_mhz  = self.conf.get("vcxo_freq_mhz", 20.0)
         self.vcxo_period_ns = 1000.0 / self.vcxo_freq_mhz
         # Modify the default mult factors based on how far from
@@ -92,8 +93,8 @@ class white_rabbit(YellowBlock):
             inst.add_port('sfp_tx_fault_i', '1\'b0')
         inst.add_port('sfp_los_i', 'wr_sfp_los', dir='in', parent_port=True)
         # UART
-        inst.add_port('uart_rxd_i', 'wr_uart_rx', dir='in', parent_port=True)
-        inst.add_port('uart_txd_o', 'wr_uart_tx', dir='out', parent_port=True)
+        inst.add_port('uart_rxd_i', 'wr_uart_rx', dir='in', parent_port=self.use_external_uart)
+        inst.add_port('uart_txd_o', 'wr_uart_tx', dir='out', parent_port=self.use_external_uart)
         # Flash
         inst.add_port('spi_ncs_o', 'wr_spi_cs_n', dir='out', parent_port=True)
         inst.add_port('spi_miso_i', 'wr_spi_miso', dir='in', parent_port=True)
@@ -166,8 +167,9 @@ class white_rabbit(YellowBlock):
             cons += [PortConstraint('wr_sfp_tx_fault', 'wr_sfp_tx_fault')]
         cons += [PortConstraint('wr_sfp_los', 'wr_sfp_los')]
 
-        cons += [PortConstraint('wr_uart_rx', 'wr_uart_rx')]
-        cons += [PortConstraint('wr_uart_tx', 'wr_uart_tx')]
+        if self.use_external_uart:
+            cons += [PortConstraint('wr_uart_rx', 'wr_uart_rx')]
+            cons += [PortConstraint('wr_uart_tx', 'wr_uart_tx')]
                                                 
         cons += [PortConstraint('wr_spi_cs_n', 'wr_spi_cs_n')]
         cons += [PortConstraint('wr_spi_miso', 'wr_spi_miso')]

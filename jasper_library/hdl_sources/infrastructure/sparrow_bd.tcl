@@ -197,6 +197,8 @@ proc create_root_design { parentCell } {
 
   set FIXED_IO [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:fixedio_rtl:1.0 FIXED_IO ]
 
+  set UART1 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 UART1 ]
+
   set USBIND_0 [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:usbctrl_rtl:1.0 USBIND_0 ]
 
   set m_axil [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 m_axil ]
@@ -363,18 +365,22 @@ proc create_root_design { parentCell } {
    CONFIG.PCW_EN_EMIO_CD_SDIO1 {0} \
    CONFIG.PCW_EN_EMIO_ENET0 {0} \
    CONFIG.PCW_EN_EMIO_I2C0 {0} \
+   CONFIG.PCW_EN_EMIO_MODEM_UART1 {0} \
    CONFIG.PCW_EN_EMIO_PJTAG {0} \
    CONFIG.PCW_EN_EMIO_SDIO1 {0} \
    CONFIG.PCW_EN_EMIO_UART0 {0} \
+   CONFIG.PCW_EN_EMIO_UART1 {1} \
    CONFIG.PCW_EN_EMIO_WP_SDIO1 {0} \
    CONFIG.PCW_EN_ENET0 {1} \
    CONFIG.PCW_EN_GPIO {1} \
    CONFIG.PCW_EN_I2C0 {1} \
+   CONFIG.PCW_EN_MODEM_UART1 {0} \
    CONFIG.PCW_EN_PJTAG {1} \
    CONFIG.PCW_EN_QSPI {1} \
    CONFIG.PCW_EN_SDIO0 {1} \
    CONFIG.PCW_EN_SDIO1 {0} \
    CONFIG.PCW_EN_UART0 {1} \
+   CONFIG.PCW_EN_UART1 {1} \
    CONFIG.PCW_EN_USB0 {1} \
    CONFIG.PCW_FCLK0_PERIPHERAL_DIVISOR0 {5} \
    CONFIG.PCW_FCLK0_PERIPHERAL_DIVISOR1 {2} \
@@ -661,6 +667,9 @@ proc create_root_design { parentCell } {
    CONFIG.PCW_UART0_GRP_FULL_ENABLE {0} \
    CONFIG.PCW_UART0_PERIPHERAL_ENABLE {1} \
    CONFIG.PCW_UART0_UART0_IO {MIO 14 .. 15} \
+   CONFIG.PCW_UART1_GRP_FULL_ENABLE {0} \
+   CONFIG.PCW_UART1_PERIPHERAL_ENABLE {1} \
+   CONFIG.PCW_UART1_UART1_IO {EMIO} \
    CONFIG.PCW_UART_PERIPHERAL_DIVISOR0 {10} \
    CONFIG.PCW_UART_PERIPHERAL_FREQMHZ {100} \
    CONFIG.PCW_UART_PERIPHERAL_VALID {1} \
@@ -675,10 +684,10 @@ proc create_root_design { parentCell } {
    CONFIG.PCW_UIPARAM_DDR_COL_ADDR_COUNT {10} \
    CONFIG.PCW_UIPARAM_DDR_CWL {6} \
    CONFIG.PCW_UIPARAM_DDR_DEVICE_CAPACITY {4096 MBits} \
-   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_0 {0} \
-   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_1 {0} \
-   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_2 {0} \
-   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_3 {0} \
+   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_0 {0.0} \
+   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_1 {0.0} \
+   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_2 {0.0} \
+   CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_3 {0.0} \
    CONFIG.PCW_UIPARAM_DDR_DRAM_WIDTH {16 Bits} \
    CONFIG.PCW_UIPARAM_DDR_MEMORY_TYPE {DDR 3 (Low Voltage)} \
    CONFIG.PCW_UIPARAM_DDR_PARTNO {MT41K256M16 RE-125} \
@@ -726,6 +735,7 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net processing_system7_0_DDR [get_bd_intf_ports DDR] [get_bd_intf_pins processing_system7_0/DDR]
   connect_bd_intf_net -intf_net processing_system7_0_FIXED_IO [get_bd_intf_ports FIXED_IO] [get_bd_intf_pins processing_system7_0/FIXED_IO]
   connect_bd_intf_net -intf_net processing_system7_0_M_AXI_GP0 [get_bd_intf_pins processing_system7_0/M_AXI_GP0] [get_bd_intf_pins smartconnect_0/S00_AXI]
+  connect_bd_intf_net -intf_net processing_system7_0_UART_1 [get_bd_intf_ports UART1] [get_bd_intf_pins processing_system7_0/UART_1]
   connect_bd_intf_net -intf_net processing_system7_0_USBIND_0 [get_bd_intf_ports USBIND_0] [get_bd_intf_pins processing_system7_0/USBIND_0]
   connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_ports m_axil] [get_bd_intf_pins smartconnect_0/M00_AXI]
   connect_bd_intf_net -intf_net smartconnect_0_M01_AXI [get_bd_intf_pins axi_slave_wishbone_c_0/S_AXI] [get_bd_intf_pins smartconnect_0/M01_AXI]
@@ -759,7 +769,6 @@ proc create_root_design { parentCell } {
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
 }
 # End of create_root_design()
@@ -771,4 +780,6 @@ proc create_root_design { parentCell } {
 
 create_root_design ""
 
+
+common::send_msg_id "BD_TCL-1000" "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
 
