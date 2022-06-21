@@ -30,6 +30,8 @@ white_rabbit:
   master_ref_signal: clk_10
   use_external_uart: False
   vcxo_freq_mhz: 25
+  wr_clk_output_pin: gpio
+  wr_clk_output_pin_index: 0
 pins:
   #sys_clk_p:
   #  loc: 
