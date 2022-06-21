@@ -195,7 +195,7 @@ class white_rabbit(YellowBlock):
         cons += [PortConstraint('wr_onewire', 'wr_onewire')]
 
         if self.wr_clk_output_pin is not None:
-            cons += [PortConstraint('wr_output_clk', self.wr_clk_output_pin, iogroup_index=self.wr_clk_output_pin_index)]
+            cons += [PortConstraint('wr_clk_output', self.wr_clk_output_pin, iogroup_index=self.wr_clk_output_pin_index)]
 
         cons += [ClockConstraint('wr_20m_vcxo', period=self.vcxo_period_ns)]
         cons += [ClockConstraint('wr_125m_gtrefclk_p', period=8.0)]
