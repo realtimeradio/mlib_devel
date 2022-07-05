@@ -354,10 +354,10 @@ starty = starty + 50;
 draw_counter(cursys, 1400, starty, 'rxeofctr', clear_name([pipe_no_pipe, '_rx_end_of_frame']));
 
 % rx snapshot
-forty_gbe_mask_draw_rxsnap(cursys, pipe_no_pipe);
+onehundred_gbe_mask_draw_rxsnap(cursys, pipe_no_pipe);
 
 % tx snapshot
-forty_gbe_mask_draw_txsnap(cursys, pipe_no_pipe);
+onehundred_gbe_mask_draw_txsnap(cursys, pipe_no_pipe);
 
 % remove unconnected blocks
 clean_blocks(cursys);
