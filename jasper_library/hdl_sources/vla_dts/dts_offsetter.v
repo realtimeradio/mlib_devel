@@ -49,7 +49,7 @@ module dts_offsetter #(
     output dout_sync
   );
   localparam MUX_FACTOR = (1<<MUX_FACTOR_BITS);
-  localparam MID_FIFO_DEPTH = 256 >> MUX_FACTOR_BITS;
+  localparam MID_FIFO_DEPTH = 32 * MUX_FACTOR;
   
   
   /* Detect positive edges of the advance/delay lines */
@@ -138,10 +138,6 @@ module dts_offsetter #(
   end
   endgenerate 
 
-
-  wire wr_rst_busy;
-  wire rd_rst_busy;
-  wire empty;
   dts_offset_fifo dts_offset_fifo_inst (
     .rst(rst),
     // Write side
@@ -149,17 +145,15 @@ module dts_offsetter #(
     .almost_full(almost_full),
     .overflow(overflow),
     .din(fifo_din),
-    .wr_en(fifo_wr_en & ~wr_rst_busy),
+    .wr_en(fifo_wr_en),
     .full(),
-    .wr_rst_busy(wr_rst_busy),
     // Read side
     .rd_clk(clk_out),
     .almost_empty(almost_empty),
     .underflow(underflow),
     .dout(fifo_dout),
     .rd_en(fifo_rd_en & ~rd_block),
-    .rd_rst_busy(rd_rst_busy),
-    .empty(empty)
+    .empty()
   );
   
 endmodule
