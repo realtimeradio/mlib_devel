@@ -160,7 +160,7 @@ class vla_dts(YellowBlock):
 
         # OUTPUT FIFO
         INPUT_WIDTH = 144
-        INPUT_DEPTH_BITS = 6
+        INPUT_DEPTH_BITS = 8
 
         config = {
             'Fifo_Implementation': 'Independent_Clocks_Block_RAM',
@@ -170,7 +170,7 @@ class vla_dts(YellowBlock):
             'Output_Data_Width': '%d' % (144 // (2**self.mux_factor_bits)),
             'Output_Depth': '%d' % (2**(INPUT_DEPTH_BITS + self.mux_factor_bits)),
             'Reset_Type': 'Asynchronous_Reset',
-            'Full_Flags_Reset_Value': '1',
+            'Full_Flags_Reset_Value': '0',
             'Almost_Full_Flag': 'true',
             'Almost_Empty_Flag': 'true',
             'Underflow_Flag': 'true',
