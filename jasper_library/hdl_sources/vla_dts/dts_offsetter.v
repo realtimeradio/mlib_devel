@@ -138,7 +138,7 @@ module dts_offsetter #(
   end
   endgenerate 
 
-  dts_offset_fifo (
+  dts_offset_fifo dts_offset_fifo_inst (
     .rst(rst),
     // Write side
     .wr_clk(clk_in),
