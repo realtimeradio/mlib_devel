@@ -7,12 +7,12 @@
  * Inputs:
  * din[3*INPUT_WIDTH-1:0] : 3 concatenated, deformatted streams
  *                          From MSBs to LSBs these should be
- *                          "top", "middle", and "bottom"
+ *                          "top", "middle", and "bottom".
+ *                          Earliest samples in MSBs
  * is_three_bit : 1 if the input data should be interpretted as 3-bit, 0 for 8-bit
  *
  * Outputs:
- * dout[3*INPUT_WIDTH-1:0] : Sample streams, with earliest sample in MSBs. This is the opposite
- *                           of the `din` convention.
+ * dout[3*INPUT_WIDTH-1:0] : Sample streams, with earliest sample in MSBs.
  *                           
  *                           In 3-bit mode, words are constructed by interleaving
  *                           "top", "middle", and "bottom" streams bitwise.
@@ -41,27 +41,25 @@ module dts_build_samples #(
   wire [3*INPUT_WIDTH-1:0] dout_12bit;
 
   // Generate 3-bit output.
-  // Interleave bits from 3 streams, and reverse word ordering
-  // so that first word (LSBs in din) is in MSB of dout 
+  // Interleave bits from 3 streams
   generate
   for (genvar i=0; i<INPUT_WIDTH; i=i+1) begin
-    assign dout_3bit[(INPUT_WIDTH-i)*3 - 1] = din_t[i]; // output MSBs
-    assign dout_3bit[(INPUT_WIDTH-i)*3 - 2] = din_m[i];
-    assign dout_3bit[(INPUT_WIDTH-i)*3 - 3] = din_b[i]; // output LSBs
+    assign dout_3bit[(i+1)*3 - 1] = din_t[i]; // output MSBs
+    assign dout_3bit[(i+1)*3 - 2] = din_m[i];
+    assign dout_3bit[(i+1)*3 - 3] = din_b[i]; // output LSBs
   end
   endgenerate
   
   // Generate 8-bit output (cast to 12 bits).
-  // Interleave words from top and bottom streams, and reverse
-  // ordering so that the first word (LSBs in din) is in MSB of dout.
-  // Assume that the first word is in the "top" stream.
+  // Interleave words from top and bottom streams
+  // Assume that the oldest word is in the "top" stream.
   localparam INPUT_NWORDS = (INPUT_WIDTH >> 3);
   generate
   for (genvar i=0; i<INPUT_NWORDS; i=i+1) begin
-    assign dout_12bit[(2*(INPUT_NWORDS-i))  *12 - 1     -: 8] = din_t[(i+1)*8-1:i*8]; // Output MSBs
-    assign dout_12bit[(2*(INPUT_NWORDS-i))  *12 - 1 - 8 -: 4] = 4'b0;
-    assign dout_12bit[(2*(INPUT_NWORDS-i)-1)*12 - 1     -: 8] = din_b[(i+1)*8-1:i*8];
-    assign dout_12bit[(2*(INPUT_NWORDS-i)-1)*12 - 1 - 8 -: 4] = 4'b0;                 // Output LSBs
+    assign dout_12bit[(2*(i+1))*12   - 1     -: 8] = din_t[(i+1)*8-1:i*8]; // Output MSBs
+    assign dout_12bit[(2*(i+1))*12   - 1 - 8 -: 4] = 4'b0;
+    assign dout_12bit[(2*(i+1)-1)*12 - 1     -: 8] = din_b[(i+1)*8-1:i*8];
+    assign dout_12bit[(2*(i+1)-1)*12 - 1 - 8 -: 4] = 4'b0;                 // Output LSBs
   end
   endgenerate
 

@@ -118,18 +118,18 @@ module dts_offsetter #(
     assign dout_sync    = fifo_dout[128];
     assign dout         = fifo_dout[127:0];
   end else if (MUX_FACTOR_BITS == 1) begin
-    assign fifo_din = {4'b0, din_one_sec, din_ten_sec, din_index, din_sync, din[63:0],
-                       4'b0, din_one_sec, din_ten_sec, din_index, din_sync, din[128:127]};
+    assign fifo_din = {4'b0, din_one_sec, din_ten_sec, din_index, din_sync, din[127:64],
+                       4'b0, din_one_sec, din_ten_sec, din_index, din_sync, din[63:0]};
     assign dout_one_sec = fifo_dout[67];
     assign dout_ten_sec = fifo_dout[66];
     assign dout_index   = fifo_dout[65];
     assign dout_sync    = fifo_dout[64];
     assign dout         = fifo_dout[63:0];
   end else if (MUX_FACTOR_BITS == 2) begin
-    assign fifo_din = {din_one_sec, din_ten_sec, din_index, din_sync, din[31:0],
-                       din_one_sec, din_ten_sec, din_index, din_sync, din[63:32],
+    assign fifo_din = {din_one_sec, din_ten_sec, din_index, din_sync, din[127:96],
                        din_one_sec, din_ten_sec, din_index, din_sync, din[95:64],
-                       din_one_sec, din_ten_sec, din_index, din_sync, din[127:96]};
+                       din_one_sec, din_ten_sec, din_index, din_sync, din[63:32],
+                       din_one_sec, din_ten_sec, din_index, din_sync, din[31:0]};
     assign dout_one_sec = fifo_dout[35];
     assign dout_ten_sec = fifo_dout[34];
     assign dout_index   = fifo_dout[33];
