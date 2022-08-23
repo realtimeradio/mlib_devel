@@ -52,13 +52,13 @@ module dts_build_samples #(
   
   // Generate 8-bit output (cast to 12 bits).
   // Interleave words from top and bottom streams
-  // Assume that the oldest word is in the "top" stream.
+  // Assume that the oldest word is in the "bottom" stream.
   localparam INPUT_NWORDS = (INPUT_WIDTH >> 3);
   generate
   for (genvar i=0; i<INPUT_NWORDS; i=i+1) begin
-    assign dout_12bit[(2*(i+1))*12   - 1     -: 8] = din_t[(i+1)*8-1:i*8]; // Output MSBs
+    assign dout_12bit[(2*(i+1))*12   - 1     -: 8] = din_b[(i+1)*8-1:i*8]; // Output MSBs
     assign dout_12bit[(2*(i+1))*12   - 1 - 8 -: 4] = 4'b0;
-    assign dout_12bit[(2*(i+1)-1)*12 - 1     -: 8] = din_b[(i+1)*8-1:i*8];
+    assign dout_12bit[(2*(i+1)-1)*12 - 1     -: 8] = din_t[(i+1)*8-1:i*8];
     assign dout_12bit[(2*(i+1)-1)*12 - 1 - 8 -: 4] = 4'b0;                 // Output LSBs
   end
   endgenerate
