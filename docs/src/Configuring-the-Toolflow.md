@@ -50,6 +50,10 @@ Here is a sample `startsg.local` file:
 
     # Activate a custom python environment on load
     export CASPER_PYTHON_VENV_ON_START=/home/user/work/casper_venv
+    # Uncomment the below to skip the load_system calls in startup.m.
+    # These calls seem to cause segfaults with Ubuntu 18.04 / Matlab 2021a / Xilinx 2021.1
+    # and the systems seem to load fine without the problem calls.
+    # CASPER_SKIP_STARTUP_LOAD_SYSTEM=yesplease
 ```
 
 Since this configuration refers to your specific installation environment, in general it shouldn't be commited to the `mlib_devel` repository. In fact, the repository is configured to ignore changes to any files with names beginning `startsg.`.
