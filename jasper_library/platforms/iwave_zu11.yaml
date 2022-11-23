@@ -1,0 +1,29 @@
+name: iwave_zu11
+manufacturer: Xilinx
+fpga: xczu11eg-ffvc1760-1-i
+family: zynq-ultrascaleplus
+config_voltage: 1.8
+cfgbvs: GND
+backend_target: vivado
+mmbus_architecture: ['AXI4-Lite', 'wishbone']
+# AXI base addr
+mmbus_base_address:  0xa0000000
+# WB base addr
+dsp_wb_base_address: 0xa1000000
+# How to address each 32-bit (i.e. 4 indicates byte-addressable)
+mmbus_address_alignment: 4
+sources: []
+constraints: []
+
+provides: []
+
+pins:
+  clk_100_p:
+    iostd: LVDS
+    loc: AM15
+  clk_100_n:
+    iostd: LVDS
+    loc: AN15
+  pmod1:
+    iostd: LVCMOS18
+    loc: [B16, A18, A13, B15]
