@@ -915,6 +915,18 @@ proc create_root_design { parentCell } {
 
 
   # Create interface ports
+  set m_axil [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:aximm_rtl:1.0 m_axil ]
+  set_property -dict [ list \
+   CONFIG.ADDR_WIDTH {32} \
+   CONFIG.DATA_WIDTH {32} \
+   CONFIG.HAS_BURST {0} \
+   CONFIG.HAS_CACHE {0} \
+   CONFIG.HAS_LOCK {0} \
+   CONFIG.HAS_QOS {0} \
+   CONFIG.HAS_REGION {0} \
+   CONFIG.PROTOCOL {AXI4LITE} \
+   ] $m_axil
+
 
   # Create ports
   set ACK_I [ create_bd_port -dir I ACK_I ]
@@ -927,6 +939,9 @@ proc create_root_design { parentCell } {
   set STB_O [ create_bd_port -dir O STB_O ]
   set WE_O [ create_bd_port -dir O WE_O ]
   set axi_aclk [ create_bd_port -dir O -type clk axi_aclk ]
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {m_axil} \
+ ] $axi_aclk
   set axi_aclk90 [ create_bd_port -dir O -type clk axi_aclk90 ]
   set axi_aclk180 [ create_bd_port -dir O -type clk axi_aclk180 ]
   set axi_aclk270 [ create_bd_port -dir O -type clk axi_aclk270 ]
@@ -1005,7 +1020,7 @@ proc create_root_design { parentCell } {
   # Create instance: axi_cpu_interconnect, and set properties
   set axi_cpu_interconnect [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_cpu_interconnect ]
   set_property -dict [ list \
-   CONFIG.NUM_MI {12} \
+   CONFIG.NUM_MI {13} \
    CONFIG.NUM_SI {1} \
  ] $axi_cpu_interconnect
 
@@ -2916,6 +2931,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_intf_net -intf_net axi_cpu_interconnect_M09_AXI [get_bd_intf_pins axi_cpu_interconnect/M09_AXI] [get_bd_intf_pins mxfe_tx_data_offload/s_axi]
   connect_bd_intf_net -intf_net axi_cpu_interconnect_M10_AXI [get_bd_intf_pins axi_cpu_interconnect/M10_AXI] [get_bd_intf_pins mxfe_rx_data_offload/s_axi]
   connect_bd_intf_net -intf_net axi_cpu_interconnect_M11_AXI [get_bd_intf_pins axi_cpu_interconnect/M11_AXI] [get_bd_intf_pins axi_slave_wishbone_c_0/S_AXI]
+  connect_bd_intf_net -intf_net axi_cpu_interconnect_M12_AXI [get_bd_intf_ports m_axil] [get_bd_intf_pins axi_cpu_interconnect/M12_AXI]
   connect_bd_intf_net -intf_net axi_hp0_interconnect_M00_AXI [get_bd_intf_pins axi_hp0_interconnect/M00_AXI] [get_bd_intf_pins sys_ps8/S_AXI_HP0_FPD]
   connect_bd_intf_net -intf_net axi_hp1_interconnect_M00_AXI [get_bd_intf_pins axi_hp1_interconnect/M00_AXI] [get_bd_intf_pins sys_ps8/S_AXI_HP1_FPD]
   connect_bd_intf_net -intf_net axi_hp2_interconnect_M00_AXI [get_bd_intf_pins axi_hp2_interconnect/M00_AXI] [get_bd_intf_pins sys_ps8/S_AXI_HP2_FPD]
@@ -3110,6 +3126,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   assign_bd_address -offset 0x84B10000 -range 0x00002000 -target_address_space [get_bd_addr_spaces sys_ps8/Data] [get_bd_addr_segs tx_mxfe_tpl_core/dac_tpl_core/s_axi/axi_lite] -force
   assign_bd_address -offset 0x9C450000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps8/Data] [get_bd_addr_segs mxfe_rx_data_offload/i_data_offload/s_axi/axi_lite] -force
   assign_bd_address -offset 0x9C440000 -range 0x00010000 -target_address_space [get_bd_addr_spaces sys_ps8/Data] [get_bd_addr_segs mxfe_tx_data_offload/i_data_offload/s_axi/axi_lite] -force
+  assign_bd_address -offset 0x80000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces sys_ps8/Data] [get_bd_addr_segs m_axil/Reg] -force
   assign_bd_address -offset 0x84A90000 -range 0x00004000 -target_address_space [get_bd_addr_spaces sys_ps8/Data] [get_bd_addr_segs axi_mxfe_rx_jesd/rx_axi/s_axi/axi_lite] -force
   assign_bd_address -offset 0x84B90000 -range 0x00004000 -target_address_space [get_bd_addr_spaces sys_ps8/Data] [get_bd_addr_segs axi_mxfe_tx_jesd/tx_axi/s_axi/axi_lite] -force
 

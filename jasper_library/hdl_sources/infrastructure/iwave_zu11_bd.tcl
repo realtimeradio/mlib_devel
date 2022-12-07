@@ -1854,8 +1854,8 @@ proc create_root_design { parentCell } {
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins rst_ps8_0_100M/ext_reset_in] [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0]
 
   # Create address segments
-  assign_bd_address -offset 0xA1000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_slave_wishbone_c_0/S_AXI/reg0] -force
-  assign_bd_address -offset 0xA0000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs m_axil/Reg] -force
+  assign_bd_address -offset 0x88000000 -range 0x00100000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_slave_wishbone_c_0/S_AXI/reg0] -force
+  assign_bd_address -offset 0x80000000 -range 0x01000000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs m_axil/Reg] -force
 
 
   # Restore current instance

@@ -7,9 +7,9 @@ cfgbvs: GND
 backend_target: vivado
 mmbus_architecture: ['AXI4-Lite', 'wishbone']
 # AXI base addr
-mmbus_base_address:  0xa0000000
+mmbus_base_address:  0x80000000
 # WB base addr
-dsp_wb_base_address: 0xa1000000
+dsp_wb_base_address: 0x88000000
 # How to address each 32-bit (i.e. 4 indicates byte-addressable)
 mmbus_address_alignment: 4
 sources: []
@@ -27,3 +27,222 @@ pins:
   pmod1:
     iostd: LVCMOS18
     loc: [B16, A18, A13, B15]
+
+  fmc0_clk_n:
+    iostd: lvds
+    loc:
+      - N15
+      - A12
+      - None
+      - None
+  
+  fmc0_clk_p:
+    iostd: lvds
+    loc:
+      - P15
+      - B13
+      - None
+      - None
+  
+  fmc0_dp_c2m_n:
+    loc:
+      - T35
+      - R37
+      - P35
+      - N37
+      - M35
+      - L37
+      - K35
+      - J37
+      - L5
+      - K3
+      - J5
+      - H3
+      - R5
+      - P7
+      - N5
+      - M7
+      - W5
+      - V7
+      - U5
+      - T7
+      - AC5
+      - AB7
+      - AA5
+      - Y7
+  
+  fmc0_dp_c2m_p:
+    loc:
+      - T34
+      - R36
+      - P34
+      - N36
+      - M34
+      - L36
+      - K34
+      - J36
+      - L6
+      - K4
+      - J6
+      - H4
+      - R6
+      - P8
+      - N6
+      - M8
+      - W6
+      - V8
+      - U6
+      - T8
+      - AC6
+      - AB8
+      - AA6
+      - Y8
+  
+  fmc0_dp_m2c_n:
+    loc:
+      - R42
+      - P40
+      - N42
+      - M40
+      - L42
+      - K40
+      - J42
+      - H40
+      - M3
+      - L1
+      - J1
+      - G1
+      - T3
+      - R1
+      - P3
+      - N1
+      - Y3
+      - W1
+      - V3
+      - U1
+      - AD3
+      - AC1
+      - AB3
+      - AA1
+  
+  fmc0_dp_m2c_p:
+    loc:
+      - R41
+      - P39
+      - N41
+      - M39
+      - L41
+      - K39
+      - J41
+      - H39
+      - M4
+      - L2
+      - J2
+      - G2
+      - T4
+      - R2
+      - P4
+      - N2
+      - Y4
+      - W2
+      - V4
+      - U2
+      - AD4
+      - AC2
+      - AB4
+      - AA2
+  
+  fmc0_gbtclk_n:
+    loc:
+      - W33
+      - R33
+      - T11
+      - V11
+      - Y11
+      - AB11
+  
+  fmc0_gbtclk_p:
+    loc:
+      - W32
+      - R32
+      - T12
+      - V12
+      - Y12
+      - AB12
+  
+  fmc0_la_n:
+    iostd: lvds
+    loc:
+      - AY9
+      - BB8
+      - AY8
+      - BA7
+      - BB6
+      - BB4
+      - AW12
+      - AV11
+      - AW10
+      - AV8
+      - AT12
+      - AT10
+      - AR12
+      - AR10
+      - AR14
+      - AP12
+      - AN11
+      - AM14
+      - AN13
+      - AK14
+      - N16
+      - C13
+      - F8
+      - C9
+      - A8
+      - F6
+      - D6
+      - H8
+      - A7
+      - H9
+      - D7
+      - E9
+      - E4
+      - C5
+  
+  fmc0_la_p:
+    iostd: lvds
+    loc:
+      - AW9
+      - BB9
+      - AW8
+      - BA8
+      - BA6
+      - BB5
+      - AV12
+      - AU11
+      - AW11
+      - AV9
+      - AT13
+      - AT11
+      - AR13
+      - AP10
+      - AR15
+      - AN12
+      - AM11
+      - AL14
+      - AM13
+      - AJ14
+      - P16
+      - D13
+      - G8
+      - D9
+      - B8
+      - G6
+      - E6
+      - J8
+      - B7
+      - J9
+      - E7
+      - F9
+      - E5
+      - C6
+
