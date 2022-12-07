@@ -1206,17 +1206,6 @@ class ToolflowBackend(object):
             if 'module_name' in ip:
                 self.add_ip(ip)
 
-        # elaborate pin constraints
-        for const in self.castro.synthesis.pin_constraints:
-            pins = self.plat.get_pins(const.symbolic_name,
-                                      const.symbolic_indices)
-            numindices = len(const.symbolic_indices)
-            const.location = [pins[idx].loc for idx in range(numindices)]
-            const.io_standard = [pins[idx].iostd for idx in range(numindices)]
-            const.drive_strength = [pins[idx].drive_strength for idx in range(numindices)]
-            const.diff_term = [pins[idx].diff_term for idx in range(numindices)]
-            const.is_vector = const.portname_indices != []
-
         self.gen_constraint_file(
             self.castro.synthesis.pin_constraints +
             self.castro.synthesis.clk_constraints +
