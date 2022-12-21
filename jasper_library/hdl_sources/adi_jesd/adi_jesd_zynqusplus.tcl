@@ -1,6 +1,6 @@
 
 ################################################################
-# This is a generated script based on design: system
+# This is a generated script based on design: iwave_zu11_bd
 #
 # Though there are limitations about the generated script,
 # the main purpose of this utility is to make learning
@@ -35,7 +35,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 ################################################################
 
 # To test this script, run the following commands from Vivado Tcl console:
-# source system_script.tcl
+# source iwave_zu11_bd_script.tcl
 
 # If there is no project opened, this script will create a
 # project, but make sure you do not have an existing project
@@ -49,7 +49,7 @@ if { $list_projs eq "" } {
 
 # CHANGE DESIGN NAME HERE
 variable design_name
-set design_name system
+set design_name iwave_zu11_bd
 
 # If you do not already have an existing IP Integrator design open,
 # you can create a design using the following command:
@@ -1049,6 +1049,7 @@ proc create_root_design { parentCell } {
   # Create instance: axi_mxfe_rx_dma, and set properties
   set axi_mxfe_rx_dma [ create_bd_cell -type ip -vlnv analog.com:user:axi_dmac:1.0 axi_mxfe_rx_dma ]
   set_property -dict [ list \
+   CONFIG.ALLOW_ASYM_MEM {1} \
    CONFIG.AXI_SLICE_DEST {true} \
    CONFIG.AXI_SLICE_SRC {true} \
    CONFIG.CYCLIC {false} \
@@ -1074,7 +1075,7 @@ proc create_root_design { parentCell } {
    CONFIG.LPM_OR_DFE_N {1} \
    CONFIG.NUM_OF_LANES {8} \
    CONFIG.OUT_CLK_SEL {"011"} \
-   CONFIG.QPLL_ENABLE {1} \
+   CONFIG.QPLL_ENABLE {0} \
    CONFIG.RATE {"000"} \
    CONFIG.SYS_CLK_SEL {0x2} \
    CONFIG.TX_OR_RX_N {0} \
@@ -1083,8 +1084,10 @@ proc create_root_design { parentCell } {
   # Create instance: axi_mxfe_tx_dma, and set properties
   set axi_mxfe_tx_dma [ create_bd_cell -type ip -vlnv analog.com:user:axi_dmac:1.0 axi_mxfe_tx_dma ]
   set_property -dict [ list \
+   CONFIG.ALLOW_ASYM_MEM {1} \
    CONFIG.AXI_SLICE_DEST {true} \
    CONFIG.AXI_SLICE_SRC {true} \
+   CONFIG.CACHE_COHERENT_DEST {false} \
    CONFIG.CYCLIC {true} \
    CONFIG.DMA_2D_TRANSFER {false} \
    CONFIG.DMA_DATA_WIDTH_DEST {512} \
@@ -1106,7 +1109,7 @@ proc create_root_design { parentCell } {
    CONFIG.LINK_MODE {2} \
    CONFIG.NUM_OF_LANES {8} \
    CONFIG.OUT_CLK_SEL {"011"} \
-   CONFIG.QPLL_ENABLE {0} \
+   CONFIG.QPLL_ENABLE {1} \
    CONFIG.RATE {"000"} \
    CONFIG.SYS_CLK_SEL {0x2} \
    CONFIG.TX_DIFFCTRL {0x0C} \
@@ -2881,12 +2884,14 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   # Create instance: util_mxfe_xcvr, and set properties
   set util_mxfe_xcvr [ create_bd_cell -type ip -vlnv analog.com:user:util_adxcvr:1.0 util_mxfe_xcvr ]
   set_property -dict [ list \
+   CONFIG.CH_HSPMUX {0x6060} \
    CONFIG.CPLL_CFG0 {0x01FA} \
    CONFIG.CPLL_CFG1 {0x002B} \
    CONFIG.CPLL_CFG2 {0x0002} \
    CONFIG.CPLL_FBDIV {2} \
    CONFIG.CPLL_FBDIV_4_5 {5} \
    CONFIG.LINK_MODE {2} \
+   CONFIG.PPF0_CFG {0x0600} \
    CONFIG.PPF1_CFG {0x0400} \
    CONFIG.PREIQ_FREQ_BST {2} \
    CONFIG.QPLL_CFG0 {0x331c} \
@@ -2894,11 +2899,17 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
    CONFIG.QPLL_CFG2_G3 {0x0FC1} \
    CONFIG.QPLL_CFG4 {0x0003} \
    CONFIG.QPLL_FBDIV {"0001000010"} \
+   CONFIG.QPLL_LPF {0x33F} \
    CONFIG.QPLL_REFCLK_DIV {2} \
+   CONFIG.RTX_BUF_CML_CTRL {0x5} \
    CONFIG.RXCDR_CFG2 {0x01E9} \
+   CONFIG.RXCDR_CFG2_GEN2 {"1001100101"} \
+   CONFIG.RXCDR_CFG2_GEN4 {0x00B4} \
    CONFIG.RXCDR_CFG3 {0x0023} \
+   CONFIG.RXCDR_CFG3_GEN2 {0x12} \
    CONFIG.RXDFE_KH_CFG2 {0x281C} \
    CONFIG.RXDFE_KH_CFG3 {0x4120} \
+   CONFIG.RXPI_CFG0 {0x0104} \
    CONFIG.RX_CLK25_DIV {10} \
    CONFIG.RX_LANE_RATE {18.5625} \
    CONFIG.RX_NUM_OF_LANES {8} \
@@ -2916,6 +2927,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
    CONFIG.TX_CLK25_DIV {10} \
    CONFIG.TX_LANE_RATE {18.5625} \
    CONFIG.TX_NUM_OF_LANES {8} \
+   CONFIG.TX_PI_BIASSET {2} \
  ] $util_mxfe_xcvr
 
   # Create interface connections
@@ -2945,8 +2957,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_ch_5 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_ch_5] [get_bd_intf_pins util_mxfe_xcvr/up_rx_5]
   connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_ch_6 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_ch_6] [get_bd_intf_pins util_mxfe_xcvr/up_rx_6]
   connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_ch_7 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_ch_7] [get_bd_intf_pins util_mxfe_xcvr/up_rx_7]
-  connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_cm_0 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_cm_0] [get_bd_intf_pins util_mxfe_xcvr/up_cm_0]
-  connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_cm_4 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_cm_4] [get_bd_intf_pins util_mxfe_xcvr/up_cm_4]
   connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_es_0 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_es_0] [get_bd_intf_pins util_mxfe_xcvr/up_es_0]
   connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_es_1 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_es_1] [get_bd_intf_pins util_mxfe_xcvr/up_es_1]
   connect_bd_intf_net -intf_net axi_mxfe_rx_xcvr_up_es_2 [get_bd_intf_pins axi_mxfe_rx_xcvr/up_es_2] [get_bd_intf_pins util_mxfe_xcvr/up_es_2]
@@ -2972,6 +2982,8 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_intf_net -intf_net axi_mxfe_tx_xcvr_up_ch_5 [get_bd_intf_pins axi_mxfe_tx_xcvr/up_ch_5] [get_bd_intf_pins util_mxfe_xcvr/up_tx_5]
   connect_bd_intf_net -intf_net axi_mxfe_tx_xcvr_up_ch_6 [get_bd_intf_pins axi_mxfe_tx_xcvr/up_ch_6] [get_bd_intf_pins util_mxfe_xcvr/up_tx_6]
   connect_bd_intf_net -intf_net axi_mxfe_tx_xcvr_up_ch_7 [get_bd_intf_pins axi_mxfe_tx_xcvr/up_ch_7] [get_bd_intf_pins util_mxfe_xcvr/up_tx_7]
+  connect_bd_intf_net -intf_net axi_mxfe_tx_xcvr_up_cm_0 [get_bd_intf_pins axi_mxfe_tx_xcvr/up_cm_0] [get_bd_intf_pins util_mxfe_xcvr/up_cm_0]
+  connect_bd_intf_net -intf_net axi_mxfe_tx_xcvr_up_cm_4 [get_bd_intf_pins axi_mxfe_tx_xcvr/up_cm_4] [get_bd_intf_pins util_mxfe_xcvr/up_cm_4]
   connect_bd_intf_net -intf_net mxfe_rx_data_offload_m_axis [get_bd_intf_pins axi_mxfe_rx_dma/s_axis] [get_bd_intf_pins mxfe_rx_data_offload/m_axis]
   connect_bd_intf_net -intf_net mxfe_tx_data_offload_m_axis [get_bd_intf_pins mxfe_tx_data_offload/m_axis] [get_bd_intf_pins util_mxfe_upack/s_axis]
   connect_bd_intf_net -intf_net s_axis_1 [get_bd_intf_pins axi_mxfe_tx_dma/m_axis] [get_bd_intf_pins mxfe_tx_data_offload/s_axis]
@@ -3131,9 +3143,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   assign_bd_address -offset 0x84B90000 -range 0x00004000 -target_address_space [get_bd_addr_spaces sys_ps8/Data] [get_bd_addr_segs axi_mxfe_tx_jesd/tx_axi/s_axi/axi_lite] -force
 
   # Exclude Address Segments
-  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces axi_mxfe_rx_dma/m_dest_axi] [get_bd_addr_segs sys_ps8/SAXIGP3/HP1_DDR_HIGH]
   exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces axi_mxfe_rx_xcvr/m_axi] [get_bd_addr_segs sys_ps8/SAXIGP2/HP0_DDR_HIGH]
-  exclude_bd_addr_seg -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces axi_mxfe_tx_dma/m_src_axi] [get_bd_addr_segs sys_ps8/SAXIGP4/HP2_DDR_HIGH]
 
 
   # Restore current instance
