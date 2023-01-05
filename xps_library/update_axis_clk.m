@@ -65,7 +65,7 @@ function [] = update_axis_clk(gcb,tile)
     for a = dac_slices
       % determine choices for samples per clock
       if (gen < 2)
-        w = 1:8;
+        w = 1:16;
       else
         w = 1:16;
       end
