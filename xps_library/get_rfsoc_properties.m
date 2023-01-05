@@ -8,7 +8,7 @@ function [gen, tile_arch, fs_max, fs_min] = get_rfsoc_properties(gcb)
   % callbacks access those workspace values?
 
   % get xsg block to extract current part set by platform
-  sysgen_blk = find_system(gcs, 'SearchDepth', 1, 'FollowLinks', 'on',...
+  sysgen_blk = find_system(bdroot, 'SearchDepth', 1, 'FollowLinks', 'on',...
   'LookUnderMasks', 'all', 'Tag', 'genX');
   if length(sysgen_blk) == 1
       xsg_blk = sysgen_blk{1};
