@@ -116,6 +116,12 @@ class adi_jesd(YellowBlock):
         add_ext_port(inst, 'sysref2_p', 'in')
         add_ext_port(inst, 'txen', 'out', 2)
 
+        # Ports to Simulink
+        inst.add_port('dout', self.fullname + '_dout', width=512)
+        inst.add_port('dout_vld', self.fullname + '_dout_vld')
+        inst.add_port('dout_overflow', self.fullname + '_dout_overflow')
+        inst.add_port('dout_sync', self.fullname + '_dout_sync')
+
     def gen_constraints(self):
         def add_con(conlist, name, pinname, iindex=[], oindex=[0]):
             portname = self.pp + name

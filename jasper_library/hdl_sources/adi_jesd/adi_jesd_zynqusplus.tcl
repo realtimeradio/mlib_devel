@@ -949,6 +949,10 @@ proc create_root_design { parentCell } {
   set_property -dict [ list \
    CONFIG.FREQ_HZ {300000000} \
  ] $clk300mhz
+  set dout [ create_bd_port -dir O -from 511 -to 0 dout ]
+  set dout_overflow [ create_bd_port -dir O dout_overflow ]
+  set dout_sync [ create_bd_port -dir O dout_sync ]
+  set dout_vld [ create_bd_port -dir O dout_vld ]
   set ext_sync_in [ create_bd_port -dir I ext_sync_in ]
   set gpio_i [ create_bd_port -dir I -from 94 -to 0 gpio_i ]
   set gpio_o [ create_bd_port -dir O -from 94 -to 0 gpio_o ]
@@ -3003,7 +3007,6 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net DAT_I_0_1 [get_bd_ports DAT_I] [get_bd_pins axi_slave_wishbone_c_0/DAT_I]
   connect_bd_net -net GND_1_dout [get_bd_pins GND_1/dout] [get_bd_pins mxfe_rx_data_offload/s_axis_tlast] [get_bd_pins mxfe_rx_data_offload/sync_ext] [get_bd_pins mxfe_tx_data_offload/sync_ext] [get_bd_pins sys_concat_intc_0/In0] [get_bd_pins sys_concat_intc_0/In1] [get_bd_pins sys_concat_intc_0/In2] [get_bd_pins sys_concat_intc_0/In3] [get_bd_pins sys_concat_intc_0/In4] [get_bd_pins sys_concat_intc_0/In5] [get_bd_pins sys_concat_intc_0/In6] [get_bd_pins sys_concat_intc_0/In7] [get_bd_pins sys_concat_intc_1/In0] [get_bd_pins sys_concat_intc_1/In1] [get_bd_pins sys_concat_intc_1/In6] [get_bd_pins sys_concat_intc_1/In7] [get_bd_pins sys_ps8/emio_spi0_s_i] [get_bd_pins sys_ps8/emio_spi0_sclk_i] [get_bd_pins sys_ps8/emio_spi1_s_i] [get_bd_pins sys_ps8/emio_spi1_sclk_i] [get_bd_pins tx_mxfe_tpl_core/dac_dunf]
   connect_bd_net -net VCC_1_dout [get_bd_pins VCC_1/dout] [get_bd_pins mxfe_rx_data_offload/s_axis_tkeep] [get_bd_pins sys_ps8/emio_spi0_ss_i_n] [get_bd_pins sys_ps8/emio_spi1_ss_i_n]
-  connect_bd_net -net adc_dovf_1 [get_bd_pins rx_mxfe_tpl_core/adc_dovf] [get_bd_pins util_mxfe_cpack/fifo_wr_overflow]
   connect_bd_net -net axi_mxfe_rx_dma_irq [get_bd_pins axi_mxfe_rx_dma/irq] [get_bd_pins sys_concat_intc_1/In5]
   connect_bd_net -net axi_mxfe_rx_jesd_irq [get_bd_pins axi_mxfe_rx_jesd/irq] [get_bd_pins sys_concat_intc_1/In3]
   connect_bd_net -net axi_mxfe_rx_jesd_rx_data_tdata [get_bd_pins axi_mxfe_rx_jesd/rx_data_tdata] [get_bd_pins rx_mxfe_tpl_core/link_data]
@@ -3101,8 +3104,10 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net tx_mxfe_tpl_core_dac_valid_0 [get_bd_pins tx_mxfe_tpl_core/dac_valid_0] [get_bd_pins util_mxfe_upack/fifo_rd_en]
   connect_bd_net -net upack_reset_sources_dout [get_bd_pins upack_reset_sources/dout] [get_bd_pins upack_rst_logic/Op1]
   connect_bd_net -net upack_rst_logic_Res [get_bd_pins upack_rst_logic/Res] [get_bd_pins util_mxfe_upack/reset]
-  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_data [get_bd_pins mxfe_rx_data_offload/s_axis_tdata] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_data]
-  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_en [get_bd_pins mxfe_rx_data_offload/s_axis_tvalid] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_en]
+  connect_bd_net -net util_mxfe_cpack_fifo_wr_overflow [get_bd_ports dout_overflow] [get_bd_pins rx_mxfe_tpl_core/adc_dovf] [get_bd_pins util_mxfe_cpack/fifo_wr_overflow]
+  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_data [get_bd_ports dout] [get_bd_pins mxfe_rx_data_offload/s_axis_tdata] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_data]
+  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_en [get_bd_ports dout_vld] [get_bd_pins mxfe_rx_data_offload/s_axis_tvalid] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_en]
+  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_sync [get_bd_ports dout_sync] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_sync]
   connect_bd_net -net util_mxfe_upack_fifo_rd_data_0 [get_bd_pins tx_mxfe_tpl_core/dac_data_0] [get_bd_pins util_mxfe_upack/fifo_rd_data_0]
   connect_bd_net -net util_mxfe_upack_fifo_rd_data_1 [get_bd_pins tx_mxfe_tpl_core/dac_data_1] [get_bd_pins util_mxfe_upack/fifo_rd_data_1]
   connect_bd_net -net util_mxfe_xcvr_rx_out_clk_0 [get_bd_ports link_clk_out] [get_bd_pins axi_mxfe_rx_jesd/link_clk] [get_bd_pins util_mxfe_xcvr/rx_clk_0] [get_bd_pins util_mxfe_xcvr/rx_clk_1] [get_bd_pins util_mxfe_xcvr/rx_clk_2] [get_bd_pins util_mxfe_xcvr/rx_clk_3] [get_bd_pins util_mxfe_xcvr/rx_clk_4] [get_bd_pins util_mxfe_xcvr/rx_clk_5] [get_bd_pins util_mxfe_xcvr/rx_clk_6] [get_bd_pins util_mxfe_xcvr/rx_clk_7] [get_bd_pins util_mxfe_xcvr/rx_out_clk_0]

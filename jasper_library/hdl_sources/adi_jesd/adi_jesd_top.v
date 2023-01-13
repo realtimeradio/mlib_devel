@@ -51,6 +51,11 @@ module adi_jesd_top  #(
   input         sysref2_n,
   input         sysref2_p,
   output [1:0]  txen,
+  // User IO
+  output [511:0] dout,
+  output dout_overflow,
+  output dout_vld,
+  output dout_sync,
   // Internal IO
   output clk300,
   output axil_aclk,
@@ -271,7 +276,13 @@ module adi_jesd_top  #(
     .tx_sync_0 (1'b0), // not used in 204C
     .rx_sysref_0 (sysref),
     .link_clk_out(link_clk),
-    .tx_sysref_0 (sysref));
+    .tx_sysref_0 (sysref),
+    // User outputs
+    .dout(dout),
+    .dout_overflow(dout_overflow),
+    .dout_vld(dout_vld),
+    .dout_sync(dout_sync)
+    );
 
   assign rx_data_p_loc[RX_JESD_L*RX_NUM_LINKS-1:0] = rx_data_p[RX_JESD_L*RX_NUM_LINKS-1:0];
   assign rx_data_n_loc[RX_JESD_L*RX_NUM_LINKS-1:0] = rx_data_n[RX_JESD_L*RX_NUM_LINKS-1:0];
