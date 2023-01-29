@@ -144,6 +144,7 @@ if __name__ == '__main__':
         fh.write('*\n')
         fh.write('*/\n')
         fh.write('!outputs/\n')
+        fh.write('!outputs/*\n')
 
     if opts.be == 'vivado':
         os.environ['SYSGEN_SCRIPT'] = os.environ['MLIB_DEVEL_PATH'] + '/startsg'
