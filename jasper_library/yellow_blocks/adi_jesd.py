@@ -36,6 +36,11 @@ class adi_jesd(YellowBlock):
                 }]
         # port prefix
         self.pp = 'jesd_fmc%d_' % self.fmc_port
+        self.provides = []
+        self.provides += ['adc_clk']
+        self.provides += ['adc_clk90']  # lies
+        self.provides += ['adc_clk180'] # lies
+        self.provides += ['adc_clk270'] # lies
 
     def modify_top(self,top):
         inst = top.get_instance('adi_jesd_top', 'jesd_top_inst')
@@ -115,6 +120,9 @@ class adi_jesd(YellowBlock):
         add_ext_port(inst, 'sysref2_n', 'in')
         add_ext_port(inst, 'sysref2_p', 'in')
         add_ext_port(inst, 'txen', 'out', 2)
+
+        # ADC clock
+        inst.add_port('adc_clk_out', 'adc_clk')
 
         # Ports to Simulink
         inst.add_port('dout', self.fullname + '_dout', width=512)

@@ -56,6 +56,7 @@ module adi_jesd_top  #(
   output dout_overflow,
   output dout_vld,
   output dout_sync,
+  output adc_clk_out,
   // Internal IO
   output clk300,
   output axil_aclk,
@@ -64,33 +65,33 @@ module adi_jesd_top  #(
   output axil_aclk270,
   output axil_aresetn,
 
-  output m_axil_araddr,
-  output m_axil_arprot,
+  output [31:0] m_axil_araddr,
+  output [2:0] m_axil_arprot,
   input m_axil_arready,
   output m_axil_arvalid,
-  output m_axil_awaddr,
-  output m_axil_awprot,
+  output [31:0] m_axil_awaddr,
+  output [2:0] m_axil_awprot,
   input m_axil_awready,
   output m_axil_awvalid,
   output m_axil_bready,
-  input m_axil_bresp,
+  input [1:0] m_axil_bresp,
   input m_axil_bvalid,
-  input m_axil_rdata,
+  input [31:0] m_axil_rdata,
   output m_axil_rready,
-  input m_axil_rresp,
+  input [1:0]m_axil_rresp,
   input m_axil_rvalid,
-  output m_axil_wdata,
+  output [31:0] m_axil_wdata,
   input m_axil_wready,
-  output m_axil_wstrb,
+  output [3:0] m_axil_wstrb,
   output m_axil_wvalid,
 
   output CYC_O,
   output STB_O,
   output WE_O,
-  output SEL_O,
-  output ADR_O,
-  output DAT_O,
-  input DAT_I,
+  output [3:0] SEL_O,
+  output [31:0] ADR_O,
+  output [31:0] DAT_O,
+  input  [31:0] DAT_I,
   input ACK_I,
   output RST_O
 );
@@ -111,6 +112,7 @@ module adi_jesd_top  #(
   wire            ref_clk;
   wire            sysref;
   wire            link_clk;
+  assign          adc_clk_out = link_clk;
 
   wire    [7:0]   rx_data_p_loc;
   wire    [7:0]   rx_data_n_loc;
@@ -224,6 +226,44 @@ module adi_jesd_top  #(
   assign gpio_i[7:0] = gpio_o[7:0];
 
   iwave_zu11_bd_wrapper i_system_wrapper (
+    // User clocks / reset
+    .clk300mhz(clk300),
+    .axi_aclk   (axil_aclk   ),
+    .axi_aclk90 (axil_aclk90 ),
+    .axi_aclk180(axil_aclk180),
+    .axi_aclk270(axil_aclk270),
+    .axi_aresetn(axil_aresetn),
+    // AXI Lite
+    .m_axil_araddr (m_axil_araddr ),
+    .m_axil_arprot (m_axil_arprot ),
+    .m_axil_arready(m_axil_arready),
+    .m_axil_arvalid(m_axil_arvalid),
+    .m_axil_awaddr (m_axil_awaddr ),
+    .m_axil_awprot (m_axil_awprot ),
+    .m_axil_awready(m_axil_awready),
+    .m_axil_awvalid(m_axil_awvalid),
+    .m_axil_bready (m_axil_bready ),
+    .m_axil_bresp  (m_axil_bresp  ),
+    .m_axil_bvalid (m_axil_bvalid ),
+    .m_axil_rdata  (m_axil_rdata  ),
+    .m_axil_rready (m_axil_rready ),
+    .m_axil_rresp  (m_axil_rresp  ),
+    .m_axil_rvalid (m_axil_rvalid ),
+    .m_axil_wdata  (m_axil_wdata  ),
+    .m_axil_wready (m_axil_wready ),
+    .m_axil_wstrb  (m_axil_wstrb  ),
+    .m_axil_wvalid (m_axil_wvalid ),
+    // Wishbone
+    .CYC_O(CYC_O),
+    .STB_O(STB_O),
+    .WE_O (WE_O ),
+    .SEL_O(SEL_O),
+    .ADR_O(ADR_O),
+    .DAT_O(DAT_O),
+    .DAT_I(DAT_I),
+    .ACK_I(ACK_I),
+    .RST_O(RST_O),
+    // Hardware Control
     .gpio_i (gpio_i),
     .gpio_o (gpio_o),
     .gpio_t (gpio_t),
