@@ -76,7 +76,7 @@ class iwave_zu11(YellowBlock):
         # Reset / Clock renaming
         top.add_signal('axil_rst')
         top.add_signal('sys_rst')
-        top.add_signal('sys_clk')
+        top.add_signal('sys_clk', attributes={'keep': '"true"'})
         top.add_signal('sys_clk90')
         top.add_signal('sys_clk180')
         top.add_signal('sys_clk270')

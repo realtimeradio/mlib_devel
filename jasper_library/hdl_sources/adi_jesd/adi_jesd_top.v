@@ -63,7 +63,7 @@ module adi_jesd_top  #(
   output axil_aclk90,
   output axil_aclk180,
   output axil_aclk270,
-  output axil_aresetn,
+  output axil_areset_n,
 
   output [31:0] m_axil_araddr,
   output [2:0] m_axil_arprot,
@@ -232,7 +232,7 @@ module adi_jesd_top  #(
     .axi_aclk90 (axil_aclk90 ),
     .axi_aclk180(axil_aclk180),
     .axi_aclk270(axil_aclk270),
-    .axi_aresetn(axil_aresetn),
+    .axi_areset_n(axil_areset_n),
     // AXI Lite
     .m_axil_araddr (m_axil_araddr ),
     .m_axil_arprot (m_axil_arprot ),

@@ -953,7 +953,7 @@ proc create_root_design { parentCell } {
   set dout [ create_bd_port -dir O -from 511 -to 0 dout ]
   set dout_overflow [ create_bd_port -dir O dout_overflow ]
   set dout_sync [ create_bd_port -dir O dout_sync ]
-  set dout_vld [ create_bd_port -dir O dout_vld ]
+  set dout_vld [ create_bd_port -dir O -from 0 -to 0 dout_vld ]
   set ext_sync_in [ create_bd_port -dir I ext_sync_in ]
   set gpio_i [ create_bd_port -dir I -from 94 -to 0 gpio_i ]
   set gpio_o [ create_bd_port -dir O -from 94 -to 0 gpio_o ]
@@ -2935,6 +2935,9 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
    CONFIG.TX_PI_BIASSET {2} \
  ] $util_mxfe_xcvr
 
+  # Create instance: xlconcat_0, and set properties
+  set xlconcat_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconcat:2.1 xlconcat_0 ]
+
   # Create interface connections
   connect_bd_intf_net -intf_net axi_cpu_interconnect_M00_AXI [get_bd_intf_pins axi_cpu_interconnect/M00_AXI] [get_bd_intf_pins axi_sysid_0/s_axi]
   connect_bd_intf_net -intf_net axi_cpu_interconnect_M01_AXI [get_bd_intf_pins axi_cpu_interconnect/M01_AXI] [get_bd_intf_pins axi_mxfe_rx_xcvr/s_axi]
@@ -3061,13 +3064,13 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net rx_device_clk_rstgen_peripheral_aresetn [get_bd_pins mxfe_rx_data_offload/s_axis_aresetn] [get_bd_pins rx_device_clk_rstgen/peripheral_aresetn]
   connect_bd_net -net rx_device_clk_rstgen_peripheral_reset [get_bd_pins cpack_reset_sources/In0] [get_bd_pins rx_device_clk_rstgen/peripheral_reset]
   connect_bd_net -net rx_do_rstout_logic_Res [get_bd_pins cpack_reset_sources/In2] [get_bd_pins rx_do_rstout_logic/Res]
-  connect_bd_net -net rx_mxfe_tpl_core_adc_data_0 [get_bd_pins rx_mxfe_tpl_core/adc_data_0] [get_bd_pins util_mxfe_cpack/fifo_wr_data_0]
-  connect_bd_net -net rx_mxfe_tpl_core_adc_data_1 [get_bd_pins rx_mxfe_tpl_core/adc_data_1] [get_bd_pins util_mxfe_cpack/fifo_wr_data_1]
+  connect_bd_net -net rx_mxfe_tpl_core_adc_data_0 [get_bd_pins rx_mxfe_tpl_core/adc_data_0] [get_bd_pins util_mxfe_cpack/fifo_wr_data_0] [get_bd_pins xlconcat_0/In0]
+  connect_bd_net -net rx_mxfe_tpl_core_adc_data_1 [get_bd_pins rx_mxfe_tpl_core/adc_data_1] [get_bd_pins util_mxfe_cpack/fifo_wr_data_1] [get_bd_pins xlconcat_0/In1]
   connect_bd_net -net rx_mxfe_tpl_core_adc_enable_0 [get_bd_pins rx_mxfe_tpl_core/adc_enable_0] [get_bd_pins util_mxfe_cpack/enable_0]
   connect_bd_net -net rx_mxfe_tpl_core_adc_enable_1 [get_bd_pins rx_mxfe_tpl_core/adc_enable_1] [get_bd_pins util_mxfe_cpack/enable_1]
   connect_bd_net -net rx_mxfe_tpl_core_adc_rst [get_bd_pins cpack_reset_sources/In1] [get_bd_pins rx_mxfe_tpl_core/adc_rst]
   connect_bd_net -net rx_mxfe_tpl_core_adc_sync_manual_req_out [get_bd_pins manual_sync_or/Op1] [get_bd_pins rx_mxfe_tpl_core/adc_sync_manual_req_out]
-  connect_bd_net -net rx_mxfe_tpl_core_adc_valid_0 [get_bd_pins rx_mxfe_tpl_core/adc_valid_0] [get_bd_pins util_mxfe_cpack/fifo_wr_en]
+  connect_bd_net -net rx_mxfe_tpl_core_adc_valid_0 [get_bd_ports dout_vld] [get_bd_pins rx_mxfe_tpl_core/adc_valid_0] [get_bd_pins util_mxfe_cpack/fifo_wr_en]
   connect_bd_net -net spi0_csn_concat_dout [get_bd_ports spi0_csn] [get_bd_pins spi0_csn_concat/dout]
   connect_bd_net -net spi0_miso_1 [get_bd_ports spi0_miso] [get_bd_pins sys_ps8/emio_spi0_m_i]
   connect_bd_net -net spi1_csn_concat_dout [get_bd_ports spi1_csn] [get_bd_pins spi1_csn_concat/dout]
@@ -3106,8 +3109,8 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net upack_reset_sources_dout [get_bd_pins upack_reset_sources/dout] [get_bd_pins upack_rst_logic/Op1]
   connect_bd_net -net upack_rst_logic_Res [get_bd_pins upack_rst_logic/Res] [get_bd_pins util_mxfe_upack/reset]
   connect_bd_net -net util_mxfe_cpack_fifo_wr_overflow [get_bd_ports dout_overflow] [get_bd_pins rx_mxfe_tpl_core/adc_dovf] [get_bd_pins util_mxfe_cpack/fifo_wr_overflow]
-  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_data [get_bd_ports dout] [get_bd_pins mxfe_rx_data_offload/s_axis_tdata] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_data]
-  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_en [get_bd_ports dout_vld] [get_bd_pins mxfe_rx_data_offload/s_axis_tvalid] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_en]
+  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_data [get_bd_pins mxfe_rx_data_offload/s_axis_tdata] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_data]
+  connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_en [get_bd_pins mxfe_rx_data_offload/s_axis_tvalid] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_en]
   connect_bd_net -net util_mxfe_cpack_packed_fifo_wr_sync [get_bd_ports dout_sync] [get_bd_pins util_mxfe_cpack/packed_fifo_wr_sync]
   connect_bd_net -net util_mxfe_upack_fifo_rd_data_0 [get_bd_pins tx_mxfe_tpl_core/dac_data_0] [get_bd_pins util_mxfe_upack/fifo_rd_data_0]
   connect_bd_net -net util_mxfe_upack_fifo_rd_data_1 [get_bd_pins tx_mxfe_tpl_core/dac_data_1] [get_bd_pins util_mxfe_upack/fifo_rd_data_1]
@@ -3129,6 +3132,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net util_mxfe_xcvr_tx_7_n [get_bd_ports tx_data_7_n] [get_bd_pins util_mxfe_xcvr/tx_7_n]
   connect_bd_net -net util_mxfe_xcvr_tx_7_p [get_bd_ports tx_data_7_p] [get_bd_pins util_mxfe_xcvr/tx_7_p]
   connect_bd_net -net util_mxfe_xcvr_tx_out_clk_0 [get_bd_pins axi_mxfe_tx_jesd/link_clk] [get_bd_pins util_mxfe_xcvr/tx_clk_0] [get_bd_pins util_mxfe_xcvr/tx_clk_1] [get_bd_pins util_mxfe_xcvr/tx_clk_2] [get_bd_pins util_mxfe_xcvr/tx_clk_3] [get_bd_pins util_mxfe_xcvr/tx_clk_4] [get_bd_pins util_mxfe_xcvr/tx_clk_5] [get_bd_pins util_mxfe_xcvr/tx_clk_6] [get_bd_pins util_mxfe_xcvr/tx_clk_7] [get_bd_pins util_mxfe_xcvr/tx_out_clk_0]
+  connect_bd_net -net xlconcat_0_dout [get_bd_ports dout] [get_bd_pins xlconcat_0/dout]
 
   # Create address segments
   assign_bd_address -offset 0x00000000 -range 0x80000000 -target_address_space [get_bd_addr_spaces axi_mxfe_rx_dma/m_dest_axi] [get_bd_addr_segs sys_ps8/SAXIGP3/HP1_DDR_LOW] -force

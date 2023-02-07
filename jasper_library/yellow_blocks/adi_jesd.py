@@ -47,11 +47,12 @@ class adi_jesd(YellowBlock):
         # Internal ports (these would usually be provided by the
         # platform insfrastructure block
         inst.add_port('clk300',    'clk300mhz')
+        top.add_signal('axil_clk', attributes={'keep': '"true"'})
         inst.add_port('axil_aclk',    'axil_clk')
         inst.add_port('axil_aclk90',  'axil_clk90')
         inst.add_port('axil_aclk180', 'axil_clk180')
         inst.add_port('axil_aclk270', 'axil_clk270')
-        inst.add_port('axil_aresetn',   'axil_rst_n')
+        inst.add_port('axil_areset_n',   'axil_rst_n')
 
         inst.add_port('m_axil_araddr', 'M_AXI_araddr', width=32)
         inst.add_port('m_axil_arprot', 'M_AXI_arprot', width=3)
@@ -122,7 +123,12 @@ class adi_jesd(YellowBlock):
         add_ext_port(inst, 'txen', 'out', 2)
 
         # ADC clock
+        top.add_signal('adc_clk', attributes={'keep': '"true"'})
         inst.add_port('adc_clk_out', 'adc_clk')
+        # not connected phased clocks
+        top.add_signal('adc_clk90')
+        top.add_signal('adc_clk180')
+        top.add_signal('adc_clk270')
 
         # Ports to Simulink
         inst.add_port('dout', self.fullname + '_dout', width=512)
@@ -213,6 +219,7 @@ class adi_jesd(YellowBlock):
         cons += [RawConstraint('set_case_analysis -quiet 1 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[0]]')]
         cons += [RawConstraint('set_case_analysis -quiet 1 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[1]]')]
         cons += [RawConstraint('set_case_analysis -quiet 0 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[2]]')]
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets axil_clk]', '-include_generated_clocks -of_objects [get_nets adc_clk]', 'asynchronous')]
 
         return cons
 
