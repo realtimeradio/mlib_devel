@@ -229,6 +229,8 @@ wire [N_INPUTS-1:0] shift_delay;
 wire shift_rst;
 wire [N_INPUTS*4-1:0] mux_control;
 wire is_three_bit;
+wire [N_INPUTS*8 - 1:0] offsetter_overflow_cnt;
+wire [N_INPUTS*8 - 1:0] offsetter_underflow_cnt;
 wb_dts_attach wb_dts_attach_inst(
     .wb_clk_i(wb_clk_i),
     .wb_rst_i(wb_rst_i),
@@ -251,6 +253,8 @@ wb_dts_attach wb_dts_attach_inst(
     .unmute_out(def_unmute),
     .def_locked(def_locked_out),
     .gt_locked(gt_locked),
+    .offsetter_overflow_cnt(offsetter_overflow_cnt),
+    .offsetter_underflow_cnt(offsetter_overflow_cnt),
     .shift_advance(shift_advance),
     .shift_delay(shift_delay),
     .shift_rst(shift_rst),
@@ -372,6 +376,8 @@ wb_dts_attach wb_dts_attach_inst(
     .almost_empty(),
     .overflow(),
     .underflow(),
+    .overflow_cnt(offsetter_overflow_cnt),
+    .underflow_cnt(offsetter_overflow_cnt),
     .dout(offsetter_dout),
     .dout_one_sec(one_sec),
     .dout_ten_sec(ten_sec),

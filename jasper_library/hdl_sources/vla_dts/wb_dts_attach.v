@@ -36,7 +36,7 @@ module wb_dts_attach(
     input         wb_stb_i,
     input         user_clk,
     // To DTS deformatter control interface
-    input [7:0] data_in,
+    input  [7:0] data_in,
     output [7:0] data_out,
     output [7:0] addr_out,
     output [11:0] cs_out,
@@ -54,9 +54,10 @@ module wb_dts_attach(
     output [11:0] induce_error,
     // Other control signals
     input [11:0] def_locked,
-    input [11:0] gt_locked
+    input [11:0] gt_locked,
+    input [12*8 - 1 :0] offsetter_overflow_cnt,
+    input [12*8 - 1 :0] offsetter_underflow_cnt
   );
-  
 
   /* WB domain registers, to be crossed to user_clock */
   reg [31:0] control_reg_wb;
@@ -70,13 +71,12 @@ module wb_dts_attach(
   /* Handshake signal from application to OPB indicating data has been latched */
   reg register_done;
   
-  // Handshaking for wishbone reads                                                                                                                                                      
-  reg register_read_request; // wishbone data read requester                                                                                                                             
-  reg register_read_ready;   // user clock domain locked register for reading                                                                                                            
-                                                                                                                                                                                         
-  reg register_read_requestR;                                                                                                                                                            
-  reg register_read_requestRR;                                                                                                                                                           
-  reg register_read_readyR;                                                                                                                                                              
+  // Handshaking for wishbone reads
+  reg register_read_request; // wishbone data read requester
+  reg register_read_ready;   // user clock domain locked register for reading
+  reg register_read_requestR;
+  reg register_read_requestRR;
+  reg register_read_readyR;
   reg register_read_readyRR;
   
   reg [32:0] user_data_in_reg;
@@ -122,16 +122,16 @@ module wb_dts_attach(
     register_doneR  <= register_done;
     register_doneRR <= register_doneR;
     
-    register_read_readyR  <= register_read_ready;                                                                                                                                      
-    register_read_readyRR <= register_read_readyR;                                                                                                                                     
-    // Request all the user_clk registers regardless of if we're actually reading one                                                                                                  
-    if (!register_read_readyRR) begin                                                                                                                                                  
-      // always request the buffer                                                                                                                                                     
-      register_read_request <= 1'b1;                                                                                                                                                   
-    end                                                                                                                                                                                
-    // When buffer is ready, release the request                                                                                                                                       
-    if (register_read_readyRR) begin                                                                                                                                                   
-      register_read_request <= 1'b0;                                                                                                                                                   
+    register_read_readyR  <= register_read_ready;
+    register_read_readyRR <= register_read_readyR;
+    // Request all the user_clk registers regardless of if we're actually reading one
+    if (!register_read_readyRR) begin
+      // always request the buffer
+      register_read_request <= 1'b1;
+    end
+    // When buffer is ready, release the request
+    if (register_read_readyRR) begin
+      register_read_request <= 1'b0;
     end
     if (register_read_readyRR && register_read_request) begin
       // only latch the data when the buffer is not locked
@@ -145,17 +145,17 @@ module wb_dts_attach(
       wb_ack_reg <= 1'b1;
       if (wb_we_i) begin
         register_ready <= 1'b1;
-        case (wb_adr_i[5:2])
+        case (wb_adr_i[6:2])
           0: control_reg_wb <= wb_dat_i;
           1: delay_control_reg_wb <= wb_dat_i;
           2: mux_control_reg_wb[31:0] <= wb_dat_i;
           3: mux_control_reg_wb[47:32] <= wb_dat_i[15:0];
           4: is_three_bit_reg_wb <= wb_dat_i[0];
           5: induce_error_reg_wb <= wb_dat_i[11:0];
-          //6: read only
+          //6+: read only
         endcase
       end else begin
-        case (wb_adr_i[5:2])
+        case (wb_adr_i[6:2])
           0: wb_dat_reg <= control_reg_wb;
           1: wb_dat_reg <= delay_control_reg_wb;
           2: wb_dat_reg <= mux_control_reg_wb[31:0];
@@ -163,6 +163,12 @@ module wb_dts_attach(
           4: wb_dat_reg <= {31'b0, is_three_bit_reg_wb};
           5: wb_dat_reg <= {20'b0, induce_error_reg_wb};
           6: wb_dat_reg <= user_data_in_reg_wb;
+          7: wb_dat_reg <= offsetter_overflow_cnt[32-1:0];
+          8: wb_dat_reg <= offsetter_overflow_cnt[64-1:32];
+          9: wb_dat_reg <= offsetter_overflow_cnt[96-1:64];
+          10: wb_dat_reg <= offsetter_underflow_cnt[32-1:0];
+          11: wb_dat_reg <= offsetter_underflow_cnt[64-1:32];
+          12: wb_dat_reg <= offsetter_underflow_cnt[96-1:64];
         endcase
       end
     end
@@ -187,22 +193,20 @@ module wb_dts_attach(
       control_reg <= control_reg_wb;
     end
     
-    // Wishbone reads                                                                                                                                                                    
-                                                                                                                                                                                         
-    // Clock domain crossing registering                                                                                                                                                 
-    register_read_requestR  <= register_read_request;                                                                                                                                    
-    register_read_requestRR <= register_read_requestR;                                                                                                                                   
-                                                                                                                                                                                         
-    if (register_read_requestRR) begin                                                                                                                                                   
-      register_read_ready<= 1'b1;                                                                                                                                                        
-    end                                                                                                                                                                                  
-                                                                                                                                                                                         
-    if (!register_read_requestRR) begin                                                                                                                                                  
-      register_read_ready<= 1'b0;                                                                                                                                                        
-    end                                                                                                                                                                                  
-                                                                                                                                                             
-    if (register_read_requestRR && !register_read_ready) begin                                                                                                                           
-      register_read_ready <= 1'b1;                                                                                                                                                       
+    // Wishbone reads
+    // Clock domain crossing registering
+    register_read_requestR  <= register_read_request;
+    register_read_requestRR <= register_read_requestR;
+
+    if (register_read_requestRR) begin
+      register_read_ready<= 1'b1;
+    end
+    if (!register_read_requestRR) begin
+      register_read_ready<= 1'b0;
+    end
+
+    if (register_read_requestRR && !register_read_ready) begin
+      register_read_ready <= 1'b1;
       user_data_in_reg <= {gt_locked, def_locked, data_in};
     end 
   end

@@ -40,6 +40,8 @@ module dts_offsetter #(
     output almost_empty,
     output overflow,
     output underflow,
+    output [7:0] overflow_cnt,
+    output [7:0] underflow_cnt,
     
     output [(128>>MUX_FACTOR_BITS)-1:0] dout,
     //output dout_locked,
@@ -155,5 +157,29 @@ module dts_offsetter #(
     .rd_en(fifo_rd_en & ~rd_block),
     .empty()
   );
+
+  reg [7:0] overflow_cnt_reg;
+  reg [7:0] underflow_cnt_reg;
+  assign overflow_cnt = overflow_cnt_reg;
+  assign underflow_cnt = underflow_cnt_reg;
+  always @(posedge clk_in) begin
+    if (rst) begin
+      overflow_cnt_reg <= 8'b0;
+    end else begin
+      if (overflow) begin
+        overflow_cnt_reg <= overflow_cnt_reg + 1'b1;
+      end
+    end
+  end
+
+  always @(posedge clk_out) begin
+    if (rst) begin
+      underflow_cnt_reg <= 8'b0;
+    end else begin
+      if (underflow) begin
+        underflow_cnt_reg <= underflow_cnt_reg + 1'b1;
+      end
+    end
+  end
   
 endmodule
