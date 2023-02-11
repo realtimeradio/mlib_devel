@@ -377,7 +377,7 @@ wb_dts_attach wb_dts_attach_inst(
     .overflow(),
     .underflow(),
     .overflow_cnt(offsetter_overflow_cnt),
-    .underflow_cnt(offsetter_overflow_cnt),
+    .underflow_cnt(offsetter_underflow_cnt),
     .dout(offsetter_dout),
     .dout_one_sec(one_sec),
     .dout_ten_sec(ten_sec),
