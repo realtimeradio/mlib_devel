@@ -575,9 +575,10 @@ class rfdc(YellowBlock):
     #cons.append(PortConstraint('vin00_n', 'vin00_n'))
 
     const = []
-    const.append(PortConstraint('pl_sysref_p', 'pl_sysref_p'))
-    # TODO: designs do not generally need to add a clock constraint for the pl_sysref, but never hurts
-    #const.append(ClockConstraint('pl_sysref_p', 'pl_sysref_p', period=self.T_pl_sysref_ns, port_en=True, virtual_en=False))
+    if self.enable_mts_adc or self.enable_mts_dac:
+        const.append(PortConstraint('pl_sysref_p', 'pl_sysref_p'))
+        # TODO: designs do not generally need to add a clock constraint for the pl_sysref, but never hurts
+        #const.append(ClockConstraint('pl_sysref_p', 'pl_sysref_p', period=self.T_pl_sysref_ns, port_en=True, virtual_en=False))
 
     return const
 
