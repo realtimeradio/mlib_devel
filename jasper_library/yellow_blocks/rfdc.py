@@ -132,7 +132,7 @@ class rfdc(YellowBlock):
           'Coarse'   : 1,
           'Fine'     : 2,
           'Off'      : 3,
-          False        : 0  # python seems to think 'Off' means 'False' and it messed with this map
+          False      : 3  # python seems to think 'Off' means 'False' and it messed with this map
         }
         if gen < 2:
           # For the gen 1 28dr/29dr this had to be 0, whereas gen3 requires it to be one. Not sure if this is a vivado bug. But most
