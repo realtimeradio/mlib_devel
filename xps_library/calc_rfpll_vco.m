@@ -1,4 +1,4 @@
-function [M, VCO] = calc_rfpll_vco(gen, sample_rate_mhz)
+function [M, VCO] = calc_rfpll_vco(gen, sample_rate_mhz, is_dac)
   % differs from `calc_rfpll_param` slightly in how the parameters are passed
   % (notably sample rate and rfsoc gen) as part of how to segment the UI process
   %
@@ -12,13 +12,21 @@ function [M, VCO] = calc_rfpll_vco(gen, sample_rate_mhz)
   vco_min = 8500.0;
   if gen < 2
     vco_max = 13112.0;
+    allowed_m=[2, 3, 4:2:64];
   else
-    vco_max = 13200.0;
+    if is_dac
+      vco_min = 7863.0;
+      vco_max = 13760.0;
+      allowed_m=[1, 2, 3, 4:2:64];
+    else
+      vco_max = 13200.0;
+      allowed_m=[2, 3, 4:2:64];
+    end
   end
 
   M = [];
   VCO = [];
-  for m=[2, 3, 4:2:64]
+  for m=allowed_m
     %vco = (samp_rate_ghz*1000.0)*m;
     vco = sample_rate_mhz*m;
     if (vco >= vco_min)
