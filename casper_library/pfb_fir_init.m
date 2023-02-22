@@ -133,7 +133,9 @@ else
     max_gain = max(sum(abs(all_filters), 2));
 end
 % Compute bit growth (make sure it is non-negative)
-bit_growth = max(0, nextpow2(max_gain));
+%bit_growth = max(0, nextpow2(max_gain));
+bit_growth = nextpow2(TotalTaps); % this is what the pfb_add_tree_init uses to set it's scaling
+
 % Compute adder output width and binary point.  We know that the adders in the
 % adder tree need to have (bit_growth+1) non-fractional bits to accommodate the
 % maximum gain.  The products from the taps will have
@@ -241,57 +243,63 @@ for p=1:pols,
                     'use_hdl', tap_multipliers(t).use_hdl, 'use_embedded', tap_multipliers(t).use_embedded,...
                     'Position', [150*(t+1) 50*portnum 150*(t+1)+100 50*portnum+30]);
                 propagate_vars([blk,'/',blk_name],'defaults', defaults, varargin{:});
-                % Update innards of the adder trees using our knowledge of
-                % maximum bit growth.  This uses knowledge of the
-                % implementation of the "last_tap" block.  This defeats the
-                % benefits of encapsulation, but the alternative is to make the
-                % underlying adder_tree block smarter and then make every block
-                % that encapsulates or uses an adder_tree smarter.  Forcing
-                % such a global change for one or two specific cases seems a
-                % greater evil, IMHO.
-                pfb_add_tree_base = sprintf('%s/%s/pfb_add_tree', blk, blk_name);
-                if oversample2x == 1
-                    pfb_add_trees = {sprintf('%s0', pfb_add_tree_base) sprintf('%s1', pfb_add_tree_base)};
-                else
-                    pfb_add_trees = {pfb_add_tree_base};
-                end
-                for pfb_add_tree_c = pfb_add_trees
-                    pfb_add_tree = pfb_add_tree_c{:};
-                    for k=1:2
-                        % Update adder blocks in the adder trees using our
-                        % knowledge of maximum bit growth.
-                        adders = find_system( ...
-                            sprintf('%s/adder_tree%d', pfb_add_tree, k), ...
-                            'LookUnderMasks','all', 'FollowLinks','on', ...
-                            'SearchDepth',1, 'RegExp','on', 'Name','^addr');
-                        for kk=1:length(adders)
-                            set_param(adders{kk}, ...
-                                'precision', 'User Defined', ...
-                                'arith_type', 'Signed  (2''s comp)', ...
-                                'n_bits', tostring(adder_n_bits_out), ...
-                                'bin_pt', tostring(adder_bin_pt_out), ...
-                                'quantization', 'Truncate', ...
-                                'overflow', 'Wrap');
-                        end
-                        % Adder tree output has bit_growth more non-fractional bits
-                        % than BitWidthIn, but we want to keep the same number of
-                        % non-fractional bits, so we must scale by 2^(-bit_growth).
-                        set_param(sprintf('%s/scale%d', pfb_add_tree, k), ...
-                            'scale_factor', tostring(-bit_growth));
-                        % Because we have handled bit growth for maximum gain,
-                        % there can be no overflow so the convert blocks can be set
-                        % to "Wrap" to avoid unnecessary logic.  If BitWidthOut is
-                        % greater than adder_bin_pt_out, set their quantization to
-                        % "Truncate" since there is no need to quantize.
-                        if BitWidthOut > adder_bin_pt_out
-                            conv_quant = 'Truncate';
-                        else
-                            conv_quant = quantization;
-                        end
-                        set_param(sprintf('%s/convert%d', pfb_add_tree, k), ...
-                            'overflow', 'Wrap', 'quantization', conv_quant);
-                    end
-                end
+                % The below logic which reaches in and messes with the PFB adders
+                % seems to be completely incompatible with the pfb_add_tree_init.m script,
+                % which sets its scale factor based on the number of taps.
+                % This leads to a scale factor which is incompatible with the 
+                % adder tree output, which is not full precision.
+
+                %% Update innards of the adder trees using our knowledge of
+                %% maximum bit growth.  This uses knowledge of the
+                %% implementation of the "last_tap" block.  This defeats the
+                %% benefits of encapsulation, but the alternative is to make the
+                %% underlying adder_tree block smarter and then make every block
+                %% that encapsulates or uses an adder_tree smarter.  Forcing
+                %% such a global change for one or two specific cases seems a
+                %% greater evil, IMHO.
+                %pfb_add_tree_base = sprintf('%s/%s/pfb_add_tree', blk, blk_name);
+                %if oversample2x == 1
+                %    pfb_add_trees = {sprintf('%s0', pfb_add_tree_base) sprintf('%s1', pfb_add_tree_base)};
+                %else
+                %    pfb_add_trees = {pfb_add_tree_base};
+                %end
+                %for pfb_add_tree_c = pfb_add_trees
+                %    pfb_add_tree = pfb_add_tree_c{:};
+                %    for k=1:2
+                %        % Update adder blocks in the adder trees using our
+                %        % knowledge of maximum bit growth.
+                %        adders = find_system( ...
+                %            sprintf('%s/adder_tree%d', pfb_add_tree, k), ...
+                %            'LookUnderMasks','all', 'FollowLinks','on', ...
+                %            'SearchDepth',1, 'RegExp','on', 'Name','^addr');
+                %        for kk=1:length(adders)
+                %            set_param(adders{kk}, ...
+                %                'precision', 'User Defined', ...
+                %                'arith_type', 'Signed  (2''s comp)', ...
+                %                'n_bits', tostring(adder_n_bits_out), ...
+                %                'bin_pt', tostring(adder_bin_pt_out), ...
+                %                'quantization', 'Truncate', ...
+                %                'overflow', 'Wrap');
+                %        end
+                %        % Adder tree output has bit_growth more non-fractional bits
+                %        % than BitWidthIn, but we want to keep the same number of
+                %        % non-fractional bits, so we must scale by 2^(-bit_growth).
+                %        set_param(sprintf('%s/scale%d', pfb_add_tree, k), ...
+                %            'scale_factor', tostring(-bit_growth));
+                %        % Because we have handled bit growth for maximum gain,
+                %        % there can be no overflow so the convert blocks can be set
+                %        % to "Wrap" to avoid unnecessary logic.  If BitWidthOut is
+                %        % greater than adder_bin_pt_out, set their quantization to
+                %        % "Truncate" since there is no need to quantize.
+                %        if BitWidthOut > adder_bin_pt_out
+                %            conv_quant = 'Truncate';
+                %        else
+                %            conv_quant = quantization;
+                %        end
+                %        set_param(sprintf('%s/convert%d', pfb_add_tree, k), ...
+                %            'overflow', 'Wrap', 'quantization', conv_quant);
+                %    end
+                %end
                 if t==2
                     prev_blk_name = ['pol',num2str(p),'_in',num2str(n),'_first_tap'];
                 else
@@ -393,7 +401,7 @@ if oversample2x == 1
         reuse_block(blk, busexp_name, 'casper_library_flow_control/bus_expand', ...
             'mode', 'divisions of equal size', ...
             'outputNum', num2str(2^n_outputs), ...
-            'outputWidth', num2str(BitWidthOut), ...
+            'outputWidth', num2str(2*BitWidthOut), ... % complex
             'outputBinaryPt', '0', ...       % UFix complex output
             'outputArithmeticType', '0', ... % UFix complex output
             'show_format', 'off', ...
