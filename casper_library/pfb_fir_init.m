@@ -60,6 +60,7 @@ defaults = {'PFBSize', 5, 'TotalTaps', 2, ...
     'quantization', 'Round  (unbiased: +/- Inf)', ...
     'fwidth', 1, 'mult_spec', [2 2], ...
     'n_pol_blocks', 1, ...
+    'oversample2x', 0, ...
     'coeffs_share', 'off', 'coeffs_fold', 'off'};
 
 if same_state(blk, 'defaults', defaults, varargin{:}), return, end
@@ -85,6 +86,10 @@ quantization = get_var('quantization', 'defaults', defaults, varargin{:});
 fwidth = get_var('fwidth', 'defaults', defaults, varargin{:});
 mult_spec = get_var('mult_spec', 'defaults', defaults, varargin{:});
 coeffs_share = get_var('coeffs_share', 'defaults', defaults, varargin{:});
+oversample2x = get_var('oversample2x', 'defaults', defaults, varargin{:})
+
+% serial FFT size
+PFBSizeSerial = PFBSize - n_inputs; % everything here is log2
 
 % check the multiplier specifications first off
 tap_multipliers = multiplier_specification(mult_spec, TotalTaps, blk);
@@ -119,7 +124,14 @@ all_coeffs = pfb_coeff_gen_calc(PFBSize, TotalTaps, WindowType, n_inputs, 0, fwi
 all_filters = reshape(all_coeffs, 2^PFBSize, TotalTaps);
 % Compute max gain
 % NB: sum rows, not columns!
-max_gain = max(sum(abs(all_filters), 2));
+if oversample2x == 1
+    % If oversampling we sum the even and odd taps separately.
+    max_gain_odd  = max(sum(abs(all_filters(:,1:2:TotalTaps)), 2));
+    max_gain_even = max(sum(abs(all_filters(:,2:2:TotalTaps)), 2));
+    max_gain = max([max_gain_odd, max_gain_even]);
+else
+    max_gain = max(sum(abs(all_filters), 2));
+end
 % Compute bit growth (make sure it is non-negative)
 bit_growth = max(0, nextpow2(max_gain));
 % Compute adder output width and binary point.  We know that the adders in the
@@ -140,20 +152,38 @@ delete_lines(blk);
 
 % Add ports
 clog('adding inports and outports', 'pfb_fir_init_debug');
+% port position/quantity
+if oversample2x == 0
+    hoff = 1;
+    voff = 50;
+    n_outputs = n_inputs;
+else
+    hoff = 6;
+    n_outputs = n_inputs+1; % variables are log2
+    voff = 25;
+end
 portnum = 1;
 reuse_block(blk, 'sync', 'built-in/inport', ...
     'Position', [0 50*portnum 30 50*portnum+15], 'Port', num2str(portnum));
 reuse_block(blk, 'sync_out', 'built-in/outport', ...
-    'Position', [150*(TotalTaps+2) 50*portnum 150*(TotalTaps+2)+30 50*portnum+15], 'Port', num2str(portnum));
+    'Position', [150*(TotalTaps+hoff) voff*portnum 150*(TotalTaps+hoff)+30 voff*portnum+15], ...
+    'Port', num2str(portnum));
 for p=1:pols,
     for n=1:2^n_inputs,
         portnum = portnum + 1; % Skip one to allow sync & sync_out to be 1
         in_name = ['pol',num2str(p),'_in',num2str(n)];
-        out_name = ['pol',num2str(p),'_out',num2str(n)];
         reuse_block(blk, in_name, 'built-in/inport', ...
             'Position', [0 50*portnum 30 50*portnum+15], 'Port', num2str(portnum));
+    end
+end
+portnum = 1;
+for p=1:pols,
+    for n=1:2^n_outputs,
+        portnum = portnum + 1; % Skip one to allow sync & sync_out to be 1
+        out_name = ['pol',num2str(p),'_out',num2str(n)];
         reuse_block(blk, out_name, 'built-in/outport', ...
-            'Position', [150*(TotalTaps+2) 50*portnum 150*(TotalTaps+2)+30 50*portnum+15], 'Port', num2str(portnum));
+            'Position', [150*(TotalTaps+hoff) voff*portnum 150*(TotalTaps+hoff)+30 voff*portnum+15], ...
+            'Port', num2str(portnum));
     end
 end
 
@@ -201,8 +231,13 @@ for p=1:pols,
                 add_line(blk, [src_block,'/3'], [blk_name,'/3']);
             % last tap
             elseif t==TotalTaps,
+                if oversample2x == 1
+                    blk_libname = 'casper_library_pfbs/last_tap_oversample2x';
+                else
+                    blk_libname = 'casper_library_pfbs/last_tap';
+                end
                 blk_name = [in_name,'_last_tap'];
-                reuse_block(blk, blk_name, 'casper_library_pfbs/last_tap', ...
+                reuse_block(blk, blk_name, blk_libname, ...
                     'use_hdl', tap_multipliers(t).use_hdl, 'use_embedded', tap_multipliers(t).use_embedded,...
                     'Position', [150*(t+1) 50*portnum 150*(t+1)+100 50*portnum+30]);
                 propagate_vars([blk,'/',blk_name],'defaults', defaults, varargin{:});
@@ -214,40 +249,48 @@ for p=1:pols,
                 % that encapsulates or uses an adder_tree smarter.  Forcing
                 % such a global change for one or two specific cases seems a
                 % greater evil, IMHO.
-                pfb_add_tree = sprintf('%s/%s/pfb_add_tree', blk, blk_name);
-                for k=1:2
-                    % Update adder blocks in the adder trees using our
-                    % knowledge of maximum bit growth.
-                    adders = find_system( ...
-                        sprintf('%s/adder_tree%d', pfb_add_tree, k), ...
-                        'LookUnderMasks','all', 'FollowLinks','on', ...
-                        'SearchDepth',1, 'RegExp','on', 'Name','^addr');
-                    for kk=1:length(adders)
-                        set_param(adders{kk}, ...
-                            'precision', 'User Defined', ...
-                            'arith_type', 'Signed  (2''s comp)', ...
-                            'n_bits', tostring(adder_n_bits_out), ...
-                            'bin_pt', tostring(adder_bin_pt_out), ...
-                            'quantization', 'Truncate', ...
-                            'overflow', 'Wrap');
+                pfb_add_tree_base = sprintf('%s/%s/pfb_add_tree', blk, blk_name);
+                if oversample2x == 1
+                    pfb_add_trees = {sprintf('%s0', pfb_add_tree_base) sprintf('%s1', pfb_add_tree_base)};
+                else
+                    pfb_add_trees = {pfb_add_tree_base};
+                end
+                for pfb_add_tree_c = pfb_add_trees
+                    pfb_add_tree = pfb_add_tree_c{:};
+                    for k=1:2
+                        % Update adder blocks in the adder trees using our
+                        % knowledge of maximum bit growth.
+                        adders = find_system( ...
+                            sprintf('%s/adder_tree%d', pfb_add_tree, k), ...
+                            'LookUnderMasks','all', 'FollowLinks','on', ...
+                            'SearchDepth',1, 'RegExp','on', 'Name','^addr');
+                        for kk=1:length(adders)
+                            set_param(adders{kk}, ...
+                                'precision', 'User Defined', ...
+                                'arith_type', 'Signed  (2''s comp)', ...
+                                'n_bits', tostring(adder_n_bits_out), ...
+                                'bin_pt', tostring(adder_bin_pt_out), ...
+                                'quantization', 'Truncate', ...
+                                'overflow', 'Wrap');
+                        end
+                        % Adder tree output has bit_growth more non-fractional bits
+                        % than BitWidthIn, but we want to keep the same number of
+                        % non-fractional bits, so we must scale by 2^(-bit_growth).
+                        set_param(sprintf('%s/scale%d', pfb_add_tree, k), ...
+                            'scale_factor', tostring(-bit_growth));
+                        % Because we have handled bit growth for maximum gain,
+                        % there can be no overflow so the convert blocks can be set
+                        % to "Wrap" to avoid unnecessary logic.  If BitWidthOut is
+                        % greater than adder_bin_pt_out, set their quantization to
+                        % "Truncate" since there is no need to quantize.
+                        if BitWidthOut > adder_bin_pt_out
+                            conv_quant = 'Truncate';
+                        else
+                            conv_quant = quantization;
+                        end
+                        set_param(sprintf('%s/convert%d', pfb_add_tree, k), ...
+                            'overflow', 'Wrap', 'quantization', conv_quant);
                     end
-                    % Adder tree output has bit_growth more non-fractional bits
-                    % than BitWidthIn, but we want to keep the same number of
-                    % non-fractional bits, so we must scale by 2^(-bit_growth).
-                    set_param(sprintf('%s/scale%d', pfb_add_tree, k), ...
-                        'scale_factor', tostring(-bit_growth));
-                    % Because we have handled bit growth for maximum gain,
-                    % there can be no overflow so the convert blocks can be set
-                    % to "Wrap" to avoid unnecessary logic.  If BitWidthOut is
-                    % greater than adder_bin_pt_out, set their quantization to
-                    % "Truncate" since there is no need to quantize.
-                    if BitWidthOut > adder_bin_pt_out
-                        conv_quant = 'Truncate';
-                    else
-                        conv_quant = quantization;
-                    end
-                    set_param(sprintf('%s/convert%d', pfb_add_tree, k), ...
-                        'overflow', 'Wrap', 'quantization', conv_quant);
                 end
                 if t==2
                     prev_blk_name = ['pol',num2str(p),'_in',num2str(n),'_first_tap'];
@@ -257,9 +300,12 @@ for p=1:pols,
                 for nn=1:4
                     add_line(blk, [prev_blk_name,'/',num2str(nn)], [blk_name,'/',num2str(nn)]);
                 end
-                add_line(blk, [blk_name,'/1'], [out_name,'/1']);
-                if n==1 && p==1
-                    add_line(blk, [blk_name,'/2'], 'sync_out/1');
+                % Only connect to outputs if not oversampled
+                if oversample2x == 0
+                    add_line(blk, [blk_name,'/1'], [out_name,'/1']);
+                    if n==1 && p==1
+                        add_line(blk, [blk_name,'/2'], 'sync_out/1');
+                    end
                 end
             % intermediary taps
             else
@@ -279,6 +325,85 @@ for p=1:pols,
                     add_line(blk, [prev_blk_name,'/',num2str(nn)], [blk_name,'/',num2str(nn)]);
                 end
             end
+        end
+    end
+end
+% If oversampled, instantiate the reordering logic
+if oversample2x == 1
+    portnum = 1;
+    for p=1:pols,
+        % Bus the even / odd taps ready to reorder
+        for ii=1:2
+            bus_create_name = ['pol',num2str(p),'_in_bus_create', num2str(ii)];
+            reuse_block(blk, bus_create_name, 'casper_library_flow_control/bus_create', ...
+                'inputNum', num2str(2^n_inputs), ...
+                'Position', [150*(TotalTaps+2) 50*portnum 150*(TotalTaps+2.25) 50*portnum+30]);
+            portnum = portnum + 1;
+        end
+        for n=1:2^n_inputs,
+            in_name = ['pol',num2str(p),'_in',num2str(n)];
+            last_tap_name = [in_name,'_last_tap'];
+            for ii=1:2
+                bus_create_name = ['pol',num2str(p),'_in_bus_create', num2str(ii)];
+                add_line(blk, [last_tap_name,'/',num2str(ii+1)], [bus_create_name, '/', num2str(n)]);
+            end
+        end
+        % square transpose
+        portnum = portnum - 1;
+        st_name = ['pol',num2str(p),'_transpose'];
+        reuse_block(blk, st_name, 'casper_library_reorder/square_transposer', ...
+            'n_inputs', '1', 'async', 'off', ...
+            'Position', [150*(TotalTaps+2.5) 50*portnum 150*(TotalTaps+3) 50*portnum+30]);
+        add_line(blk, [last_tap_name,'/1'], [st_name, '/1']);
+        for ii=1:2
+            bus_create_name = ['pol',num2str(p),'_in_bus_create', num2str(ii)];
+            add_line(blk, [bus_create_name,'/1'], [st_name, '/', num2str(ii+1)]);
+        end
+        % Cram
+        bus_create_name = ['pol',num2str(p),'_reord_in_bus_create'];
+        reuse_block(blk, bus_create_name, 'casper_library_flow_control/bus_create', ...
+            'inputNum', '2', ...
+            'Position', [150*(TotalTaps+3.25) 50*portnum 150*(TotalTaps+3.75) 50*portnum+30]);
+        add_line(blk, [st_name, '/2'], [bus_create_name, '/1']);
+        add_line(blk, [st_name, '/3'], [bus_create_name, '/2']);
+        % serial reorder
+        reuse_block(blk, 'always_we', 'xbsIndex_r4/Constant', ...
+            'const','1', ...
+            'arith_type','Boolean', ...
+            'explicit_period','on', ...
+            'period','1', ...
+            'Position', [150*(TotalTaps+4) 50*portnum+10 150*(TotalTaps+4.2) 50*portnum+20]);
+        reorder_name = ['pol',num2str(p),'_reord'];
+        reord_map_str = sprintf('reshape(transpose(reshape([0:%d], 2, %d)), %d, 1)', 2^PFBSizeSerial-1, 2^(PFBSizeSerial-1), 2^PFBSizeSerial);
+        reuse_block(blk, reorder_name, 'casper_library_reorder/reorder', ...
+            'map', reord_map_str, ...
+            'n_bits', '0', 'n_inputs', '1', ...
+            'bram_latency', '3', 'map_latency', '1', ...
+            'fanout_latency', '0', ...
+            'double_buffer', '0', ...
+            'bram_map', 'off', ...
+            'software_controlled', 'off', ...
+            'Position', [150*(TotalTaps+4.5) 50*portnum 150*(TotalTaps+5) 50*portnum+30]);
+        add_line(blk, [bus_create_name, '/1'], [reorder_name, '/3']);
+        add_line(blk, [st_name, '/1'], [reorder_name, '/1']); % sync
+        add_line(blk, 'always_we/1', [reorder_name, '/2']);
+        add_line(blk, [reorder_name, '/1'], 'sync_out/1');
+        % Slice up and output
+        busexp_name = ['pol',num2str(p),'_busexp'];
+        reuse_block(blk, busexp_name, 'casper_library_flow_control/bus_expand', ...
+            'mode', 'divisions of equal size', ...
+            'outputNum', num2str(2^n_outputs), ...
+            'outputWidth', num2str(BitWidthOut), ...
+            'outputBinaryPt', '0', ...       % UFix complex output
+            'outputArithmeticType', '0', ... % UFix complex output
+            'show_format', 'off', ...
+            'outputToWorkspace', 'off', ...
+            'outputToModelAsWell', 'on', ...
+            'Position', [150*(TotalTaps+5.25) 50*portnum 150*(TotalTaps+5.75) 50*portnum+30]);
+        add_line(blk, [reorder_name, '/3'], [busexp_name, '/1']);
+        for ii=1:2^n_outputs
+            out_name = ['pol',num2str(p),'_out',num2str(ii)];
+            add_line(blk, [busexp_name, '/', num2str(ii)], [out_name, '/1']);
         end
     end
 end
