@@ -4,6 +4,16 @@ function [] = update_pll(gcb, tile)
 
   [gen, tile_arch, ~, ~] = get_rfsoc_properties(gcb);
 
+  tile_is_dac = 0; % default to ADC
+  %case for adcs
+  if tile < 228
+    tile_is_dac = 0;
+  %case for dacs
+  elseif ~(tile > 229 && (strcmp(tile_arch, 'dual')))
+    tile_is_dac = 1;
+    % TODO: store max DAC sample rates for platforms so we can read them here
+  end
+
   msk = Simulink.Mask.get(gcb);
 
   sample_rate_mhz = str2double(get_param(gcb, ['t', num2str(tile), '_', 'sample_rate']));
@@ -15,7 +25,7 @@ function [] = update_pll(gcb, tile)
     msk.getParameter(['t', num2str(tile), '_', 'ref_clk']).Enabled = 'off';
   else
     % compute usable PLL reference frequencies
-    [M, VCO] = calc_rfpll_vco(gen, sample_rate_mhz);
+    [M, VCO] = calc_rfpll_vco(gen, sample_rate_mhz, tile_is_dac);
     if isempty(VCO)
       error('RFPLL parameters could not be resolved to determine a valid ref. clock freq.');
     end

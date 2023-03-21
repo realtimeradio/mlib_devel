@@ -132,7 +132,7 @@ class rfdc(YellowBlock):
           'Coarse'   : 1,
           'Fine'     : 2,
           'Off'      : 3,
-          False        : 0  # python seems to think 'Off' means 'False' and it messed with this map
+          False      : 3  # python seems to think 'Off' means 'False' and it messed with this map
         }
         if gen < 2:
           # For the gen 1 28dr/29dr this had to be 0, whereas gen3 requires it to be one. Not sure if this is a vivado bug. But most
@@ -575,9 +575,10 @@ class rfdc(YellowBlock):
     #cons.append(PortConstraint('vin00_n', 'vin00_n'))
 
     const = []
-    const.append(PortConstraint('pl_sysref_p', 'pl_sysref_p'))
-    # TODO: designs do not generally need to add a clock constraint for the pl_sysref, but never hurts
-    #const.append(ClockConstraint('pl_sysref_p', 'pl_sysref_p', period=self.T_pl_sysref_ns, port_en=True, virtual_en=False))
+    if self.enable_mts_adc or self.enable_mts_dac:
+        const.append(PortConstraint('pl_sysref_p', 'pl_sysref_p'))
+        # TODO: designs do not generally need to add a clock constraint for the pl_sysref, but never hurts
+        #const.append(ClockConstraint('pl_sysref_p', 'pl_sysref_p', period=self.T_pl_sysref_ns, port_en=True, virtual_en=False))
 
     return const
 
@@ -591,7 +592,8 @@ class rfdc(YellowBlock):
     # place the rfdc
     rfdc_bd_name = 'usp_rf_data_converter_0'#rfdc'
     # TODO better handle version information, the version string was manually increasesd when testing for > Vivado 2020.2
-    tcl_cmds['pre_synth'] += ['create_bd_cell -type ip -vlnv xilinx.com:ip:usp_rf_data_converter:2.5 {:s}'.format(rfdc_bd_name)]
+    # ...And then again to 2.6 for Vivado 2021.2
+    tcl_cmds['pre_synth'] += ['create_bd_cell -type ip -vlnv xilinx.com:ip:usp_rf_data_converter:2.6 {:s}'.format(rfdc_bd_name)]
 
     # get a reference to the rfdc in the block design, currently assume that only one rfdc is in the design (decent assumption)
     tcl_cmds['pre_synth'] += ['set rfdc [get_bd_cells -filter { NAME =~ *usp_rf_data_converter*}]']
