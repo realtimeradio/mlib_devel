@@ -516,7 +516,7 @@ proc create_hier_cell_mxfe_tx_data_offload { parentCell nameHier } {
   set_property -dict [ list \
    CONFIG.DST_CYCLIC_EN {true} \
    CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.MEM_SIZE_LOG2 {18} \
+   CONFIG.MEM_SIZE_LOG2 {14} \
    CONFIG.MEM_TYPE {0} \
    CONFIG.SRC_DATA_WIDTH {512} \
    CONFIG.SYNC_EXT_ADD_INTERNAL_CDC {true} \
@@ -527,7 +527,7 @@ proc create_hier_cell_mxfe_tx_data_offload { parentCell nameHier } {
   set storage_unit [ create_bd_cell -type ip -vlnv analog.com:user:util_do_ram:1.0 storage_unit ]
   set_property -dict [ list \
    CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.LENGTH_WIDTH {18} \
+   CONFIG.LENGTH_WIDTH {14} \
    CONFIG.SRC_DATA_WIDTH {512} \
  ] $storage_unit
 
@@ -611,7 +611,7 @@ proc create_hier_cell_mxfe_rx_data_offload { parentCell nameHier } {
   set_property -dict [ list \
    CONFIG.DST_CYCLIC_EN {true} \
    CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.MEM_SIZE_LOG2 {18} \
+   CONFIG.MEM_SIZE_LOG2 {16} \
    CONFIG.MEM_TYPE {0} \
    CONFIG.SRC_DATA_WIDTH {512} \
    CONFIG.SYNC_EXT_ADD_INTERNAL_CDC {true} \
@@ -622,7 +622,7 @@ proc create_hier_cell_mxfe_rx_data_offload { parentCell nameHier } {
   set storage_unit [ create_bd_cell -type ip -vlnv analog.com:user:util_do_ram:1.0 storage_unit ]
   set_property -dict [ list \
    CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.LENGTH_WIDTH {18} \
+   CONFIG.LENGTH_WIDTH {16} \
    CONFIG.SRC_DATA_WIDTH {512} \
  ] $storage_unit
 
