@@ -84,9 +84,17 @@ reuse_block(blk, 'coeff', 'built-in/outport', 'Position', [500 343 530 357], 'Po
 % Add Static Blocks
 reuse_block(blk, 'Delay', 'xbsIndex_r4/Delay', ...
     'latency', 'bram_latency+1+fan_latency', 'Position', [65 12 110 58]);
-reuse_block(blk, 'Counter', 'xbsIndex_r4/Counter', ...
-    'cnt_type', 'Free Running', 'n_bits', tostring(PFBSize-n_inputs), 'arith_type', 'Unsigned', ...
-    'rst', 'on', 'explicit_period', 'on', 'Position', [65 75 115 125]);
+if (PFBSize > n_inputs),
+    use_const_coeff = 0;
+elseif (PFBSize == n_inputs),
+    use_const_coeff = 1;
+end
+
+if (use_const_coeff == 0),
+    reuse_block(blk, 'Counter', 'xbsIndex_r4/Counter', ...
+        'cnt_type', 'Free Running', 'n_bits', tostring(PFBSize-n_inputs), 'arith_type', 'Unsigned', ...
+        'rst', 'on', 'explicit_period', 'on', 'Position', [65 75 115 125]);
+end
 reuse_block(blk, 'Delay1', 'xbsIndex_r4/Delay', ...
     'latency', 'bram_latency+1+fan_latency', 'Position', [290 12 335 58]);
 reuse_block(blk, 'Concat', 'xbsIndex_r4/Concat', ...
@@ -96,7 +104,9 @@ reuse_block(blk, 'Register', 'xbsIndex_r4/Register', ...
 
 add_line(blk, 'din/1', 'Delay1/1');
 add_line(blk, 'Delay1/1', 'dout/1');
-add_line(blk, 'sync/1', 'Counter/1');
+if (use_const_coeff == 0),
+    add_line(blk, 'sync/1', 'Counter/1');
+end
 add_line(blk, 'sync/1', 'Delay/1');
 add_line(blk, 'Delay/1', 'sync_out/1');
 add_line(blk, 'Concat/1', 'Register/1');
@@ -104,17 +114,23 @@ add_line(blk, 'Register/1', 'coeff/1');
 
 % Add Dynamic Blocks
 for a=1:TotalTaps,
-    dblkname = ['fan_delay', tostring(a)];
-    reuse_block(blk, dblkname, 'xbsIndex_r4/Delay', ...
-    'latency', 'fan_latency', 'Position', [150 65*(a-1)+74 180 65*(a-1)+126]);
-    add_line(blk, 'Counter/1', [dblkname, '/1']);
+    if (use_const_coeff == 0),
+        dblkname = ['fan_delay', tostring(a)];
+        reuse_block(blk, dblkname, 'xbsIndex_r4/Delay', ...
+        'latency', 'fan_latency', 'Position', [150 65*(a-1)+74 180 65*(a-1)+126]);
+        add_line(blk, 'Counter/1', [dblkname, '/1']);
+    end
     
     if strcmp(debug_mode, 'on'),
         atype = 'Unsigned';
         binpt = '0';
         debug_option = 'true';
     else
-        atype = 'Signed  (2''s comp)';
+        if (use_const_coeff == 0),
+            atype = 'Signed  (2''s comp)'; % yup, two spaces here
+        else
+            atype = 'Signed (2''s comp)'; % but not here!
+        end
         binpt = tostring(CoeffBitWidth-1);
         debug_option = 'false';
     end
@@ -123,12 +139,20 @@ for a=1:TotalTaps,
         tostring(n_inputs), ', ', tostring(nput), ',', ...
         tostring(fwidth), ',', tostring(a), ',', debug_option, ')'];
     blkname = ['ROM', tostring(a)];
-    reuse_block(blk, blkname, 'xbsIndex_r4/ROM', ...
-        'depth', tostring(2^(PFBSize-n_inputs)), 'initVector', vector_str, 'arith_type', atype, ...
-        'n_bits', tostring(CoeffBitWidth), 'bin_pt', binpt, ...
-        'latency', 'bram_latency', 'use_rpm','on', 'Position', [200 65*(a-1)+74 250 65*(a-1)+126]);
+    if (use_const_coeff == 0),
+        reuse_block(blk, blkname, 'xbsIndex_r4/ROM', ...
+            'depth', tostring(2^(PFBSize-n_inputs)), 'initVector', vector_str, 'arith_type', atype, ...
+            'n_bits', tostring(CoeffBitWidth), 'bin_pt', binpt, ...
+            'latency', 'bram_latency', 'use_rpm','on', 'Position', [200 65*(a-1)+74 250 65*(a-1)+126]);
+        add_line(blk, [dblkname, '/1'], [blkname, '/1']);
+    else
+        reuse_block(blk, blkname, 'xbsIndex_r4/Constant', ...
+            'const', vector_str, 'arith_type', atype, ...
+            'n_bits', tostring(CoeffBitWidth), 'bin_pt', binpt, ...
+            'explicit_period', 'on', 'period', '1', ...
+            'Position', [200 65*(a-1)+74 250 65*(a-1)+126]);
+    end
 
-    add_line(blk, [dblkname, '/1'], [blkname, '/1']);
     reintname = ['Reinterpret', tostring(a)];
     reuse_block(blk, reintname, 'xbsIndex_r4/Reinterpret', 'force_arith_type', 'On', ...
         'force_bin_pt','On',...
@@ -139,12 +163,14 @@ for a=1:TotalTaps,
 end
 
 % Set coefficient ROMs to use distribute memory (or not).
-for a=1:TotalTaps,
-    blkname = ['ROM', tostring(a)];
-    if strcmp(CoeffDistMem, 'on'),
-        set_param([blk,'/',blkname], 'distributed_mem', 'Distributed memory');
-    else
-        set_param([blk,'/',blkname], 'distributed_mem', 'Block RAM');
+if (use_const_coeff == 0),
+    for a=1:TotalTaps,
+        blkname = ['ROM', tostring(a)];
+        if strcmp(CoeffDistMem, 'on'),
+            set_param([blk,'/',blkname], 'distributed_mem', 'Distributed memory');
+        else
+            set_param([blk,'/',blkname], 'distributed_mem', 'Block RAM');
+        end
     end
 end
 
