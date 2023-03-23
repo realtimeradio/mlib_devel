@@ -17,8 +17,7 @@ class adi_jesd(YellowBlock):
         self.add_source('adi_jesd/adi_jesd_top.v')
         self.add_source(path.join(self.adi_ip_path, 'common', 'ad_iobuf.v'))
         self.add_source(path.join(self.adi_ip_path, 'common', 'ad_3w_spi.v'))
-        self.sample_rate_mhz = 4500
-        self.lane_mbps = 4500 * self.JESD_M * self.JESD_N / self.RX_JESD_L * 66 / 64
+        self.lane_mbps = self.sample_rate_mhz * self.JESD_M * self.JESD_N / self.RX_JESD_L * 66 / 64
         if self.enable_wishbone:
             self.ips += [{'path':'%s/axi_wb_bridge/ip_repo' % env['HDL_ROOT'],
                  'name':'axi_slave_wishbone_classic_master',
