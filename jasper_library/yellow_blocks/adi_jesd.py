@@ -205,7 +205,8 @@ class adi_jesd(YellowBlock):
         ntx = self.TX_JESD_L*self.TX_NUM_LINKS
         cons = add_con(cons, 'tx_data_n', 'dp_c2m_n', range(ntx), range(ntx))
 
-        cons += [ClockConstraint(self.pp+'fpga_refclk_in_n', freq=self.lane_mbps/66.)]
+        clkconst = ClockConstraint(self.pp+'fpga_refclk_in_n', freq=self.lane_mbps/66.)
+        cons += [clkconst]
         # The firmware allows dynamic clock source selection. Set the case
         # for the timing analysis based on what the driver will ultimately select
         cons += [RawConstraint('set_case_analysis -quiet 0 [get_pins -quiet -hier *_channel/TXSYSCLKSEL[0]]')]
@@ -218,7 +219,7 @@ class adi_jesd(YellowBlock):
         cons += [RawConstraint('set_case_analysis -quiet 1 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[0]]')]
         cons += [RawConstraint('set_case_analysis -quiet 1 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[1]]')]
         cons += [RawConstraint('set_case_analysis -quiet 0 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[2]]')]
-        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets axil_clk]', '-include_generated_clocks -of_objects [get_nets adc_clk]', 'asynchronous')]
+        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets axil_clk]', '-include_generated_clocks %s' % clkconst.name, 'asynchronous')]
 
         return cons
 
