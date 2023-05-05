@@ -83,10 +83,10 @@ pins:
     iostd: LVDS
     loc: AM17
   irig_trig:
-    iostd: LVCMOS33
+    iostd: LVCMOS18
     loc: AH13
   irig_comp:
-    iostd: LVCMOS33
+    iostd: LVCMOS18
     loc: AJ13
 
 # RFDC
