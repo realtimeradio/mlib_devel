@@ -238,6 +238,8 @@ proc create_hier_cell_tx_mxfe_tpl_core { parentCell nameHier } {
   set_property -dict [ list \
    CONFIG.BITS_PER_SAMPLE {16} \
    CONFIG.CONVERTER_RESOLUTION {16} \
+   CONFIG.DATAPATH_DISABLE {1} \
+   CONFIG.DDS_TYPE {1} \
    CONFIG.DMA_BITS_PER_SAMPLE {16} \
    CONFIG.EXT_SYNC {1} \
    CONFIG.IQCORRECTION_DISABLE {0} \
@@ -245,6 +247,7 @@ proc create_hier_cell_tx_mxfe_tpl_core { parentCell nameHier } {
    CONFIG.NUM_LANES {8} \
    CONFIG.OCTETS_PER_BEAT {8} \
    CONFIG.SAMPLES_PER_FRAME {2} \
+   CONFIG.XBAR_ENABLE {0} \
  ] $dac_tpl_core
 
   # Create instance: data_concat0, and set properties
