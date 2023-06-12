@@ -4,9 +4,6 @@ function [] = mixer_callback(gcb, tile, slice, arch)
 
   [~, tile_arch, ~, adc_num_tiles, ~, ~, ~] = get_rfsoc_properties(gcb);
 
-  tile
-  adc_num_tiles
-
   if strcmp(tile_arch, 'quad')
     prefix = 'QT';
   elseif strcmp(tile_arch, 'dual')
