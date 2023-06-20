@@ -226,5 +226,6 @@ class adi_jesd(YellowBlock):
     def gen_tcl_cmds(self):
         tcl_cmds = {}
         tcl_cmds['pre_synth'] = []
+        tcl_cmds['pre_synth'] += ['set ::ADI_JESD_LANE_RATE_GBPS %f' % (self.lane_mbps/1000.)]
         tcl_cmds['pre_synth'] += ['source {}'.format(path.join(self.hdl_root, 'adi_jesd', self.block_diagram))]
         return tcl_cmds
