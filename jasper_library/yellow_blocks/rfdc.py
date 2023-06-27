@@ -58,7 +58,8 @@ class rfdc(YellowBlock):
     'nco_freq'        : {'param' : 'DAC_NCO_Freq{:d}{:d}',            'fmt' : "{{:.5f}}"}, # DAC suffix {:d} is 0-3 # TODO: how many digits to add? was 3, upped to 5 for zcu111 tests
     'coarse_freq'     : {'param' : 'DAC_Coarse_Mixer_Freq{:d}{:d}',   'fmt' : "{{:d}}"},
     'nyquist_zone'    : {'param' : 'DAC_Nyquist{:d}{:d}',             'fmt' : "{{:d}}"},
-    'decode_mode'     : {'param' : 'DAC_Decoder_Mode{:d}{:d}',        'fmt' : "{{:d}}"}
+    'decode_mode'     : {'param' : 'DAC_Decoder_Mode{:d}{:d}',        'fmt' : "{{:d}}"},
+    'inverse_sinc'    : {'param' : 'DAC_Invsinc_Ctrl{:d}{:d}',        'fmt' : "{{}}"},
   }
 
   """
@@ -160,6 +161,8 @@ class rfdc(YellowBlock):
         self.coarse_freq_value_map  = { 'Fs/2' : 0, 'Fs/4' : 1, '-Fs/4' : 2, 0 : 3 }
         self.nyquist_zone_value_map = { 'Zone 1' : 0, 'Zone 2' : 1 }
         self.decode_mode_value_map  = { 'SNR Optimized' : 0, 'Linearity Optimized': 1 }
+        # Default to turn inverse sinc filters on
+        self.inverse_sinc = True
 
   def initialize(self):
     # IP generation and configuration parameters

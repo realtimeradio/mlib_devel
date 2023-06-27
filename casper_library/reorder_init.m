@@ -159,7 +159,7 @@ reuse_block(blk, 'delay_we2', 'xbsIndex_r4/Delay', ...
   'reg_retiming', 'on', 'latency', num2str(pre_delay), 'Position', [305 120 345 140]);
 add_line(blk, 'en/1', 'delay_we2/1');
 reuse_block(blk, 'delay_valid', 'xbsIndex_r4/Delay', 'reg_retiming', 'on', ...
-    'Position', [860  80  900  100], 'latency', num2str(bram_latency+(double_buffer*2)+fanout_latency));
+    'Position', [860  80  900  100], 'latency', num2str(bram_latency+fanout_latency));
 add_line(blk, 'delay_we1/1', 'delay_valid/1');
 reuse_block(blk, 'valid', 'built-in/outport', 'Position', [965   82   995   98], 'Port', '2');
 add_line(blk, 'delay_valid/1', 'valid/1');
@@ -190,7 +190,7 @@ reuse_block(blk, 'sync_delay_en', 'casper_library_delays/sync_delay_en', ...
 add_line(blk, 'or/1', 'sync_delay_en/2');
 add_line(blk, 'pre_sync_delay/1', 'sync_delay_en/1');
 reuse_block(blk, 'post_sync_delay', 'xbsIndex_r4/Delay', ...
-    'reg_retiming', 'on', 'Position', [860  5  900  25], 'latency', num2str(bram_latency+(double_buffer*2)+fanout_latency));
+    'reg_retiming', 'on', 'Position', [860  5  900  25], 'latency', num2str(bram_latency+fanout_latency));
 add_line(blk, 'sync_delay_en/1', 'post_sync_delay/1');
 reuse_block(blk, 'sync_out', 'built-in/outport', 'Position', [965   7   995   23], 'Port', '1');
 add_line(blk, 'post_sync_delay/1', 'sync_out/1');
