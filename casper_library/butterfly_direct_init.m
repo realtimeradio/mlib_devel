@@ -215,6 +215,9 @@ function butterfly_direct_init(blk, varargin)
       end
   elseif length(Coeffs)==2 && Coeffs(1)==0 && Coeffs(2)==1 && StepPeriod==FFTSize-2,
       twiddle_type = 'twiddle_stage_2';
+      add_latency=0;
+      mult_latency=0;
+      bram_latency=0;
   else
       twiddle_type = 'twiddle_general';
   end
