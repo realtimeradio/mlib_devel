@@ -200,14 +200,30 @@ class rfdc(YellowBlock):
       self.gen = 1
 
     # second digit from part designator indicates RF tile architecture (e.g., xczu28dr is a Dual-Tile arch)
-    if   designator[1] == '8':
-      self.tile_arch = 'DT'
-      self.num_adc_slice = 2
-      lastTile = 230
-    elif designator[1] == '9':
-      self.tile_arch = 'QT'
-      self.num_adc_slice = 4
-      lastTile = 232
+    # This logic taken from xps_library/get_rfsoc_properties()
+    # Not sure this is right / needs other modifications
+    if self.gen == 3:
+      if   designator[1] == '8':
+        self.adc_tile_arch = 'DT'
+        self.dac_tile_arch = 'DT'
+        self.num_adc_slice = 2
+        lastTile = 232
+      elif designator[1] == '9':
+        self.adc_tile_arch = 'QT'
+        self.dac_tile_arch = 'QT'
+        self.num_adc_slice = 4
+        lastTile = 232
+    else:
+      if   designator[1] == '8':
+        self.adc_tile_arch = 'DT'
+        self.dac_tile_arch = 'QT'
+        self.num_adc_slice = 2
+        lastTile = 230
+      elif designator[1] == '9':
+        self.adc_tile_arch = 'QT'
+        self.dac_tile_arch = 'QT'
+        self.num_adc_slice = 4
+        lastTile = 232
 
     # build tile and adc slice objects for IP instantiation and configuration
     # determine enabled adc tiles
@@ -309,7 +325,7 @@ class rfdc(YellowBlock):
     for tidx in self.enabled_adc_tiles:
       # determine enabled adcs
       for aidx in range(0, self.num_adc_slice):
-        if self.blk['t{:d}_{:s}_adc{:d}_enable'.format(tidx+224, self.tile_arch, aidx)]:
+        if self.blk['t{:d}_{:s}_adc{:d}_enable'.format(tidx+224, self.adc_tile_arch, aidx)]:
           print("adding Slice {:d} to ADC tile {:d}".format(aidx, tidx+224))
           self.enabled_adcs.append(str(tidx)+str(aidx))
 
@@ -319,7 +335,7 @@ class rfdc(YellowBlock):
       for aidx in range(0, self.num_adc_slice):
         a = self.adc_slice(self.gen)
         for adc_attr, _ in iteritems(self.adc_attr_map):
-          attr_key = adc_mask_fmt.format(tidx, self.tile_arch, aidx, adc_attr)
+          attr_key = adc_mask_fmt.format(tidx, self.adc_tile_arch, aidx, adc_attr)
           if attr_key in self.blk:
             setattr(a, adc_attr, self.blk[attr_key])
 
@@ -328,7 +344,7 @@ class rfdc(YellowBlock):
     for tidx in self.enabled_dac_tiles:
       # determine enabled dacs
       for didx in range(0, self.num_dac_slice):
-        if self.blk['t{:d}_{:s}_dac{:d}_enable'.format(tidx+228, self.tile_arch, didx)]:
+        if self.blk['t{:d}_{:s}_dac{:d}_enable'.format(tidx+228, self.dac_tile_arch, didx)]:
           print("adding Slice {:d} to DAC tile {:d}".format(didx, tidx+228))
           self.enabled_dacs.append(str(tidx)+str(didx))
 
@@ -338,7 +354,7 @@ class rfdc(YellowBlock):
       for didx in range(0, self.num_dac_slice):
         d = self.dac_slice(self.gen)
         for dac_attr, _ in iteritems(self.dac_attr_map):
-          attr_key = dac_mask_fmt.format(tidx, self.tile_arch, didx, dac_attr)
+          attr_key = dac_mask_fmt.format(tidx, self.dac_tile_arch, didx, dac_attr)
           if attr_key in self.blk:
             setattr(d, dac_attr, self.blk[attr_key])
 
@@ -469,7 +485,7 @@ class rfdc(YellowBlock):
         if int(aidx[0]) == tidx: # need this becuase of enabled_adcs stores ALL enabled slices across all adc tiles, we only want the adcs associated with this tile
           n_aidx = int(aidx[1])
 
-          if self.tile_arch == 'QT':
+          if self.adc_tile_arch == 'QT':
             a = self.adcs[n_aidx+4*int(aidx[0])] # 4 adc slices for each QT tile
             data_width = 16*a.sample_per_cycle
             # vin ports
@@ -538,7 +554,7 @@ class rfdc(YellowBlock):
           d = self.dacs[int(didx[1])+4*int(didx[0])]
           data_width = 16*d.sample_per_cycle
           
-          if self.tile_arch == 'QT':
+          if self.dac_tile_arch == 'QT':
             print("adding vin and axis ports for DAC Tile {:d} Slice {:d}".format(int(didx[0]), int(didx[1])))
             # vout ports
             bd_inst.add_port('vout{:s}_p'.format(didx), 'vout{:s}_p'.format(didx),  dir='out', parent_port=True)
@@ -664,10 +680,10 @@ class rfdc(YellowBlock):
         if int(aidx[0]) == tidx:
 
           n_aidx = int(aidx[1])
-          if self.tile_arch == 'QT':
+          if self.adc_tile_arch == 'QT':
             a = self.adcs[n_aidx+4*int(aidx[0])]
             tcl_cmds['pre_synth'] += self.build_config_cmd(a, self.adc_attr_map, tidx, n_aidx)
-          elif self.tile_arch == 'DT':
+          elif self.adc_tile_arch == 'DT':
             a = self.adcs[n_aidx+2*int(aidx[0])]
             tcl_cmds['pre_synth'] += self.build_config_cmd(a, self.adc_attr_map, tidx, 2*n_aidx)
             tcl_cmds['pre_synth'] += self.build_config_cmd(a, self.adc_attr_map, tidx, 2*n_aidx+1)
@@ -709,12 +725,12 @@ class rfdc(YellowBlock):
       for aidx in self.enabled_adcs:
         if tidx == int(aidx[0]):
           n_aidx = int(aidx[1])
-          if self.tile_arch == 'QT':
+          if self.adc_tile_arch == 'QT':
             a = self.adcs[n_aidx+4*int(aidx[0])]
-          elif self.tile_arch == 'DT':
+          elif self.adc_tile_arch == 'DT':
             a = self.adcs[n_aidx+2*int(aidx[0])]
           data_width = 16*a.sample_per_cycle
-          if self.tile_arch == 'QT':
+          if self.adc_tile_arch == 'QT':
             # vin ports
             tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vin{:d}{:d}_n'.format(tidx, n_aidx), port_dir='in'))
             tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vin{:d}{:d}_p'.format(tidx, n_aidx), port_dir='in'))
@@ -776,7 +792,7 @@ class rfdc(YellowBlock):
           n_didx = int(didx[1])
           d = self.dacs[n_didx+4*int(didx[0])]
           data_width = 16*d.sample_per_cycle
-          if self.tile_arch == 'QT':
+          if self.dac_tile_arch == 'QT':
             # vout ports
             tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_n'.format(tidx, n_didx), port_dir='out'))
             tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_p'.format(tidx, n_didx), port_dir='out'))
