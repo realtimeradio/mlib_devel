@@ -364,11 +364,10 @@ class YellowBlock(object):
             fullpath = path
         else:
             fullpath = self.hdl_root + '/' + path
-        print(path, glob(fullpath))
         for fname in glob(fullpath):
             self.sources.append(fname)
-        #if not os.path.exists(fullpath):
-        #    self.throw_error("path %s does not exist"%path)
+        if not os.path.exists(fullpath):
+            self.throw_error("path %s does not exist"%path)
         #self.sources.append(fullpath)
 
     def throw_error(self,message):
