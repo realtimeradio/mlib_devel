@@ -15,6 +15,7 @@ class adi_jesd(YellowBlock):
     def initialize(self):
         self.ips = []
         self.add_source('adi_jesd/adi_jesd_top.v')
+        self.add_source('adi_jesd/data_fifo/data_fifo.xci')
         self.add_source(path.join(self.adi_ip_path, 'common', 'ad_iobuf.v'))
         self.add_source(path.join(self.adi_ip_path, 'common', 'ad_3w_spi.v'))
         self.lane_mbps = self.sample_rate_mhz * self.JESD_M * self.JESD_N / self.RX_JESD_L * 66 / 64
@@ -40,6 +41,10 @@ class adi_jesd(YellowBlock):
         self.provides += ['adc_clk90']  # lies
         self.provides += ['adc_clk180'] # lies
         self.provides += ['adc_clk270'] # lies
+        self.provides += ['dsp_clk']
+        self.provides += ['dsp_clk90']  # lies
+        self.provides += ['dsp_clk180'] # lies
+        self.provides += ['dsp_clk270'] # lies
 
     def modify_top(self,top):
         inst = top.get_instance('adi_jesd_top', 'jesd_top_inst')
@@ -128,6 +133,14 @@ class adi_jesd(YellowBlock):
         top.add_signal('adc_clk90')
         top.add_signal('adc_clk180')
         top.add_signal('adc_clk270')
+
+        # DSP clock
+        top.add_signal('dsp_clk', attributes={'keep': '"true"'})
+        inst.add_port('dsp_clk_out', 'dsp_clk')
+        # not connected phased clocks
+        top.add_signal('dsp_clk90')
+        top.add_signal('dsp_clk180')
+        top.add_signal('dsp_clk270')
 
         # Ports to Simulink
         inst.add_port('dout', self.fullname + '_dout', width=512)
