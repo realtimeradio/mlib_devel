@@ -218,8 +218,8 @@ class adi_jesd(YellowBlock):
         ntx = self.TX_JESD_L*self.TX_NUM_LINKS
         cons = add_con(cons, 'tx_data_n', 'dp_c2m_n', range(ntx), range(ntx))
 
-        clkconst = ClockConstraint(self.pp+'fpga_refclk_in_n', freq=self.lane_mbps/66.)
-        cons += [clkconst]
+        self.clkconst = ClockConstraint(self.pp+'fpga_refclk_in_n', freq=self.lane_mbps/66.)
+        cons += [self.clkconst]
         # The firmware allows dynamic clock source selection. Set the case
         # for the timing analysis based on what the driver will ultimately select
         cons += [RawConstraint('set_case_analysis -quiet 0 [get_pins -quiet -hier *_channel/TXSYSCLKSEL[0]]')]
@@ -232,7 +232,8 @@ class adi_jesd(YellowBlock):
         cons += [RawConstraint('set_case_analysis -quiet 1 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[0]]')]
         cons += [RawConstraint('set_case_analysis -quiet 1 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[1]]')]
         cons += [RawConstraint('set_case_analysis -quiet 0 [get_pins -quiet -hier *_channel/RXOUTCLKSEL[2]]')]
-        cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets axil_clk]', '-include_generated_clocks %s' % clkconst.name, 'asynchronous')]
+        # Moved this clock constraint to post-synth tcl. Not sure why it doesn't work here (are constraints rejected pre-synth lost forever?)
+        #cons += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets axil_clk]', '-include_generated_clocks %s' % self.clkconst.name, 'asynchronous')]
 
         return cons
 
@@ -241,4 +242,6 @@ class adi_jesd(YellowBlock):
         tcl_cmds['pre_synth'] = []
         tcl_cmds['pre_synth'] += ['set ::ADI_JESD_LANE_RATE_GBPS %f' % (self.lane_mbps/1000.)]
         tcl_cmds['pre_synth'] += ['source {}'.format(path.join(self.hdl_root, 'adi_jesd', self.block_diagram))]
+        tcl_cmds['pre_impl'] = []
+        tcl_cmds['pre_impl'] += ['set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks -of_objects [get_nets axil_clk]] -group [get_clocks -include_generated_clocks %s]' % self.clkconst.name]
         return tcl_cmds
