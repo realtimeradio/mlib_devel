@@ -142,6 +142,9 @@ class adi_jesd(YellowBlock):
         top.add_signal('dsp_clk180')
         top.add_signal('dsp_clk270')
 
+        # Output FIFO read clock
+        inst.add_port('user_clk', 'user_clk')
+
         # Ports to Simulink
         inst.add_port('dout', self.fullname + '_dout', width=512)
         inst.add_port('dout_vld', self.fullname + '_dout_vld')

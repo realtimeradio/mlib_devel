@@ -58,6 +58,7 @@ module adi_jesd_top  #(
   output dout_sync,
   output adc_clk_out,
   output dsp_clk_out,
+  input user_clk,
   // Internal IO
   output clk300,
   output axil_aclk,
@@ -374,7 +375,7 @@ module adi_jesd_top  #(
     .wr_clk(adc_clk_out),
     .din({adc_dout_sync, adc_dout}),
     .wr_en(adc_dout_vld),
-    .rd_clk(dsp_clk_out),
+    .rd_clk(user_clk),
     .empty(fifo_empty),
     .rd_en(~fifo_empty),
     .dout(fifo_dout),
