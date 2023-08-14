@@ -86,7 +86,7 @@ quantization = get_var('quantization', 'defaults', defaults, varargin{:});
 fwidth = get_var('fwidth', 'defaults', defaults, varargin{:});
 mult_spec = get_var('mult_spec', 'defaults', defaults, varargin{:});
 coeffs_share = get_var('coeffs_share', 'defaults', defaults, varargin{:});
-oversample2x = get_var('oversample2x', 'defaults', defaults, varargin{:})
+oversample2x = get_var('oversample2x', 'defaults', defaults, varargin{:});
 
 % serial FFT size
 PFBSizeSerial = PFBSize - n_inputs; % everything here is log2
@@ -160,7 +160,7 @@ if oversample2x == 0
     voff = 50;
     n_outputs = n_inputs;
 else
-    hoff = 6;
+    hoff = 8;
     n_outputs = n_inputs+1; % variables are log2
     voff = 25;
 end
@@ -356,22 +356,55 @@ if oversample2x == 1
                 add_line(blk, [last_tap_name,'/',num2str(ii+1)], [bus_create_name, '/', num2str(n)]);
             end
         end
-        % square transpose
+	% Multiplex input samples like "fftshift" every other FFT window
         portnum = portnum - 1;
+	counter_name = ['counter' num2str(p)];
+	reuse_block(blk, counter_name, 'xbsIndex_r4/Counter', ...
+            'cnt_type', 'Free Running', 'operation', 'Up', 'start_count', '0', 'cnt_by_val', '1', ...
+            'arith_type', 'Unsigned', 'n_bits', num2str(PFBSize - n_inputs + 1), 'bin_pt', '0', ...
+            'rst', 'on', 'en', 'off', ...
+            'use_behavioral_HDL', 'on', 'implementation', 'Fabric', ...
+            'Position', [150*(TotalTaps+2.5) 50*(portnum-1) 150*(TotalTaps+2.75) 50*(portnum-1)+30]);
+        add_line(blk, [last_tap_name,'/1'], [counter_name, '/1']);
+
+	slice_name = ['slice' num2str(p)];
+	reuse_block(blk, slice_name, 'xbsIndex_r4/Slice', ...
+	    'mode', 'Lower Bit Location + Width', ...
+	    'nbits', '1', 'bit0', num2str(PFBSize - n_inputs), ...
+            'Position', [150*(TotalTaps+3) 50*(portnum-1) 150*(TotalTaps+3.25) 50*(portnum-1)+30]);
+        add_line(blk, [counter_name,'/1'], [slice_name, '/1']);
+
+	for ii=1:2
+            mux_name = ['mux', num2str(p), '_', num2str(ii)];
+            reuse_block(blk, mux_name, 'xbsIndex_r4/Mux', ...
+		'latency', '0', 'inputs', '2', ...
+                'Position', [150*(TotalTaps+3.75) 50*(portnum-1+ii-1) 150*(TotalTaps+4) 50*(portnum-1+ii-1)+30]);
+            add_line(blk, [slice_name, '/1'], [mux_name, '/1']);
+            bus_create_name0 = ['pol',num2str(p),'_in_bus_create1'];
+            bus_create_name1 = ['pol',num2str(p),'_in_bus_create2'];
+	    if ii==1
+                add_line(blk, [bus_create_name0, '/1'], [mux_name, '/2']);
+                add_line(blk, [bus_create_name1, '/1'], [mux_name, '/3']);
+	    else
+                add_line(blk, [bus_create_name1, '/1'], [mux_name, '/2']);
+                add_line(blk, [bus_create_name0, '/1'], [mux_name, '/3']);
+	    end
+	end
+        % square transpose
         st_name = ['pol',num2str(p),'_transpose'];
         reuse_block(blk, st_name, 'casper_library_reorder/square_transposer', ...
             'n_inputs', '1', 'async', 'off', ...
-            'Position', [150*(TotalTaps+2.5) 50*portnum 150*(TotalTaps+3) 50*portnum+30]);
+            'Position', [150*(TotalTaps+4.5) 50*portnum 150*(TotalTaps+5) 50*portnum+30]);
         add_line(blk, [last_tap_name,'/1'], [st_name, '/1']);
         for ii=1:2
-            bus_create_name = ['pol',num2str(p),'_in_bus_create', num2str(ii)];
-            add_line(blk, [bus_create_name,'/1'], [st_name, '/', num2str(ii+1)]);
+            mux_name = ['mux',num2str(p),'_', num2str(ii)];
+            add_line(blk, [mux_name,'/1'], [st_name, '/', num2str(ii+1)]);
         end
         % Cram
         bus_create_name = ['pol',num2str(p),'_reord_in_bus_create'];
         reuse_block(blk, bus_create_name, 'casper_library_flow_control/bus_create', ...
             'inputNum', '2', ...
-            'Position', [150*(TotalTaps+3.25) 50*portnum 150*(TotalTaps+3.75) 50*portnum+30]);
+            'Position', [150*(TotalTaps+5.25) 50*portnum 150*(TotalTaps+5.75) 50*portnum+30]);
         add_line(blk, [st_name, '/2'], [bus_create_name, '/1']);
         add_line(blk, [st_name, '/3'], [bus_create_name, '/2']);
         % serial reorder
@@ -380,7 +413,7 @@ if oversample2x == 1
             'arith_type','Boolean', ...
             'explicit_period','on', ...
             'period','1', ...
-            'Position', [150*(TotalTaps+4) 50*portnum+10 150*(TotalTaps+4.2) 50*portnum+20]);
+            'Position', [150*(TotalTaps+6) 50*portnum+10 150*(TotalTaps+6.2) 50*portnum+20]);
         reorder_name = ['pol',num2str(p),'_reord'];
         reord_map_str = sprintf('reshape(transpose(reshape([0:%d], 2, %d)), %d, 1)', 2^PFBSizeSerial-1, 2^(PFBSizeSerial-1), 2^PFBSizeSerial);
         reuse_block(blk, reorder_name, 'casper_library_reorder/reorder', ...
@@ -391,7 +424,7 @@ if oversample2x == 1
             'double_buffer', '0', ...
             'bram_map', 'off', ...
             'software_controlled', 'off', ...
-            'Position', [150*(TotalTaps+4.5) 50*portnum 150*(TotalTaps+5) 50*portnum+30]);
+            'Position', [150*(TotalTaps+6.5) 50*portnum 150*(TotalTaps+7) 50*portnum+30]);
         add_line(blk, [bus_create_name, '/1'], [reorder_name, '/3']);
         add_line(blk, [st_name, '/1'], [reorder_name, '/1']); % sync
         add_line(blk, 'always_we/1', [reorder_name, '/2']);
@@ -407,7 +440,7 @@ if oversample2x == 1
             'show_format', 'off', ...
             'outputToWorkspace', 'off', ...
             'outputToModelAsWell', 'on', ...
-            'Position', [150*(TotalTaps+5.25) 50*portnum 150*(TotalTaps+5.75) 50*portnum+30]);
+            'Position', [150*(TotalTaps+7.25) 50*portnum 150*(TotalTaps+7.75) 50*portnum+30]);
         add_line(blk, [reorder_name, '/3'], [busexp_name, '/1']);
         for ii=1:2^n_outputs
             out_name = ['pol',num2str(p),'_out',num2str(ii)];
