@@ -19,6 +19,7 @@
 % * bram_latency    = Latency of BRAM blocks.
 % * add_latency     = Latency of adders blocks.
 % * mult_latency    = Latency of multiplier blocks.
+% * mux_latency     = Latency of post-shift multiplixer block blocks.
 % * conv_latency    = Latency of cast blocks.
 % * quantization    = Quantization behavior.
 % * overflow        = Overflow behavior.
@@ -81,6 +82,7 @@ function butterfly_direct_init(blk, varargin)
       'conv_latency', 1, ...
       'add_pipe_latency', 0, ...
       'mult_pipe_latency', 0, ...        
+      'mux_latency', 1, ...        
       'quantization', 'Truncate', ...
       'overflow', 'Wrap', ...
       'coeffs_bit_limit', 8, ...
@@ -126,6 +128,7 @@ function butterfly_direct_init(blk, varargin)
   bram_latency      = get_var('bram_latency', 'defaults', defaults, varargin{:});
   add_latency       = get_var('add_latency', 'defaults', defaults, varargin{:});
   mult_latency      = get_var('mult_latency', 'defaults', defaults, varargin{:});
+  mux_latency       = get_var('mux_latency', 'defaults', defaults, varargin{:});
   conv_latency      = get_var('conv_latency', 'defaults', defaults, varargin{:});
   add_pipe_latency  = get_var('add_pipe_latency', 'defaults', defaults, varargin{:});
   mult_pipe_latency = get_var('mult_pipe_latency', 'defaults', defaults, varargin{:});  
@@ -186,8 +189,8 @@ function butterfly_direct_init(blk, varargin)
 
   % Validate input fields.
 
+  % Mux latency is zero (there is no mux) if shifting is not optional
   if strcmp(bitgrowth, 'on') || strcmp(hardcode_shifts, 'on'), mux_latency = 0;
-  else mux_latency = 1;
   end
 
   %TODO
@@ -212,6 +215,9 @@ function butterfly_direct_init(blk, varargin)
       end
   elseif length(Coeffs)==2 && Coeffs(1)==0 && Coeffs(2)==1 && StepPeriod==FFTSize-2,
       twiddle_type = 'twiddle_stage_2';
+      add_latency=0;
+      mult_latency=0;
+      bram_latency=0;
   else
       twiddle_type = 'twiddle_general';
   end

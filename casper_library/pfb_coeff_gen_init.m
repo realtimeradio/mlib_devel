@@ -83,7 +83,7 @@ reuse_block(blk, 'coeff', 'built-in/outport', 'Position', [500 343 530 357], 'Po
 
 % Add Static Blocks
 reuse_block(blk, 'Delay', 'xbsIndex_r4/Delay', ...
-    'latency', 'bram_latency+1+fan_latency', 'Position', [65 12 110 58]);
+    'latency', 'bram_latency+fan_latency', 'Position', [65 12 110 58]);
 if (PFBSize > n_inputs),
     use_const_coeff = 0;
 elseif (PFBSize == n_inputs),
@@ -96,11 +96,9 @@ if (use_const_coeff == 0),
         'rst', 'on', 'explicit_period', 'on', 'Position', [65 75 115 125]);
 end
 reuse_block(blk, 'Delay1', 'xbsIndex_r4/Delay', ...
-    'latency', 'bram_latency+1+fan_latency', 'Position', [290 12 335 58]);
+    'latency', 'bram_latency+fan_latency', 'Position', [290 12 335 58]);
 reuse_block(blk, 'Concat', 'xbsIndex_r4/Concat', ...
     'num_inputs', tostring(TotalTaps), 'Position', [360 97 415 643]);
-reuse_block(blk, 'Register', 'xbsIndex_r4/Register', ...
-    'Position', [435 325 480 375]);
 
 add_line(blk, 'din/1', 'Delay1/1');
 add_line(blk, 'Delay1/1', 'dout/1');
@@ -109,8 +107,7 @@ if (use_const_coeff == 0),
 end
 add_line(blk, 'sync/1', 'Delay/1');
 add_line(blk, 'Delay/1', 'sync_out/1');
-add_line(blk, 'Concat/1', 'Register/1');
-add_line(blk, 'Register/1', 'coeff/1');
+add_line(blk, 'Concat/1', 'coeff/1');
 
 % Add Dynamic Blocks
 for a=1:TotalTaps,

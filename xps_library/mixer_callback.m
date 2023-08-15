@@ -2,7 +2,7 @@ function [] = mixer_callback(gcb, tile, slice, arch)
 
   msk = Simulink.Mask.get(gcb);
 
-  [~, tile_arch, ~, ~] = get_rfsoc_properties(gcb);
+  [~, tile_arch, ~, adc_num_tiles, ~, ~, ~] = get_rfsoc_properties(gcb);
 
   if strcmp(tile_arch, 'quad')
     prefix = 'QT';
@@ -70,7 +70,7 @@ function [] = mixer_callback(gcb, tile, slice, arch)
     end
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  elseif ~(strcmp(tile_arch, 'dual') && (tile > 229)) %indicates a dac
+  elseif tile >= (224 + adc_num_tiles) %indicates a dac
     analog_mode_param = ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_analog_output'];
     %if chk_param(gcb, analog_mode_param, 'I/Q')
       % override if an even slice is C output with C2C mixer
@@ -114,7 +114,11 @@ function [] = mixer_callback(gcb, tile, slice, arch)
           msk.getParameter(['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_mode']).TypeOptions = {'Real -> Real', 'I/Q -> Real'};
           if chk_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_mode'], 'I/Q -> Real')
             msk.getParameter(['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_type']).TypeOptions = {'Fine','Coarse'};
-            set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_type'],'Fine')
+            % Get the current mask value. If not valid, default to Fine
+            curr_val = get_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_type']);
+            if ~any(strcmp({'Fine','Coarse'}, curr_val))
+              set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_type'],'Fine')
+            end
           else
             msk.getParameter(['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_type']).TypeOptions = {'Bypassed'};
             set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a+1), '_mixer_type'],'Bypassed');
@@ -126,7 +130,11 @@ function [] = mixer_callback(gcb, tile, slice, arch)
           end
           if chk_param(gcb, mixer_mode_param, 'I/Q -> Real')
             msk.getParameter(['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type']).TypeOptions = {'Fine','Coarse'};
-            set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type'],'Fine')
+            curr_val = get_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type']);
+            % Get the current mask value. If not valid, default to Fine
+            if ~any(strcmp({'Fine','Coarse'}, curr_val))
+              set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type'],'Fine')
+            end
           else %Real->Real
             msk.getParameter(['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type']).TypeOptions = {'Bypassed'};
             set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type'],'Bypassed');
@@ -137,6 +145,11 @@ function [] = mixer_callback(gcb, tile, slice, arch)
       else %odd slices still need to do mixer settings
         if chk_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_mode'], 'I/Q -> Real')
           msk.getParameter(['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type']).TypeOptions = {'Fine','Coarse'};
+          % Get the current mask value. If not valid, default to Fine
+          curr_val = get_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type']);
+          if ~any(strcmp({'Fine','Coarse'}, curr_val))
+            set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type'],'Fine')
+          end
           set_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type'],'Fine')
         elseif chk_param(gcb, ['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_mode'], 'Real -> Real')
           msk.getParameter(['t', num2str(tile), '_', prefix, '_dac', num2str(a), '_mixer_type']).TypeOptions = {'Bypassed'};

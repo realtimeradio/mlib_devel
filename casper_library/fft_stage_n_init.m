@@ -52,7 +52,7 @@ log_group = 'fft_stage_n_init_debug';
 clog('entering fft_stage_n_init', {log_group, 'trace'});
 
 % Don't use BRAMs with fanout control
-USE_DUMB_BRAMS = 0;
+USE_DUMB_BRAMS = strcmp(getenv('USE_DUMB_BRAMS'), 'yes');
 
 % Set default vararg values.
 % reg_retiming is not an actual parameter of this block, but it is included
@@ -161,7 +161,7 @@ end
 
 %calculate data path width so that mux latency can be increased if needed
 n_bits_dp = input_bit_width * n_inputs * 2;
-if n_bits_dp <= 200, mux_latency = 1;
+if n_bits_dp <= 500, mux_latency = 1;
 else mux_latency = 2;
 end
 
