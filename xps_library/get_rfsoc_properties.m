@@ -18,7 +18,7 @@ function [gen, adc_tile_arch, dac_tile_arch, adc_num_tiles, dac_num_tiles, fs_ma
 
   part = xlgetparam(xsg_blk, 'part');
 
-  match = regexp(part, 'xczu(2[8-9])|(39)|(4[8-9])dr', 'tokens', 'ignorecase');
+  match = regexp(part, 'xczu(2[8-9])|(39)|(4[7-9])dr', 'tokens', 'ignorecase');
   if ~isempty(match);
     designator = match{1}{1};
   else
@@ -59,6 +59,12 @@ function [gen, adc_tile_arch, dac_tile_arch, adc_num_tiles, dac_num_tiles, fs_ma
     case 3
       fs_min = 500;
       switch designator(2)
+        case '7'
+          fs_max = 5000;
+          adc_tile_arch = 'dual';
+          adc_num_tiles = 4;
+          dac_tile_arch = 'dual';
+          dac_num_tiles = 4;
         case '8'
           fs_max = 5000;
           adc_tile_arch = 'dual';

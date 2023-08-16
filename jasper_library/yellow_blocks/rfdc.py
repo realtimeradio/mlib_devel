@@ -186,7 +186,7 @@ class rfdc(YellowBlock):
     self.rfdc_conf = self.platform.conf['rfdc']
 
     part = self.platform.conf['fpga']
-    m = re.search('(2[8-9])|(39)|(4[8-9])', part)
+    m = re.search('(2[8-9])|(39)|(4[7-9])', part)
     if not m:
       self.throw_error("ERROR: RFSoC part designator {} not recognized or is not yet supported".format(part))
 
@@ -203,7 +203,7 @@ class rfdc(YellowBlock):
     # This logic taken from xps_library/get_rfsoc_properties()
     # Not sure this is right / needs other modifications
     if self.gen == 3:
-      if   designator[1] == '8':
+      if designator[1] in ['7','8']:
         self.adc_tile_arch = 'DT'
         self.dac_tile_arch = 'DT'
         self.num_adc_slice = 2
