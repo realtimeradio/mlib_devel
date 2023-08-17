@@ -119,6 +119,33 @@ pins:
   adc_clk_224_n:
     loc: BB3
 
+  # LMK04208
+  spi0_sck:
+    loc: AT5
+    iostd: LVCMOS18
+  spi0_ss:
+    loc: AR6
+    iostd: LVCMOS18
+  spi0_mosi:
+    loc: AU5
+    iostd: LVCMOS18
+  spi0_miso:
+    loc: AP5
+    iostd: LVCMOS18
+
+  # LMX2594
+  spi1_sck:
+    loc: AT6
+    iostd: LVCMOS18
+  spi1_ss:
+    loc: [AT7, AU8, AR7]
+    iostd: LVCMOS18
+  spi1_mosi:
+    loc: AV8
+    iostd: LVCMOS18
+  spi1_miso:
+    loc: [AV7, AU7, AP6]
+    iostd: LVCMOS18
 
 # 100 GbE
   qsfp_mgt_ref_clk_p:
