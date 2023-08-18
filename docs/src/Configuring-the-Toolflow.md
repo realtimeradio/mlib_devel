@@ -17,11 +17,12 @@ The latter method is useful if you want to run parts of the toolflow outside of 
 ### Specifying local details
 
 The `startsg` script is generic. You should not need to modify it.
-The script does not require that the Matlab and Xilinx tools be installed in specific locations, but it does require that you provide it with a few details about your local installation.  This is done by creating a `startsg.local` file that defines a few key variables needed by `startsg`.
+The script does not require that the MATLAB and Xilinx tools be installed in specific locations, but it does require that you provide it with a few details about your local installation.  This is done by creating a `startsg.local` file that defines a few key variables needed by `startsg`.
 Two essential variables are:
 
 - `MATLAB_PATH` - the path to the directory where MATLAB was installed
-- `XILINX_PATH` - the path to the directory where Xilinx tools were installed
+- `XILINX_PATH` - the path to the directory where Xilinx Vivado is installed
+- `COMPOSER_PATH` - the path to the directory where the Xilinx Model Compose is installed
 
 Optional variables:
 
@@ -36,8 +37,9 @@ Depending on your operating system, and MATLAB / Xilinx quirks, you may need to 
 Here is a sample `startsg.local` file:
 
 ```bash
-    export XILINX_PATH=/opt/Xilinx/Vivado/2019.1
-    export MATLAB_PATH=/usr/local/MATLAB/R2018a
+    export XILINX_PATH=/opt/Xilinx/Vivado/2021.1
+    export COMPOSER_PATH=/opt/Xilinx/Model_Composer/2021.1
+    export MATLAB_PATH=/usr/local/MATLAB/R2021a
     export PLATFORM=lin64
     export JASPER_BACKEND=vivado
 
@@ -48,6 +50,10 @@ Here is a sample `startsg.local` file:
 
     # Activate a custom python environment on load
     export CASPER_PYTHON_VENV_ON_START=/home/user/work/casper_venv
+    # Uncomment the below to skip the load_system calls in startup.m.
+    # These calls seem to cause segfaults with Ubuntu 18.04 / Matlab 2021a / Xilinx 2021.1
+    # and the systems seem to load fine without the problem calls.
+    # CASPER_SKIP_STARTUP_LOAD_SYSTEM=yesplease
 ```
 
 Since this configuration refers to your specific installation environment, in general it shouldn't be commited to the `mlib_devel` repository. In fact, the repository is configured to ignore changes to any files with names beginning `startsg.`.

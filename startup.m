@@ -7,8 +7,8 @@ warning off Simulink:Commands:LoadMdlParameterizedLink
 jasper_backend = getenv('JASPER_BACKEND');
 
 %if vivado is to be used
-if strcmp(jasper_backend, 'vivado') || isempty(jasper_backend)
-  disp('Starting Vivado Sysgen')
+if strcmp(jasper_backend, 'vivado') || strcmp(jasper_backend, 'vitis') || isempty(jasper_backend)
+  disp('Starting Model Composer')
   addpath([getenv('MLIB_DEVEL_PATH'), '/casper_library']);
   addpath([getenv('MLIB_DEVEL_PATH'), '/xps_library']);
   addpath([getenv('MLIB_DEVEL_PATH'), '/jasper_library']);
@@ -31,7 +31,7 @@ elseif strcmp(jasper_backend, 'ise')
   xlAddSysgen([getenv('XILINX_PATH'), '/ISE'])
   sysgen_startup
 else
-  fprintf('Unknown JASPER_BACKEND ''%s''\n', jasper_library);
+  fprintf('Unknown JASPER_BACKEND ''%s''\n', jasper_backend);
   % Hopefully helpful in this case
   addpath([getenv('MLIB_DEVEL_PATH'), '/casper_library']);
   addpath([getenv('MLIB_DEVEL_PATH'), '/xps_library']);
@@ -42,10 +42,16 @@ else
   end
 end
 
-load_system('casper_library');
-load_system('xps_library');
-if ~isempty(getenv('DSP_HDL_SL_PATH'))
-  load_system('hdl_library');
+% The load_system function causes a segfault when run with the Matlab 2021a and Vivado 2021.1
+% but the libraries are still accessable even without loading them.
+if ~isempty(getenv('CASPER_SKIP_STARTUP_LOAD_SYSTEM'))
+  disp('Skipping "load_system" calls because CASPER_SKIP_STARTUP_LOAD_SYSTEM variable is not empty');
+else
+  load_system('casper_library');
+  load_system('xps_library');
+  if ~isempty(getenv('DSP_HDL_SL_PATH'))
+    load_system('hdl_library');
+  end
 end
 
 casper_startup_dir = getenv('CASPER_STARTUP_DIR');

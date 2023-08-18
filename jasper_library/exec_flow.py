@@ -32,12 +32,18 @@ if __name__ == '__main__':
                     default=False, help="Run backend compilation")
     parser.add_argument("--software", dest="software", action='store_true',
                     default=False, help="Run software compilation")
+    parser.add_argument("--vitis", dest="vitis", action='store_true',
+                    default=False, help="[EXPERIMENTAL] Run xsct (Vitis) to generate dtbo")
+    parser.add_argument("--xsa", dest="xsa", type=str, default='',
+                    help="location of xsa file, uses backend generated if ran with backend option")
     parser.add_argument("--be", dest="be", type=str, default='vivado',
                     help="Backend to use. Default: vivado")
     parser.add_argument("--sysgen", dest="sysgen", type=str, default='',
                     help="Specify a specific sysgen startup script.")
     parser.add_argument("--jobs", dest="jobs", type=int, default=4,
                     help="Number of cores to run compiles with. Default=4")
+    parser.add_argument("--threads", dest="threads", type=str, default='multi',
+                    help="Processor threads to use for compiling - either multi or single. Default: multi")
     parser.add_argument("--nonprojectmode", dest="nonprojectmode",
                     action='store_false', default=True,
                     help="Project Mode is enabled by default/Non Project Mode "
@@ -231,7 +237,7 @@ if __name__ == '__main__':
 
             # launch vivado via the generated .tcl file
             backend.compile(cores=opts.jobs, plat=platform,
-                            synth_strat=opts.synth_strat, impl_strat=opts.impl_strat)
+                            synth_strat=opts.synth_strat, impl_strat=opts.impl_strat, threads=opts.threads)
         # if ISE is selected to compile
         elif opts.be == 'ise':
             platform.backend_target = 'ise'
@@ -255,13 +261,15 @@ if __name__ == '__main__':
             backend.initialize()
             # launch vivado via the generated .tcl file
             backend.compile(cores=opts.jobs, plat=platform,
-                            synth_strat=opts.synth_strat, impl_strat=opts.impl_strat)
+                            synth_strat=opts.synth_strat, impl_strat=opts.impl_strat, threads=opts.threads)
 
         if opts.software:
             binary = backend.bin_loc
+            bit_file = backend.bit_loc
             hex_file = backend.hex_loc
             mcs_file = backend.mcs_loc
             prm_file = backend.prm_loc
+            bitstream = backend.bitstream_loc
 
             backend.output_fpg = tf.frontend_target_base[:-4] + '_%d-%02d-%02d_%02d%02d.fpg' % (
                 tf.start_time.tm_year, tf.start_time.tm_mon, tf.start_time.tm_mday,
@@ -303,7 +311,11 @@ if __name__ == '__main__':
                     tf.start_time.tm_year, tf.start_time.tm_mon, tf.start_time.tm_mday,
                     tf.start_time.tm_hour, tf.start_time.tm_min)
                 os.system('cp %s %s/top.bin' % (binary, backend.compile_dir))
-                backend.mkfpg(binary, backend.output_fpg)
+                os.system('cp %s %s/top.bit' % (bit_file, backend.compile_dir))
+                if platform.name.startswith("au"):
+                   backend.mkfpg(bitstream, backend.output_fpg)
+                else:
+                   backend.mkfpg(binary, backend.output_fpg)
                 print('Created %s/%s' % (backend.output_dir, backend.output_fpg))
 
             # Only generate the hex and mcs files if a golden image or multiboot image
@@ -322,3 +334,25 @@ if __name__ == '__main__':
                 print('Created prm file: %s/%s' % (backend.output_dir, backend.output_prm))
 
     # end
+
+    if opts.vitis:
+        if opts.backend:
+            xsa_loc = backend.xsa_loc
+        else:
+            if opts.xsa != '':
+                xsa_loc = opts.xsa
+            else:
+                raise RuntimeError('--xsa option must be provided when not running with the backend option')
+
+        vitis = toolflow.VitisBackend(xsa=xsa_loc, plat=None, compile_dir=tf.compile_dir, periph_objs=tf.periph_objs)
+        vitis.compile()
+
+        # running this seperate of `--backend` will require work of the user. The rfdc in casperfpga is currently
+        # expecting the `.dtbo` and `.fpg` live in the same place with the same name (different ext) and so a
+        # separate compilation will require the user to change the name of the `.dtbo` to match the `.fpg`
+        vitis.output_dtbo = tf.frontend_target_base[:-4] + '_%d-%02d-%02d_%02d%02d.dtbo' % (
+            tf.start_time.tm_year, tf.start_time.tm_mon, tf.start_time.tm_mday,
+            tf.start_time.tm_hour, tf.start_time.tm_min)
+
+        vitis.mkdtbo(vitis.dtsi_loc, os.path.join(vitis.output_dir, vitis.output_dtbo))
+        print('Created %s/%s' % (vitis.output_dir, vitis.output_dtbo))

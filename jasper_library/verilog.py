@@ -1428,6 +1428,7 @@ class VerilogModule(object):
         for block in list(sorted(self.ports.keys())):
             n_ports = len(self.ports[block])
             n = 0
+
             for pn, port in sorted(self.ports[block].items()):
                 try:
                     s += '    .%s(%s)'%(port.name, port.signal.rstrip(' '))
@@ -1494,7 +1495,7 @@ class VerilogModule(object):
         self.add_port('wb_err_o'+suffix, signal='wbs_err_i[%s]'%wb_id,parent_sig=False)
 
     def add_axi4lite_interface(self, regname, mode, nbytes=4,
-                               default_val=None, suffix='',
+                               default_val=0, suffix='',
                                candr_suffix='', memory_map=[],
                                typecode=0xff, data_width=32, axi4lite_mode=''):
         """
