@@ -249,9 +249,12 @@ class ads5404(YellowBlock):
         cons.append(RawConstraint('set_clock_uncertainty -from ads5404a_clk -to ads5404b_clk 0.2')) # This might be redundant?
 
         # Annoyingly, vivado seems to try to place the PLL in an impossible location which the BUFR can't reach.
+        # For 030 chip CLOCKREGION_X1Y3
+        # For 035 chip CLOCKREGION X1Y6
         pll = '%s/mmcm_inst' % self.fullname
         pc = 'create_pblock ads5404_pblock\n'
-        pc += 'resize_pblock [get_pblocks ads5404_pblock] -add {CLOCKREGION_X1Y3:CLOCKREGION_X1Y3}\n'
+        pc += 'set clkregion [get_clock_regions -of_objects [get_cells %s/ads5404_a_inst/ibuf_inst[13]]]\n' % self.fullname
+        pc += 'resize_pblock [get_pblocks ads5404_pblock] -add CLOCKREGION_${clkregion}:CLOCKREGION_${clkregion}\n'
         pc += 'add_cells_to_pblock [get_pblocks ads5404_pblock] [get_cells -quiet [list %s]]\n' % pll
         cons.append(RawConstraint(pc))
         return cons
