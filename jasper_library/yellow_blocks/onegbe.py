@@ -833,6 +833,8 @@ class onegbe_snap(onegbe):
 
         if (not self.use_lvds) and (self.platform.name in ['snap']):
             consts += [PortConstraint(self.fullname+'_sfp_disable', 'sfp_disable')]
+        elif self.platform.name in ['sparrow']:
+            pass
         else:
             consts += [PortConstraint('phy_rst_n', 'phy_rst_n')]
         return consts
