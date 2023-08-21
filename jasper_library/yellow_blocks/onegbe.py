@@ -799,8 +799,9 @@ class onegbe_snap(onegbe):
            gbe_pcs.add_port('gt0_qplloutrefclk_out', 'gbe_gt0_qplloutrefclk_out')
                
            # hard code SFP disable to 0
-           top.add_port(self.fullname+'_sfp_disable', dir='out', width=0)
-           top.assign_signal(self.fullname+'_sfp_disable', '1\'b0')
+           if self.platform.name in ['snap']:
+               top.add_port(self.fullname+'_sfp_disable', dir='out', width=0)
+               top.assign_signal(self.fullname+'_sfp_disable', '1\'b0')
 
 
     def gen_constraints(self):
@@ -834,6 +835,10 @@ class onegbe_snap(onegbe):
         if (not self.use_lvds) and (self.platform.name in ['snap']):
             consts += [PortConstraint(self.fullname+'_sfp_disable', 'sfp_disable')]
         elif self.platform.name in ['sparrow']:
+            # TODO: why is this newly required
+            consts += [ClockGroupConstraint('-include_generated_clocks -of_objects [get_nets sys_clk]',
+                                            '-include_generated_clocks %s*' % self.fullname,
+                                            'asynchronous')]
             pass
         else:
             consts += [PortConstraint('phy_rst_n', 'phy_rst_n')]
