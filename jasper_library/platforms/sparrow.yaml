@@ -1,6 +1,7 @@
 name: sparrow
 manufacturer: Xilinx
-fpga: xc7z030ffg676-2
+# FPGA may be overridden by sparrow yellow block
+fpga: xc7z035ffg676-2
 backend_target: vivado
 config_voltage: 1.8
 cfgbvs: GND

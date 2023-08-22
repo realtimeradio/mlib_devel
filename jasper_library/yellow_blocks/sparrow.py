@@ -6,6 +6,9 @@ from .hardware_typecodes import *
 class sparrow(YellowBlock):
     enable_wishbone = True
     def initialize(self):
+        board, fpga = self.hw_sys.split(':')
+        # override FPGA model in platform yaml file
+        self.platform.fpga = fpga + 'ffg676-2'
         if self.enable_wishbone:
             self.ips = [{'path':'%s/axi_wb_bridge/ip_repo' % env['HDL_ROOT'],
                  'name':'axi_slave_wishbone_classic_master',
