@@ -86,7 +86,7 @@ class sparrow(YellowBlock):
             # has finished.
             pllctrl.add_parameter("NBITS", 32)
             pllctrl.add_parameter("NCSBITS", 1)
-            pllctrl.add_parameter("NCLKDIVBITS", 3)
+            pllctrl.add_parameter("NCLKDIVBITS", 5)
             pllctrl.add_wb_interface(nbytes=4*4, regname='sparrow_pll_ctrl', mode='rw', typecode=self.typecode)
             pllctrl.add_port('cs',   self.pll_port_base + 'cs',   dir='out', parent_port=True)
             pllctrl.add_port('sclk', self.pll_port_base + 'sclk', dir='out', parent_port=True)
@@ -189,6 +189,10 @@ class sparrow(YellowBlock):
             cons.append(PortConstraint(self.pll_port_base + 'mosi', 'pll_sdi'))
             cons.append(PortConstraint(self.pll_port_base + 'miso', 'pll_sdo'))
             cons.append(PortConstraint(self.pll_port_base + 'adc_en', 'adc_en'))
+            cons.append(RawConstraint('set_property SLEW SLOW [get_ports %scs]' % (self.pll_port_base)))
+            cons.append(RawConstraint('set_property SLEW SLOW [get_ports %ssclk]' % (self.pll_port_base)))
+            cons.append(RawConstraint('set_property SLEW SLOW [get_ports %smosi]' % (self.pll_port_base)))
+            cons.append(RawConstraint('set_property SLEW SLOW [get_ports %sadc_en]' % (self.pll_port_base)))
 
 
         return cons

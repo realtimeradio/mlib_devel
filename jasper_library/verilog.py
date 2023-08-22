@@ -397,7 +397,7 @@ def gen_wbs_master_arbiter(arbiters, max_devices_per_arb=32):
         .N_SLAVES(N_SUB_ARBS),\n\
         .SLAVE_ADDR(SLAVE_ADDR),\n\
         .SLAVE_HIGH(SLAVE_HIGH),\n\
-        .TIMEOUT(1024)\n\
+        .TIMEOUT(4096)\n\
       ) wbs_arbiter_primary (\n\
         .wb_clk_i(wb_clk_i),\n\
         .wb_rst_i(wb_rst_i),\n\
@@ -428,7 +428,7 @@ def gen_wbs_master_arbiter(arbiters, max_devices_per_arb=32):
         .N_SLAVES(N_SLAVES_ARB{0}),\n\
         .SLAVE_ADDR(SLAVE_ADDR_ARB{0}),\n\
         .SLAVE_HIGH(SLAVE_HIGH_ARB{0}),\n\
-        .TIMEOUT(1024)\n\
+        .TIMEOUT(4096)\n\
       ) wbs_arbiter_{0} (\n\
         .wb_clk_i(wb_clk_i),\n\
         .wb_rst_i(wb_rst_i),\n\
