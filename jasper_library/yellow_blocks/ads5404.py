@@ -248,13 +248,17 @@ class ads5404(YellowBlock):
         cons.append(RawConstraint('set_clock_uncertainty -from ads5404b_clk -to ads5404a_clk 0.2'))
         cons.append(RawConstraint('set_clock_uncertainty -from ads5404a_clk -to ads5404b_clk 0.2')) # This might be redundant?
 
+        return cons
+
+    def gen_tcl_cmds(self):
+        tcl_cmds = {}
+        tcl_cmds['pre_impl'] = []
         # Annoyingly, vivado seems to try to place the PLL in an impossible location which the BUFR can't reach.
         # For 030 chip CLOCKREGION_X1Y3
         # For 035 chip CLOCKREGION X1Y6
         pll = '%s/mmcm_inst' % self.fullname
-        pc = 'create_pblock ads5404_pblock\n'
-        pc += 'set clkregion [get_clock_regions -of_objects [get_cells %s/ads5404_a_inst/ibuf_inst[13]]]\n' % self.fullname
-        pc += 'resize_pblock [get_pblocks ads5404_pblock] -add CLOCKREGION_${clkregion}:CLOCKREGION_${clkregion}\n'
-        pc += 'add_cells_to_pblock [get_pblocks ads5404_pblock] [get_cells -quiet [list %s]]\n' % pll
-        cons.append(RawConstraint(pc))
-        return cons
+        tcl_cmds['pre_impl'] += ['create_pblock ads5404_pblock']
+        tcl_cmds['pre_impl'] += ['set clkregion [get_clock_regions -of_objects [get_cells %s/ads5404_a_inst/ibuf_inst[13]]]' % self.fullname]
+        tcl_cmds['pre_impl'] += ['resize_pblock [get_pblocks ads5404_pblock] -add CLOCKREGION_${clkregion}:CLOCKREGION_${clkregion}']
+        tcl_cmds['pre_impl'] += ['add_cells_to_pblock [get_pblocks ads5404_pblock] [get_cells -quiet [list %s]]' % pll]
+        return tcl_cmds
