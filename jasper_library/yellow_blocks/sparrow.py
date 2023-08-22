@@ -89,7 +89,7 @@ class sparrow(YellowBlock):
             # has finished.
             pllctrl.add_parameter("NBITS", 32)
             pllctrl.add_parameter("NCSBITS", 1)
-            pllctrl.add_parameter("NCLKDIVBITS", 5)
+            pllctrl.add_parameter("NCLKDIVBITS", 6)
             pllctrl.add_wb_interface(nbytes=4*4, regname='sparrow_pll_ctrl', mode='rw', typecode=self.typecode)
             pllctrl.add_port('cs',   self.pll_port_base + 'cs',   dir='out', parent_port=True)
             pllctrl.add_port('sclk', self.pll_port_base + 'sclk', dir='out', parent_port=True)
@@ -183,8 +183,6 @@ class sparrow(YellowBlock):
         # We don't need IO constraints for any of the PS ports, because the IP
         # will generate these for us.
         cons.append(PortConstraint('wr_osc_en', 'wr_osc_en'))
-        cons.append(RawConstraint('set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]'))
-        cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
 
         if self.use_pll_ctrl:
             cons.append(PortConstraint(self.pll_port_base + 'cs',   'pll_sen'))
@@ -197,7 +195,8 @@ class sparrow(YellowBlock):
             cons.append(RawConstraint('set_property SLEW SLOW [get_ports %smosi]' % (self.pll_port_base)))
             cons.append(RawConstraint('set_property SLEW SLOW [get_ports %sadc_en]' % (self.pll_port_base)))
 
-
+        cons.append(RawConstraint('set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]'))
+        #cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
         return cons
 
     def gen_tcl_cmds(self):

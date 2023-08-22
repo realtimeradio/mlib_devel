@@ -166,23 +166,23 @@ pins:
     loc: F8
 
   adc_en:
-    drive_strength: 8
+    drive_strength: 4
     loc: AE17
     iostd: LVCMOS33
 
   pll_sdi:
-    drive_strength: 8
+    drive_strength: 4
     iostd: LVCMOS33
     loc: Y17
   pll_sdo:
     iostd: LVCMOS33
     loc: AB17
   pll_sen:
-    drive_strength: 8
+    drive_strength: 4
     iostd: LVCMOS33
     loc: AA15
   pll_sclk:
-    drive_strength: 8
+    drive_strength: 4
     iostd: LVCMOS33
     loc: AB14
 
