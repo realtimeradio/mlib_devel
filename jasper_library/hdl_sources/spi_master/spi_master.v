@@ -155,14 +155,14 @@ module spi_master#(
           dvld_reg <= 1'b0;
         end
         END: begin
-          sclk_reg <= 1'b1;
-          cs_reg <= cs_idle_int;
+          sclk_reg <= 1'b0;
+          cs_reg <= cs_int;
           mosi_reg <= din_int[NBITS-1];
           dvld_reg <= 1'b0;
         end
         AWAIT_ACK: begin
           cs_reg <= cs_idle_int;
-          sclk_reg <= 1'b1;
+          sclk_reg <= 1'b0;
           mosi_reg <= 1'b0;
           dvld_reg <= 1'b1;
         end
