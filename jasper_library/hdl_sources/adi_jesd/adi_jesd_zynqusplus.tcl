@@ -519,9 +519,10 @@ proc create_hier_cell_mxfe_tx_data_offload { parentCell nameHier } {
   set_property -dict [ list \
    CONFIG.DST_CYCLIC_EN {true} \
    CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.MEM_SIZE_LOG2 {14} \
+   CONFIG.HAS_BYPASS {true} \
+   CONFIG.MEM_SIZE_LOG2 {15} \
    CONFIG.MEM_TYPE {0} \
-   CONFIG.SRC_DATA_WIDTH {512} \
+   CONFIG.SRC_DATA_WIDTH {64} \
    CONFIG.SYNC_EXT_ADD_INTERNAL_CDC {true} \
    CONFIG.TX_OR_RXN_PATH {1} \
  ] $i_data_offload
@@ -530,8 +531,8 @@ proc create_hier_cell_mxfe_tx_data_offload { parentCell nameHier } {
   set storage_unit [ create_bd_cell -type ip -vlnv analog.com:user:util_do_ram:1.0 storage_unit ]
   set_property -dict [ list \
    CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.LENGTH_WIDTH {14} \
-   CONFIG.SRC_DATA_WIDTH {512} \
+   CONFIG.LENGTH_WIDTH {15} \
+   CONFIG.SRC_DATA_WIDTH {64} \
  ] $storage_unit
 
   # Create interface connections
@@ -613,8 +614,8 @@ proc create_hier_cell_mxfe_rx_data_offload { parentCell nameHier } {
   set i_data_offload [ create_bd_cell -type ip -vlnv analog.com:user:data_offload:1.0 i_data_offload ]
   set_property -dict [ list \
    CONFIG.DST_CYCLIC_EN {true} \
-   CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.MEM_SIZE_LOG2 {16} \
+   CONFIG.DST_DATA_WIDTH {64} \
+   CONFIG.MEM_SIZE_LOG2 {15} \
    CONFIG.MEM_TYPE {0} \
    CONFIG.SRC_DATA_WIDTH {512} \
    CONFIG.SYNC_EXT_ADD_INTERNAL_CDC {true} \
@@ -624,8 +625,8 @@ proc create_hier_cell_mxfe_rx_data_offload { parentCell nameHier } {
   # Create instance: storage_unit, and set properties
   set storage_unit [ create_bd_cell -type ip -vlnv analog.com:user:util_do_ram:1.0 storage_unit ]
   set_property -dict [ list \
-   CONFIG.DST_DATA_WIDTH {512} \
-   CONFIG.LENGTH_WIDTH {16} \
+   CONFIG.DST_DATA_WIDTH {64} \
+   CONFIG.LENGTH_WIDTH {15} \
    CONFIG.SRC_DATA_WIDTH {512} \
  ] $storage_unit
 
@@ -1062,13 +1063,13 @@ proc create_root_design { parentCell } {
    CONFIG.AXI_SLICE_SRC {true} \
    CONFIG.CYCLIC {false} \
    CONFIG.DMA_2D_TRANSFER {false} \
-   CONFIG.DMA_DATA_WIDTH_DEST {512} \
-   CONFIG.DMA_DATA_WIDTH_SRC {512} \
+   CONFIG.DMA_DATA_WIDTH_DEST {64} \
+   CONFIG.DMA_DATA_WIDTH_SRC {64} \
    CONFIG.DMA_LENGTH_WIDTH {24} \
    CONFIG.DMA_TYPE_DEST {0} \
    CONFIG.DMA_TYPE_SRC {1} \
    CONFIG.ID {0} \
-   CONFIG.MAX_BYTES_PER_BURST {4096} \
+   CONFIG.MAX_BYTES_PER_BURST {1024} \
    CONFIG.SYNC_TRANSFER_START {false} \
  ] $axi_mxfe_rx_dma
 
@@ -1098,13 +1099,13 @@ proc create_root_design { parentCell } {
    CONFIG.CACHE_COHERENT_DEST {false} \
    CONFIG.CYCLIC {true} \
    CONFIG.DMA_2D_TRANSFER {false} \
-   CONFIG.DMA_DATA_WIDTH_DEST {512} \
-   CONFIG.DMA_DATA_WIDTH_SRC {512} \
+   CONFIG.DMA_DATA_WIDTH_DEST {64} \
+   CONFIG.DMA_DATA_WIDTH_SRC {64} \
    CONFIG.DMA_LENGTH_WIDTH {24} \
    CONFIG.DMA_TYPE_DEST {1} \
    CONFIG.DMA_TYPE_SRC {0} \
    CONFIG.ID {0} \
-   CONFIG.MAX_BYTES_PER_BURST {4096} \
+   CONFIG.MAX_BYTES_PER_BURST {1024} \
  ] $axi_mxfe_tx_dma
 
   # Create instance: axi_mxfe_tx_jesd
@@ -2919,7 +2920,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
    CONFIG.RXDFE_KH_CFG3 {0x4120} \
    CONFIG.RXPI_CFG0 {0x0104} \
    CONFIG.RX_CLK25_DIV {10} \
-   CONFIG.RX_LANE_RATE $::ADI_JESD_LANE_RATE_GBPS \
+   CONFIG.RX_LANE_RATE {19.800000} \
    CONFIG.RX_NUM_OF_LANES {8} \
    CONFIG.RX_OUT_DIV {1} \
    CONFIG.RX_WIDEMODE_CDR {0x2} \
@@ -2933,7 +2934,7 @@ Port;FD4A0000;FD4AFFFF;0|FPD;DPDMA;FD4C0000;FD4CFFFF;0|FPD;DDR_XMPU5_CFG;FD05000
    CONFIG.TXPI_CFG1 {0x1000} \
    CONFIG.TXSWBST_EN {0} \
    CONFIG.TX_CLK25_DIV {10} \
-   CONFIG.TX_LANE_RATE $::ADI_JESD_LANE_RATE_GBPS \
+   CONFIG.TX_LANE_RATE {19.800000} \
    CONFIG.TX_NUM_OF_LANES {8} \
    CONFIG.TX_PI_BIASSET {2} \
  ] $util_mxfe_xcvr
