@@ -48,7 +48,12 @@ if debug,
     coeff_vector = index;
 else
     try
-        windowval = transpose(window(WindowType, alltaps));
+	if strcmp(WindowType, 'dpss')
+	    windowval = transpose(dpss(alltaps, 2.0, 1));
+	    windowval = windowval / max(windowval);
+	else
+            windowval = transpose(window(WindowType, alltaps));
+	end
     catch err
         switch err.identifier
             case 'MATLAB:UndefinedFunction'
