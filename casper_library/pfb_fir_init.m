@@ -428,7 +428,9 @@ if oversample2x == 1
         add_line(blk, [bus_create_name, '/1'], [reorder_name, '/3']);
         add_line(blk, [st_name, '/1'], [reorder_name, '/1']); % sync
         add_line(blk, 'always_we/1', [reorder_name, '/2']);
-        add_line(blk, [reorder_name, '/1'], 'sync_out/1');
+	if p == 1
+            add_line(blk, [reorder_name, '/1'], 'sync_out/1');
+	end
         % Slice up and output
         busexp_name = ['pol',num2str(p),'_busexp'];
         reuse_block(blk, busexp_name, 'casper_library_flow_control/bus_expand', ...
