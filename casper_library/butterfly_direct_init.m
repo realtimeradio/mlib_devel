@@ -81,6 +81,7 @@ function butterfly_direct_init(blk, varargin)
       'conv_latency', 1, ...
       'add_pipe_latency', 0, ...
       'mult_pipe_latency', 0, ...        
+      'shift_mux_latency', 1, ...
       'quantization', 'Truncate', ...
       'overflow', 'Wrap', ...
       'coeffs_bit_limit', 8, ...
@@ -129,6 +130,7 @@ function butterfly_direct_init(blk, varargin)
   conv_latency      = get_var('conv_latency', 'defaults', defaults, varargin{:});
   add_pipe_latency  = get_var('add_pipe_latency', 'defaults', defaults, varargin{:});
   mult_pipe_latency = get_var('mult_pipe_latency', 'defaults', defaults, varargin{:});  
+  shift_mux_latency = get_var('shift_mux_latency', 'defaults', defaults, varargin{:});
   quantization      = get_var('quantization', 'defaults', defaults, varargin{:});
   overflow          = get_var('overflow', 'defaults', defaults, varargin{:});
   coeffs_bit_limit  = get_var('coeffs_bit_limit', 'defaults', defaults, varargin{:});
@@ -187,7 +189,7 @@ function butterfly_direct_init(blk, varargin)
   % Validate input fields.
 
   if strcmp(bitgrowth, 'on') || strcmp(hardcode_shifts, 'on'), mux_latency = 0;
-  else mux_latency = 1;
+  else mux_latency = shift_mux_latency;
   end
 
   %TODO
