@@ -56,6 +56,7 @@ defaults = { ...
   'n_inputs', 1, ...
   'double_buffer', 0, ...
   'software_controlled', 'off', ...
+  'use_control_fanout', 'on', ...
   'bram_map', 'on'};
 if same_state(blk, 'defaults', defaults, varargin{:}), return, end
 
@@ -71,6 +72,7 @@ n_inputs        = get_var('n_inputs', 'defaults', defaults, varargin{:});
 double_buffer   = get_var('double_buffer', 'defaults', defaults, varargin{:});
 bram_map        = get_var('bram_map', 'defaults', defaults, varargin{:});
 software_controlled = get_var('software_controlled', 'defaults', defaults, varargin{:});
+use_control_fanout = get_var('use_control_fanout', 'defaults', defaults, varargin{:});
 mux_latency     = 1;
 
 yinc = 20;
@@ -137,7 +139,11 @@ if 2^map_bits ~= map_length,
 end
 
 % make fanout as low as possible (2)
-rep_latency = log2(n_inputs);
+if strcmp(use_control_fanout, 'on')
+  rep_latency = log2(n_inputs);
+else
+  rep_latency = 0;
+end
 
 % en stuff
 % delays on way into buffer depend on double buffering 
