@@ -57,6 +57,7 @@ defaults = { ...
   'double_buffer', 0, ...
   'software_controlled', 'off', ...
   'use_control_fanout', 'on', ...
+  'hide_latency', 'off', ...
   'bram_map', 'on'};
 if same_state(blk, 'defaults', defaults, varargin{:}), return, end
 
@@ -73,6 +74,7 @@ double_buffer   = get_var('double_buffer', 'defaults', defaults, varargin{:});
 bram_map        = get_var('bram_map', 'defaults', defaults, varargin{:});
 software_controlled = get_var('software_controlled', 'defaults', defaults, varargin{:});
 use_control_fanout = get_var('use_control_fanout', 'defaults', defaults, varargin{:});
+hide_latency = get_var('hide_latency', 'defaults', defaults, varargin{:});
 mux_latency     = 1;
 
 yinc = 20;
@@ -203,13 +205,19 @@ add_line(blk, 'post_sync_delay/1', 'sync_out/1');
 
 base = 160 + (n_inputs-1)*yinc;
 
+if strcmp(hide_latency, 'on')
+  count_offset = pre_delay + rep_latency;
+else
+  count_offset = 0;
+end
+
 %Ports
 for cnt=1:n_inputs,
   % Ports
   reuse_block(blk, ['din', num2str(cnt-1)], 'built-in/inport', ...
       'Position', [680    base+80*(cnt-1)+43   710    base+80*(cnt-1)+57], 'Port', num2str(2+cnt));
   reuse_block(blk, ['delay_din', num2str(cnt-1)], 'xbsIndex_r4/Delay', 'reg_retiming', 'on', ...
-      'Position', [760    base+80*(cnt-1)+40    800    base+80*(cnt-1)+60], 'latency', num2str(pre_delay+rep_latency));
+      'Position', [760    base+80*(cnt-1)+40    800    base+80*(cnt-1)+60], 'latency', num2str(pre_delay+rep_latency-count_offset));
   add_line(blk, ['din', num2str(cnt-1),'/1'], ['delay_din', num2str(cnt-1),'/1']);
   reuse_block(blk, ['dout', num2str(cnt-1)], 'built-in/outport', ...
       'Position', [965    base+80*(cnt-1)+43   995    base+80*(cnt-1)+57], 'Port', num2str(2+cnt));
@@ -220,7 +228,7 @@ if order ~= 1,
     reuse_block(blk, 'Counter', 'xbsIndex_r4/Counter', ...
         'Position', [95   base   145   base+55], 'n_bits', num2str(map_bits + order_bits), 'cnt_type', 'Free Running', ...
         'use_behavioral_HDL', 'on', 'implementation', 'Fabric', 'arith_type', 'Unsigned', ...
-        'en', 'on', 'rst', 'on');
+        'en', 'on', 'rst', 'on', 'start_count', num2str(count_offset));
     add_line(blk, 'sync/1', 'Counter/1');
     add_line(blk, 'en/1', 'Counter/2');
 
