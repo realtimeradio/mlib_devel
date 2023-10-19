@@ -156,15 +156,21 @@ if double_buffer == 0,
 else, pre_delay = map_latency;
 end
 
+if strcmp(hide_latency, 'on')
+  count_offset = pre_delay + rep_latency;
+else
+  count_offset = 0;
+end
+
 reuse_block(blk, 'en', 'built-in/inport', 'Position', [25   43    55   57], 'Port', '2');
 reuse_block(blk, 'delay_we0', 'xbsIndex_r4/Delay', ...
-  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency), 'Position', [305 40 345 60]);
+  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency-count_offset), 'Position', [305 40 345 60]);
 add_line(blk, 'en/1', 'delay_we0/1');
 reuse_block(blk, 'delay_we1', 'xbsIndex_r4/Delay', ...
-  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency), 'Position', [305 80 345 100]);
+  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency-count_offset), 'Position', [305 80 345 100]);
 add_line(blk, 'en/1', 'delay_we1/1');
 reuse_block(blk, 'delay_we2', 'xbsIndex_r4/Delay', ...
-  'reg_retiming', 'on', 'latency', num2str(pre_delay), 'Position', [305 120 345 140]);
+  'reg_retiming', 'on', 'latency', num2str(pre_delay-count_offset), 'Position', [305 120 345 140]);
 add_line(blk, 'en/1', 'delay_we2/1');
 reuse_block(blk, 'delay_valid', 'xbsIndex_r4/Delay', 'reg_retiming', 'on', ...
     'Position', [860  80  900  100], 'latency', num2str(bram_latency+fanout_latency));
@@ -187,7 +193,7 @@ add_line(blk, 'we_replicate/1', 'we_expand/1');
 % delay value here is time into BRAM + time for one vector + time out of BRAM
 reuse_block(blk, 'sync', 'built-in/inport', 'Position', [25    3    55    17], 'Port', '1');
 reuse_block(blk, 'pre_sync_delay', 'xbsIndex_r4/Delay', ...
-    'reg_retiming', 'on', 'Position', [305 0 345 20], 'latency', num2str(pre_delay+rep_latency));
+    'reg_retiming', 'on', 'Position', [305 0 345 20], 'latency', num2str(pre_delay+rep_latency-count_offset));
 add_line(blk, 'sync/1', 'pre_sync_delay/1');
 reuse_block(blk, 'or', 'xbsIndex_r4/Logical', ...
     'logical_function', 'OR', 'Position', [375 19 400 46], 'latency', '0');
@@ -204,12 +210,6 @@ reuse_block(blk, 'sync_out', 'built-in/outport', 'Position', [965   7   995   23
 add_line(blk, 'post_sync_delay/1', 'sync_out/1');
 
 base = 160 + (n_inputs-1)*yinc;
-
-if strcmp(hide_latency, 'on')
-  count_offset = pre_delay + rep_latency;
-else
-  count_offset = 0;
-end
 
 %Ports
 for cnt=1:n_inputs,
