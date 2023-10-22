@@ -196,7 +196,7 @@ class sparrow(YellowBlock):
             cons.append(RawConstraint('set_property SLEW SLOW [get_ports %sadc_en]' % (self.pll_port_base)))
 
         cons.append(RawConstraint('set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]'))
-        #cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
+        cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPPOWERDOWN Enable [current_design]"))
         return cons
 
     def gen_tcl_cmds(self):
