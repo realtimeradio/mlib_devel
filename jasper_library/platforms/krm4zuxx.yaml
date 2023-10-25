@@ -1,3 +1,4 @@
+# Xilinx pkg.txt -- https://www.xilinx.com/content/dam/xilinx/support/packagefiles/zuppackages/xczu47drfsvg1517pkg.txt
 name: krm4zuxx
 manufacturer: Xilinx
 fpga: xczu47dr-fsvg1517-2-e
@@ -122,30 +123,30 @@ pins:
   # LMK04208
   spi0_sck:
     loc: AT5
-    iostd: LVCMOS18
+    iostd: LVCMOS33
   spi0_ss:
     loc: AR6
-    iostd: LVCMOS18
+    iostd: LVCMOS33
   spi0_mosi:
     loc: AU5
-    iostd: LVCMOS18
+    iostd: LVCMOS33
   spi0_miso:
     loc: AP5
-    iostd: LVCMOS18
+    iostd: LVCMOS33
 
   # LMX2594
   spi1_sck:
     loc: AT6
-    iostd: LVCMOS18
+    iostd: LVCMOS33
   spi1_ss:
     loc: [AT7, AU8, AR7]
-    iostd: LVCMOS18
+    iostd: LVCMOS33
   spi1_mosi:
     loc: AV8
-    iostd: LVCMOS18
+    iostd: LVCMOS33
   spi1_miso:
     loc: [AV7, AU7, AP6]
-    iostd: LVCMOS18
+    iostd: LVCMOS33
 
 # 100 GbE
   qsfp_mgt_ref_clk_p:
@@ -193,21 +194,18 @@ pins:
   led:
     drive_strength: 8 #HP banks don't support the default of 12
     iostd: LVCMOS18
-    # [USER_LED(4), RGB_0(3), RGB_1(3)]
-    loc: [AR11, AW10, AT11, AU10, AM8, AM7, AN8, AR12, AP8, AT10]
+    loc: [D20, B23]
 
 
-  gpio:
-    iostd: LVCMOS18
+  gpio_afe: # GPIO on KRC-4700-KIT Analog Front-End header
+    iostd: LVCMOS33
     loc:
-      # switches
-      - AN13 # SW0
-      - AU12 # SW1
-      - AW11 # SW2
-      - AV11 # SW3
-      # buttons
-      - AN12 # User Reset
-      - AV12 # PB0
-      - AV10 # PB1
-      - AW9  # PB2
-      - AT12 # PB3
+      # index is pin of bank 84 (as labelled on PCB) not header pin
+      - AW6 # B84.00
+      - AW5 # B84.01
+      - AW4 # B84.02
+      - AW3 # B84.03
+      - AV3 # B84.04
+      - AV2 # B84.05
+      - AU2 # B84.06
+      - AU1 # B84.07
