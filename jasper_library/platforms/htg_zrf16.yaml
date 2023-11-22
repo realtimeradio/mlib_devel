@@ -28,6 +28,7 @@ onehundredgbe:
   gt_group:
     - X0Y12~X0Y15
     - X0Y16~X0Y19
+  management_interface: []
 provides:
   - sys_clk
   - qsfp0
