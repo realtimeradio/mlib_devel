@@ -185,7 +185,7 @@ class rfdc(YellowBlock):
 
     self.rfdc_conf = self.platform.conf['rfdc']
 
-    part = self.platform.conf['fpga']
+    part = self.platform.fpga
     m = re.search('(2[8-9])|(39)|(4[7-9])', part)
     if not m:
       self.throw_error("ERROR: RFSoC part designator {} not recognized or is not yet supported".format(part))
