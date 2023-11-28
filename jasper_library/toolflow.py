@@ -415,6 +415,9 @@ class Toolflow(object):
             self.periph_objs.append(yellow_block.YellowBlock.make_block(
                 self.peripherals[pk], self.plat))
         self._expand_children(self.periph_objs)
+        for obj in self.periph_objs:
+            self.logger.debug('Initializing obj %s' % obj.name)
+            obj.initialize()
         
         self._drc()
         
