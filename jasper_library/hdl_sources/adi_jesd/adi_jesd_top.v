@@ -338,7 +338,7 @@ module adi_jesd_top  #(
    .CLKFBOUT_MULT_F(4.0),      // Multiply value for all CLKOUT (2.000-64.000)
    .CLKFBOUT_PHASE(0.0),       // Phase offset in degrees of CLKFB (-360.000-360.000)
    .CLKIN1_PERIOD(3.0),        // Input clock period in ns units, ps resolution (i.e., 33.333 is 30 MHz).
-   .CLKOUT0_DIVIDE_F(3.0),     // Divide amount for CLKOUT0 (1.000-128.000)
+   .CLKOUT0_DIVIDE_F(2.0),     // Divide amount for CLKOUT0 (1.000-128.000)
    // CLKOUT0_DUTY_CYCLE - CLKOUT6_DUTY_CYCLE: Duty cycle for each CLKOUT (0.001-0.999).
    .CLKOUT0_DUTY_CYCLE(0.5),
    // CLKOUT0_PHASE - CLKOUT6_PHASE: Phase offset for each CLKOUT (-360.000-360.000).
