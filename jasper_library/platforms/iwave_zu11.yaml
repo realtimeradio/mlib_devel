@@ -43,7 +43,113 @@ pins:
       - B13
       - None
       - None
-  
+
+  ddr4_0_sys_clk_p:
+    loc: [E32]
+    iostd: LVDS
+  ddr4_0_sys_clk_n:
+    loc: [D32]
+    iostd: LVDS
+  ddr4_0_reset_n:
+    loc: [D24]
+  ddr4_0_ck_t:
+    loc: [C42]
+  ddr4_0_ck_c:
+    loc: [B42]
+  ddr4_0_dqs_c:
+    loc: [E20, B21, K24, G23, E27, B26, F30, A32]
+  ddr4_0_dqs_t:
+    loc: [F20, C21, L24, H23, E26, B25, G30, B31]
+  ddr4_0_cs_n:
+    loc: [J29]
+  ddr4_0_bg:
+    loc: [B40]
+  ddr4_0_act_n:
+    loc: [E30]
+  ddr4_0_ba:
+    loc: [A39, A40]
+  ddr4_0_cke:
+    loc: [B38]
+  ddr4_0_dm_dbi_n:
+    loc: [G22, D19, P26, K27, G26, C28, K29, E29]
+  ddr4_0_odt:
+    loc: [D29]
+  ddr4_0_adr:
+    loc: [B32, B33, D33, C33, D34, C34, B35, A35, A33, A34, C35, C36, C37, B36, B37, A37, A38]
+  ddr4_0_dq:
+    loc:
+    - F23
+    - F22
+    - F19
+    - E19
+    - E21
+    - D21
+    - E22
+    - D22
+    #
+    - C20
+    - B20
+    - A20
+    - A19
+    - B22
+    - A22
+    - B23
+    - A23
+    #
+    - M25
+    - L25
+    - N24
+    - N25
+    - P23
+    - N23
+    - M23
+    - L23
+    #
+    - K26
+    - J26
+    - J23
+    - J24
+    - H25
+    - H26
+    - H24
+    - G25
+    #
+    - F25
+    - E25
+    - F27
+    - F28
+    - D27
+    - D28
+    - F24
+    - E24
+    #
+    - A27
+    - A28
+    - C26
+    - B27
+    - C24
+    - C25
+    - A24
+    - A25
+    #
+    - J30
+    - H30
+    - F31
+    - F32
+    - G28
+    - F29
+    - J28
+    - H28
+    #
+    - C29
+    - B30
+    - A29
+    - A30
+    - E31
+    - D31
+    - C30
+    - C31
+
   fmc0_dp_c2m_n:
     loc:
       - T35
