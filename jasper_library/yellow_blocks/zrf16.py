@@ -57,7 +57,7 @@ class zrf16(YellowBlock):
         inst_infr.add_port('adc_clk90', 'adc_clk90')
         inst_infr.add_port('adc_clk180', 'adc_clk180')
         inst_infr.add_port('adc_clk270', 'adc_clk270')
-        inst_infr.add_port('mmcm_locked', 'mmcm_locked', dir='out', parent_port=True)
+        inst_infr.add_port('mmcm_locked', '')
 
 
     def gen_children(self):
@@ -110,7 +110,6 @@ class zrf16(YellowBlock):
         cons.append(PortConstraint('pl_clk_p', 'pl_clk_p'))
         # TODO: tweak this until we have the right reference clocks
         cons.append(ClockGroupConstraint('clk_pl_0', 'pl_clk_mmcm', 'asynchronous'))
-        cons.append(RawConstraint('set_property -dict { PACKAGE_PIN AR12 IOSTANDARD LVCMOS33 } [get_ports { mmcm_locked }]'))
 
         # TODO: extend to provide other onboard clocks
         #cons.append(PortConstraint('clk_100_p', 'clk_100_p'))

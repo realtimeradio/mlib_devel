@@ -6,15 +6,35 @@ family: rfsoc
 config_voltage: 1.8
 cfgbvs: GND
 backend_target: vivado
-#mmbus_architecture: AXI4-Lite
-mmbus_architecture: ['AXI4-Lite', 'wishbone']
-mmbus_base_address: 0xA1000000
+mmbus_architecture: AXI4-Lite
+mmbus_base_address: 0xA0000000
 mmbus_rfdc_base_address: 0xA0000000
 dsp_wb_base_address: 0xA0100000
 # How to address each 32-bit (i.e. 4 indicates byte-addressable)
 mmbus_address_alignment: 4
 sources: []
 constraints: []
+
+rfdc:
+  # gen3 devices can internally route their input refclk or the output of the RFPLL
+  # as the sample clock for adjacent tiles. See PG269. For such configurations,
+  # tile 225 is the preferred tile when available. The zcu216/208 eval boards only
+  # have the sample clock connected to tile 255.
+  #
+  # For gen1 and gen2 devices the `adc_clk_src` is the same as the tile index
+  tile224:
+    has_adc_clk: True
+    adc_clk_src: 0
+  tile225:
+    has_adc_clk: True
+    adc_clk_src: 1
+  tile226:
+    has_adc_clk: True
+    adc_clk_src: 2
+  tile227:
+    has_adc_clk: True
+    adc_clk_src: 3
+
 onehundredgbe:
   refclk_freq_str: "156.25" # Needs configuring by programming PLL
   include_rs_fec: 1
@@ -22,6 +42,7 @@ onehundredgbe:
     - CMACE4_X0Y1
     - CMACE4_X0Y0
   # See UG1075; Fig 1-40
+  management_interface: [modprsl_ls, intl_ls]
   cmac_loc:
     - CMACE4_X0Y1
     - CMACE4_X0Y1 # Change this to X0Y0 post-synth (Why did HTG layout the board this way?!)
@@ -30,14 +51,17 @@ onehundredgbe:
     - X0Y16~X0Y19
   management_interface: []
 provides:
+  - adc_clk
+  - axil_clk
+  - sysref_in
   - sys_clk
   - qsfp0
   - qsfp1
 pins:
-  clk_300_p:
+  pl_clk_p:
     iostd: LVDS
     loc: H26
-  clk_300_n:
+  pl_clk_n:
     iostd: LVDS
     loc: G26
   pl_sysref_p:
