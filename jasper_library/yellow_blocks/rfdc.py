@@ -1,7 +1,7 @@
 
 from .yellow_block import YellowBlock
 from .yellow_block_typecodes import TYPECODE_RFDC
-from constraints import PortConstraint, ClockConstraint, RawConstraint
+from constraints import PortConstraint, ClockConstraint, RawConstraint, ClockGroupConstraint
 
 import os
 import struct
@@ -469,7 +469,7 @@ class rfdc(YellowBlock):
       bd_inst.add_port('clk_adc{:d}'.format(tidx), 'clk_adc{:d}'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
 
       # wire these ports to supporting infrastructure
-      top.assign_signal('m{:d}_axis_aclk'.format(tidx), 'adc_clk')
+      top.assign_signal('m{:d}_axis_aclk'.format(tidx), 'user_clk')
 
       #Tile source information from simulink
       if self.gen > 1:
@@ -534,7 +534,7 @@ class rfdc(YellowBlock):
       bd_inst.add_port('clk_dac{:d}'.format(tidx), 'clk_dac{:d}'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
 
       # wire these ports to supporting infrastructure
-      top.assign_signal('s{:d}_axis_aclk'.format(tidx), 'adc_clk')
+      top.assign_signal('s{:d}_axis_aclk'.format(tidx), 'user_clk')
 
       # gen3 parts support clock forwarding, user provides information about provided clock to the board sources in simulink mask (e.g.,
       # current gen3 xilinx eval boards only have clocks coming to 2 adc and 2 dac tiles, requiring clocks to be forwarded)
@@ -599,6 +599,14 @@ class rfdc(YellowBlock):
         # TODO: designs do not generally need to add a clock constraint for the pl_sysref, but never hurts
         #const.append(ClockConstraint('pl_sysref_p', 'pl_sysref_p', period=self.T_pl_sysref_ns, port_en=True, virtual_en=False))
 
+    # Add RFDC output clocks and make them asynchronous to sys_clk
+    # TODO: are these clock names deterministic?
+    for tidx in self.enabled_adc_tiles:
+        t = self.tiles[tidx]
+        const.append(ClockGroupConstraint('RFADC{:d}_CLK'.format(tidx), '-of_objects [get_nets sys_clk]', 'asynchronous'))
+    for tidx in self.enabled_dac_tiles:
+        t = self.tiles[tidx]
+        const.append(ClockGroupConstraint('RFDAC{:d}_CLK'.format(tidx), '-of_objects [get_nets sys_clk]', 'asynchronous'))
     return const
 
 

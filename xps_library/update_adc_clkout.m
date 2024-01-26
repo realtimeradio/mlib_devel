@@ -11,9 +11,9 @@ function [adc_clkout] = update_adc_clkout(gcb, tile)
   min_adc_clkout_mhz = 10.0;
   div = 2.^(3:6);
 
-  if fs_max >= 4.0
-    div = div.*2;
-  end
+  %if fs_max >= 4.0
+  %  div = div.*2;
+  %end
 
   for d = div
     clkout = round(sample_rate_mhz/d, 3);
