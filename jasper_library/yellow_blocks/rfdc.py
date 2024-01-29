@@ -385,8 +385,10 @@ class rfdc(YellowBlock):
       self.requires.append('pl_sysref')
 
     for a in self.enabled_adcs:
-      # TODO: should these be renamed to something like "rfdc_clkX", since "adc_clk" is a dominant name else where in the toolflow
-      self.provides.append('adc_clk{:s}'.format(a[0]))
+      self.provides.append('rfdc_adc{:s}_clk'.format(a[0]))
+      self.provides.append('rfdc_adc{:s}_clk90'.format(a[0]))  # Not true, but keep toolflow happy
+      self.provides.append('rfdc_adc{:s}_clk180'.format(a[0])) # Not true, but keep toolflow happy
+      self.provides.append('rfdc_adc{:s}_clk270'.format(a[0])) # Not true, but keep toolflow happy
 
 
   def modify_top(self, top):
@@ -466,7 +468,10 @@ class rfdc(YellowBlock):
       # maxis clk, reset and output clock (when using mts, this output clock is not typically used)
       bd_inst.add_port('m{:d}_axis_aclk'.format(tidx), 'm{:d}_axis_aclk'.format(tidx))       #self.fullname+'_m0_axis_aclk'
       bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
-      bd_inst.add_port('clk_adc{:d}'.format(tidx), 'clk_adc{:d}'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
+      bd_inst.add_port('clk_adc{:d}'.format(tidx), 'rfdc_adc{:d}_clk'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
+      top.add_signal('rfdc_adc{:d}_clk90'.format(tidx))
+      top.add_signal('rfdc_adc{:d}_clk180'.format(tidx))
+      top.add_signal('rfdc_adc{:d}_clk270'.format(tidx))
 
       # wire these ports to supporting infrastructure
       top.assign_signal('m{:d}_axis_aclk'.format(tidx), 'user_clk')
@@ -531,7 +536,7 @@ class rfdc(YellowBlock):
       # maxis clk, reset and output clock (when using mts, this output clock is not typically used)
       bd_inst.add_port('s{:d}_axis_aclk'.format(tidx), 's{:d}_axis_aclk'.format(tidx))       #self.fullname+'_m0_axis_aclk'
       bd_inst.add_port('s{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
-      bd_inst.add_port('clk_dac{:d}'.format(tidx), 'clk_dac{:d}'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
+      bd_inst.add_port('clk_dac{:d}'.format(tidx), 'rfdc_dac{:d}_clk'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
 
       # wire these ports to supporting infrastructure
       top.assign_signal('s{:d}_axis_aclk'.format(tidx), 'user_clk')

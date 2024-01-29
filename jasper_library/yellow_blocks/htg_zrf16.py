@@ -24,11 +24,11 @@ class htg_zrf16(YellowBlock):
         self.pl_clk_mhz = self.blk['pl_clk_rate']
         self.T_pl_clk_ns = 1.0/self.pl_clk_mhz*1000
 
-        self.provides.append('clk_adc0')
-        self.provides.append('clk_adc090')  # lies
-        self.provides.append('clk_adc0180') # lies
-        self.provides.append('clk_adc0270') # lies
-        self.provides.append('clk_adc_rst')
+        self.provides.append('adc_clk')
+        self.provides.append('adc_clk90')
+        self.provides.append('adc_clk180')
+        self.provides.append('adc_clk270')
+        self.provides.append('adc_clk_rst')
 
         self.provides.append('sys_clk')
         self.provides.append('sys_rst')
@@ -45,9 +45,6 @@ class htg_zrf16(YellowBlock):
         self.requires.append('M_AXI') # axi4lite interface from block design
 
     def modify_top(self, top):
-        top.add_signal('clk_adc090')
-        top.add_signal('clk_adc0180')
-        top.add_signal('clk_adc0270')
         top.assign_signal('axil_clk', 'pl_sys_clk')
         #top.assign_signal('axil_rst', 'axil_rst')
         top.assign_signal('axil_rst_n', 'axil_arst_n') # TODO RENAME the board design one `axil_arst_n`
