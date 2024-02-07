@@ -4,7 +4,7 @@ from os import path, environ as env
 
 class adi_jesd(YellowBlock):
     enable_wishbone = True
-    block_diagram = 'adi_jesd_zynqusplus.tcl'
+    block_diagram = 'adi_jesd_zynqusplus_adc_only.tcl'
     fmc_port = 0
     RX_JESD_L = 8
     TX_JESD_L = 8
