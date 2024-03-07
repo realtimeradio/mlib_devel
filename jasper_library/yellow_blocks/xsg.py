@@ -1,4 +1,5 @@
 from .yellow_block import YellowBlock
+from constraints import RawConstraint
 
 class xsg(YellowBlock):
     """
@@ -44,7 +45,8 @@ class xsg(YellowBlock):
         '''
         Things the toolflow has to know. eg, clocks needed/provided
         '''
-        self.platform.user_clk_rate = self.clk_rate
+        self.platform.user_clk_rate = self.clk_rate # MHz
+        self.platform.user_clk_period_ns = 1000./self.clk_rate
         if self.platform.name == 'skarab':
             self.requires.append(self.clk_src)  # we need something to provide the clock we plan to use
             self.provides.append('user_clk')
@@ -90,3 +92,8 @@ class xsg(YellowBlock):
             top.assign_signal('user_clk270',self.clk_src+'270')
 
             top.add_signal('sys_clk', attributes={'keep': '"true"'})
+
+    def gen_constraints(self):
+        conlist = []
+        #conlist += [RawConstraint('create_clock -name user_clk -period %.4f [get_nets user_clk]' % self.platform.user_clk_period_ns)]
+        return conlist

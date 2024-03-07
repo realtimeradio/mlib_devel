@@ -409,8 +409,20 @@ class Toolflow(object):
         self._parse_periph_file()
         self._extract_plat_info()
         self.periph_objs = []
-        
+
+        # Find XSG block and ensure its block is evaluated first
+        xsg_key = None
         for pk in list(sorted(self.peripherals.keys())):
+            if self.peripherals[pk]['tag'] == 'xps:xsg':
+                xsg_key = pk
+        print('##################### XSG key:', xsg_key)
+
+        ordered_keys = list(sorted(self.peripherals.keys()))
+        if xsg_key is not None:
+            ordered_keys.remove(xsg_key)
+            ordered_keys = [xsg_key] + ordered_keys
+
+        for pk in ordered_keys:
             self.logger.debug('Generating Yellow Block: %s' % pk)
             self.periph_objs.append(yellow_block.YellowBlock.make_block(
                 self.peripherals[pk], self.plat))
@@ -1210,14 +1222,15 @@ class ToolflowBackend(object):
             self.castro.synthesis.pin_constraints +
             self.castro.synthesis.clk_constraints +
             self.castro.synthesis.gen_clk_constraints +
+            self.castro.synthesis.raw_constraints +
             self.castro.synthesis.clk_grp_constraints +
             self.castro.synthesis.input_delay_constraints +
             self.castro.synthesis.output_delay_constraints +
             self.castro.synthesis.max_delay_constraints +
             self.castro.synthesis.min_delay_constraints +
             self.castro.synthesis.false_path_constraints +
-            self.castro.synthesis.multi_cycle_constraints +
-            self.castro.synthesis.raw_constraints)
+            self.castro.synthesis.multi_cycle_constraints
+            )
 
     def mkfpg(self, filename_bin, filename_fpg):
         """
