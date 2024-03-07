@@ -51,20 +51,23 @@ class ddr4(YellowBlock):
 
         # Read from FIFO when both command and data FIFOs are available and there is valid data
         top.assign_signal(f'{self.fullname}_ddr4_tx_fifo_rd_en', f'{self.fullname}_ddr4_app_rdy & {self.fullname}_ddr4_app_wdf_rdy & ~{self.fullname}_ddr4_fifo_in_empty')
+        top.add_signal(f'{self.fullname}_ddr4_wdf_wren')
+        top.assign_signal(f'{self.fullname}_ddr4_wdf_wren', f'{self.fullname}_ddr4_tx_fifo_rd_en & ~{self.fullname}_ddr4_cmd_fout') # only write to data FIFO on write command (write command is 3'b000)
 
         inst.add_port('c0_ddr4_app_rdy',           self.fullname+'_ddr4_app_rdy')            # output wire c0_ddr4_app_rdy
         inst.add_port('c0_ddr4_app_wdf_rdy',       self.fullname+'_ddr4_app_wdf_rdy')        # output wire c0_ddr4_app_wdf_rdy
-        inst.add_port('c0_ddr4_app_en',            self.fullname+'_ddr4_tx_data_fifo_rd_en') # input wire c0_ddr4_app_en
+        inst.add_port('c0_ddr4_app_en',            self.fullname+'_ddr4_tx_fifo_rd_en') # input wire c0_ddr4_app_en
         inst.add_port('c0_ddr4_app_hi_pri',        "1'b0")         # input wire c0_ddr4_app_hi_pri
-        inst.add_port('c0_ddr4_app_wdf_end',       self.fullname+'_ddr4_tx_data_fifo_rd_en')       # input wire c0_ddr4_app_wdf_end
-        inst.add_port('c0_ddr4_app_wdf_wren',      self.fullname+'_ddr4_tx_data_fifo_rd_en')       # input wire c0_ddr4_app_wdf_wren
+        inst.add_port('c0_ddr4_app_wdf_end',       self.fullname+'_ddr4_tx_fifo_rd_en')       # input wire c0_ddr4_app_wdf_end
+        inst.add_port('c0_ddr4_app_wdf_wren',      self.fullname+'_ddr4_wdf_wren')       # input wire c0_ddr4_app_wdf_wren
         inst.add_port('c0_ddr4_app_addr',          self.fullname+'_ddr4_addr_fout', width=self.addr_width)       # input wire [28 : 0] c0_ddr4_app_addr
         inst.add_port('c0_ddr4_app_cmd',           self.fullname+'_ddr4_cmd_fout',  width=3)        # input wire [2 : 0] c0_ddr4_app_cmd
         inst.add_port('c0_ddr4_app_wdf_data',      self.fullname+'_ddr4_din_fout', width=8*self.width)  # input wire [383 : 0] c0_ddr4_app_wdf_data
+        #inst.add_port('c0_ddr4_app_wdf_mask',      f"{self.width}'h{2**self.width-1:x}")   # input wire [47 : 0] c0_ddr4_app_wdf_mask
         inst.add_port('c0_ddr4_app_wdf_mask',      f"{self.width}'b0")   # input wire [47 : 0] c0_ddr4_app_wdf_mask
 
         # Receive-side FIFO
-        txf = top.get_instance(f'{self.fullname}_tx_fifo', f'{self.fullname}_rx_fifo_inst')
+        txf = top.get_instance(f'{self.fullname}_rx_fifo', f'{self.fullname}_rx_fifo_inst')
         txf.add_port('rst', rst)
         txf.add_port('wr_clk', self.ddr_clk)
         txf.add_port('rd_clk', 'user_clk')
@@ -122,7 +125,7 @@ class ddr4(YellowBlock):
         conlist.append(PortConstraint(self.fullname + '_ddr4_dqs_t', ramid + '_dqs_t', port_index=range(self.width//8), iogroup_index=range(self.width//8)))
         conlist.append(PortConstraint(self.fullname + '_ddr4_odt', ramid + '_odt', iogroup_index=0))
         conlist.append(PortConstraint(self.fullname + '_ddr4_bg', ramid + '_bg', iogroup_index=0))
-        conlist.append(ClockGroupConstraint('-of_objects [get_nets user_clk]', f'-of_objects [get_nets {self.ddr_clk}]', 'asynchronous'))
+        conlist.append(ClockGroupConstraint('user_clk', f'-of_objects [get_nets {self.ddr_clk}]', 'asynchronous'))
 
         return conlist
 
