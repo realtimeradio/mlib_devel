@@ -967,7 +967,7 @@ proc create_root_design { parentCell } {
   # Create instance: rom_sys_0, and set properties
   set rom_sys_0 [ create_bd_cell -type ip -vlnv analog.com:user:sysid_rom:1.0 rom_sys_0 ]
   set_property -dict [ list \
-   CONFIG.PATH_TO_FILE {/home/jackh/src/adi/hdl/projects/ad9082_fmca_ebz/iwave_zu11_m2d1_i_4500/mem_init_sys.txt} \
+   CONFIG.PATH_TO_FILE {adi_jesd_mem_init_sys.txt} \
    CONFIG.ROM_ADDR_BITS {9} \
  ] $rom_sys_0
 

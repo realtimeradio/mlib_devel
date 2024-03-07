@@ -16,6 +16,7 @@ class adi_jesd(YellowBlock):
         self.ips = []
         self.add_source('adi_jesd/adi_jesd_top.v')
         self.add_source('adi_jesd/data_fifo/data_fifo.xci')
+        self.add_source('adi_jesd/adi_jesd_mem_init_sys.txt')
         self.add_source(path.join(self.adi_ip_path, 'common', 'ad_iobuf.v'))
         self.add_source(path.join(self.adi_ip_path, 'common', 'ad_3w_spi.v'))
         self.lane_mbps = self.sample_rate_mhz * self.JESD_M * self.JESD_N / self.RX_JESD_L * 66 / 64
