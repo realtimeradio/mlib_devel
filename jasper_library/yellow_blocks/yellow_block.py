@@ -147,7 +147,6 @@ class YellowBlock(object):
             self.fullname = makeshift_name
             self.unique_name = makeshift_name
             self.logger.warning("%r doesn't have an attribute 'fullpath'"%self)
-        self.initialize()
         self.check_support()
 
     def __str__(self):

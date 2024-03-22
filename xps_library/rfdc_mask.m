@@ -117,7 +117,7 @@ function [] = rfdc_mask(gcb,force)
     end
   elseif strcmp(dac_tile_arch, 'dual')
     %prefix = 'DT';
-    dac_slices = 0:1;
+    dac_slices = 0:3;
     if (dac_num_tile == 4)
         Four_Tiles = 1;
     elseif (dac_num_tile == 2)
@@ -195,7 +195,7 @@ function [] = rfdc_mask(gcb,force)
       if tile > 227
           DacDTConf = msk.getDialogControl(sprintf('t%d_DACPair23_DT', tile));
           if strcmp(dac_tile_arch, 'dual')
-              DacDTConf.Visible = 'off';
+              DacDTConf.Visible = 'on'; % Don't think this is right
           else
               DacDTConf.Visible = 'on';
           end

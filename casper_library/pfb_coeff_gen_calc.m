@@ -48,11 +48,16 @@ if debug,
     coeff_vector = index;
 else
     try
-        windowval = transpose(window(WindowType, alltaps));
+	if strcmp(WindowType, 'dpss')
+	    windowval = transpose(dpss(alltaps, 2.0, 1));
+	    windowval = windowval / max(windowval);
+	else
+            windowval = transpose(window(WindowType, alltaps));
+	end
     catch err
         switch err.identifier
-            case 'MATLAB:UndefinedFunction'
-                warning('window function undefined in MATLAB. Attempting to use python variant')
+            case 'MATLAB:license:NoFeature'
+                warning('window function not available in MATLAB toolboxes. Attempting to use python variant')
                 try
                     windowval = cellfun(@double, cell(py.window.window(WindowType, int32(alltaps))));
                 catch
@@ -66,8 +71,8 @@ else
         total_coeffs = windowval .* sinc(fwidth * ([0.5:1:alltaps-0.5]/(2^PFBSize)-TotalTaps/2));
     catch err
         switch err.identifier
-            case 'MATLAB:UndefinedFunction'
-                warning('sinc function undefined in MATLAB. Attempting to use python variant')
+            case 'MATLAB:license:NoFeature'
+                warning('sinc function not available in MATLAB toolboxes. Attempting to use python variant')
                 try
                     total_coeffs = windowval .* cellfun(@double, cell(py.window.sinc(py.list(fwidth * ([0.5:alltaps-0.5]/(2^PFBSize)-TotalTaps/2)))));
                 catch

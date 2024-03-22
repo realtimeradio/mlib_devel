@@ -33,7 +33,6 @@ function first_tap_init(blk, varargin)
 % CoeffBitWidth = Bitwidth of Coefficients.
 % TotalTaps = Total number of taps in the PFB
 % BitWidthIn = Input Bitwidth
-% WindowType = The type of windowing function to use.
 % mult_latency = Latency through each multiplier
 % bram_latency = Latency through each BRAM.
 % n_inputs = The number of parallel inputs

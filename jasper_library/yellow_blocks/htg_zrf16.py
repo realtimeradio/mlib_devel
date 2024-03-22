@@ -15,155 +15,118 @@ class htg_zrf16(YellowBlock):
             platform.fpga = "xczu49dr-ffvf1760-2-e"
 
     def initialize(self):
-        if self.enable_wishbone:
-            self.ips = [{'path':'%s/axi_wb_bridge/ip_repo' % env['HDL_ROOT'],
-                 'name':'axi_slave_wishbone_classic_master',
-                 'vendor':'peralex.com',
-                 'library':'user',
-                 'version':'1.0',
-                }]
-        self.add_source('infrastructure/htg_zrf16_infrastructure.v')
+        self.add_source('infrastructure/zcu216_clk_infrastructure.sv')
         self.add_source('utils/cdc_synchroniser.vhd')
-        self.add_source('wbs_arbiter')
 
-        self.provides.append(self.clk_src)
-        self.provides.append(self.clk_src+'90')
-        self.provides.append(self.clk_src+'180')
-        self.provides.append(self.clk_src+'270')
-        self.provides.append(self.clk_src+'_rst')
+        # create reference to block design name
+        self.blkdesign = '{:s}_bd'.format(self.platform.conf['name'])
+
+        self.pl_clk_mhz = self.blk['pl_clk_rate']
+        self.T_pl_clk_ns = 1.0/self.pl_clk_mhz*1000
+
+        self.provides.append('adc_clk')
+        self.provides.append('adc_clk90')
+        self.provides.append('adc_clk180')
+        self.provides.append('adc_clk270')
+        self.provides.append('adc_clk_rst')
 
         self.provides.append('sys_clk')
-        self.provides.append('sys_clk90')
-        self.provides.append('sys_clk180')
-        self.provides.append('sys_clk270')
-        self.provides.append('sys_clk_rst')
+        self.provides.append('sys_rst')
 
-        #self.add_source('sysmon/sysmon_usplus.v')
+        # TODO: is a bug that `axi4lite_interconnect` does not make a `requires` on `axil_clk`.
+        # Looking into this more: the `_drc` check on YB requires/provides is done in `gen_periph_objs` but the `axi4lite_interconnect`
+        # is not done until later within `generate_hdl > _instantiate_periphs`, therefore, by-passing any checks done.
+        self.provides.append('axil_clk')    # from block design
+        self.provides.append('axil_rst_n')  # from block desgin
 
-    def modify_top(self,top):
-        inst = top.get_instance('htg_zrf16', 'htg_zrf16_inst')
-        inst.add_port('axil_clk',   'axil_clk')
-        inst.add_port('axil_rst',   'axil_rst')
-        inst.add_port('axil_rst_n', 'axil_rst_n')
+        # rfsocs use the requires/provides for to check for `sysref` and `pl_sysref` for MTS
+        self.provides.append('pl_sysref') # rfsoc platform/infrastructure provides so rfdc can require
 
-        inst.add_port('M_AXI_araddr', 'M_AXI_araddr', width=40)
-        inst.add_port('M_AXI_arprot', 'M_AXI_arprot', width=3)
-        inst.add_port('M_AXI_arready', 'M_AXI_arready')
-        inst.add_port('M_AXI_arvalid', 'M_AXI_arvalid')
-        inst.add_port('M_AXI_awaddr', 'M_AXI_awaddr', width=40)
-        inst.add_port('M_AXI_awprot', 'M_AXI_awprot', width=3)
-        inst.add_port('M_AXI_awready', 'M_AXI_awready')
-        inst.add_port('M_AXI_awvalid', 'M_AXI_awvalid')
-        inst.add_port('M_AXI_bready', 'M_AXI_bready')
-        inst.add_port('M_AXI_bresp', 'M_AXI_bresp', width=2)
-        inst.add_port('M_AXI_bvalid', 'M_AXI_bvalid')
-        inst.add_port('M_AXI_rdata', 'M_AXI_rdata', width=32)
-        inst.add_port('M_AXI_rready', 'M_AXI_rready')
-        inst.add_port('M_AXI_rresp', 'M_AXI_rresp', width=2)
-        inst.add_port('M_AXI_rvalid', 'M_AXI_rvalid')
-        inst.add_port('M_AXI_wdata', 'M_AXI_wdata', width=32)
-        inst.add_port('M_AXI_wready', 'M_AXI_wready')
-        inst.add_port('M_AXI_wstrb', 'M_AXI_wstrb', width=4)
-        inst.add_port('M_AXI_wvalid', 'M_AXI_wvalid')
-        #axi4-lite interface for rfdc core
-        inst.add_port('M_AXI_RFDC_araddr', 'M_AXI_RFDC_araddr', width=40)
-        inst.add_port('M_AXI_RFDC_arprot', 'M_AXI_RFDC_arprot', width=3)
-        inst.add_port('M_AXI_RFDC_arready', 'M_AXI_RFDC_arready')
-        inst.add_port('M_AXI_RFDC_arvalid', 'M_AXI_RFDC_arvalid')
-        inst.add_port('M_AXI_RFDC_awaddr', 'M_AXI_RFDC_awaddr', width=40)
-        inst.add_port('M_AXI_RFDC_awprot', 'M_AXI_RFDC_awprot', width=3)
-        inst.add_port('M_AXI_RFDC_awready', 'M_AXI_RFDC_awready')
-        inst.add_port('M_AXI_RFDC_awvalid', 'M_AXI_RFDC_awvalid')
-        inst.add_port('M_AXI_RFDC_bready', 'M_AXI_RFDC_bready')
-        inst.add_port('M_AXI_RFDC_bresp', 'M_AXI_RFDC_bresp', width=2)
-        inst.add_port('M_AXI_RFDC_bvalid', 'M_AXI_RFDC_bvalid')
-        inst.add_port('M_AXI_RFDC_rdata', 'M_AXI_RFDC_rdata', width=32)
-        inst.add_port('M_AXI_RFDC_rready', 'M_AXI_RFDC_rready')
-        inst.add_port('M_AXI_RFDC_rresp', 'M_AXI_RFDC_rresp', width=2)
-        inst.add_port('M_AXI_RFDC_rvalid', 'M_AXI_RFDC_rvalid')
-        inst.add_port('M_AXI_RFDC_wdata', 'M_AXI_RFDC_wdata', width=32)
-        inst.add_port('M_AXI_RFDC_wready', 'M_AXI_RFDC_wready')
-        inst.add_port('M_AXI_RFDC_wstrb', 'M_AXI_RFDC_wstrb', width=4)
-        inst.add_port('M_AXI_RFDC_wvalid', 'M_AXI_RFDC_wvalid')
-        if self.enable_wishbone:
-            # Wishbone ports
-            inst.add_port('CYC_O', 'wbm_cyc_o')
-            inst.add_port('STB_O', 'wbm_stb_o')
-            inst.add_port('WE_O ', 'wbm_we_o ')
-            inst.add_port('SEL_O', 'wbm_sel_o', width=4)
-            inst.add_port('ADR_O', 'wbm_adr_o', width=32)
-            inst.add_port('DAT_O', 'wbm_dat_o', width=32)
-            inst.add_port('DAT_I', 'wbm_dat_i', width=32)
-            inst.add_port('ACK_I', 'wbm_ack_i')
-            inst.add_port('RST_O', 'wbm_rst_o')
-            top.add_signal('wb_clk_i')
-            top.add_signal('wb_rst_i')
-            top.assign_signal('wb_clk_i', 'axil_clk')
-            top.assign_signal('wb_rst_i', 'axil_rst')
+        self.requires.append('M_AXI') # axi4lite interface from block design
 
-            #sysmon = top.get_instance(entity='sysmon', name='sysmon_inst')
-            #sysmon.add_parameter('SIM_DEVICE', '"ZYNQ_ULTRASCALE"')
-            #sysmon.add_wb_interface(regname='sysmon', mode='rw', nbytes=1024)
+    def modify_top(self, top):
+        top.assign_signal('axil_clk', 'pl_sys_clk')
+        #top.assign_signal('axil_rst', 'axil_rst')
+        top.assign_signal('axil_rst_n', 'axil_arst_n') # TODO RENAME the board design one `axil_arst_n`
+        top.assign_signal('sys_clk', 'pl_sys_clk')
+        top.assign_signal('sys_rst', '~axil_arst_n')
 
-        inst_infr = top.get_instance('htg_zrf16_infrastructure', 'htg_zrf16_infr_inst')
-        if self.clk_src == "arb_clk":
-           clkparams = clk_factors(300, self.platform.user_clk_rate)
-           inst_infr.add_parameter('GEN_USER_CLK', 1)
-           inst_infr.add_parameter('MULTIPLY', clkparams[0])
-           inst_infr.add_parameter('DIVIDE',   clkparams[1])
-           inst_infr.add_parameter('DIVCLK',   clkparams[2])
-        else:
-           inst_infr.add_parameter('GEN_USER_CLK', 0)
-        inst_infr.add_port('clk_300_p',      "clk_300_p", dir='in',  parent_port=True)
-        inst_infr.add_port('clk_300_n',      "clk_300_n", dir='in',  parent_port=True)
+        # generate clock parameters to use pl_clk to drive as the user IP clock
+        # TODO: will need to make changes when other user ip clk source options provided
+        clkparams = clk_factors(self.pl_clk_mhz, self.platform.user_clk_rate, vco_min=800.0, vco_max=1600.0)
 
-        inst_infr.add_port('sys_clk      ', 'sys_clk_int   ')
-        inst_infr.add_port('sys_clk90    ', 'sys_clk90_int ')
-        inst_infr.add_port('sys_clk180   ', 'sys_clk180_int')
-        inst_infr.add_port('sys_clk270   ', 'sys_clk270_int')
-        inst_infr.add_port('sys_clk_rst', 'sys_rst_int')
+        inst_infr = top.get_instance('zcu216_clk_infrastructure', 'zcu216_clk_infr_inst')
+        inst_infr.add_parameter('PERIOD', "{:0.3f}".format(self.T_pl_clk_ns))
+        inst_infr.add_parameter('MULTIPLY', clkparams[0])
+        inst_infr.add_parameter('DIVIDE',   clkparams[1])
+        inst_infr.add_parameter('DIVCLK',   clkparams[2])
+        inst_infr.add_port('pl_clk_p',      "pl_clk_p", dir='in',  parent_port=True)
+        inst_infr.add_port('pl_clk_n',      "pl_clk_n", dir='in',  parent_port=True)
 
-        inst_infr.add_port('user_clk      ', 'arb_clk   ')
-        inst_infr.add_port('user_clk90    ', 'arb_clk90 ')
-        inst_infr.add_port('user_clk180   ', 'arb_clk180')
-        inst_infr.add_port('user_clk270   ', 'arb_clk270')
-        inst_infr.add_port('user_clk_rst', 'arb_rst')
+        inst_infr.add_port('adc_clk', 'adc_clk')
+        inst_infr.add_port('adc_clk90', 'adc_clk90')
+        inst_infr.add_port('adc_clk180', 'adc_clk180')
+        inst_infr.add_port('adc_clk270', 'adc_clk270')
+        inst_infr.add_port('mmcm_locked', '')
 
-        # Get sys clock from the processor
-        top.assign_signal('sys_clk', 'axil_clk')
-        top.assign_signal('sys_clk90', 'axil_clk')
-        top.assign_signal('sys_clk180', 'axil_clk')
-        top.assign_signal('sys_clk270', 'axil_clk')
-        top.assign_signal('sys_rst', '~axil_rst_n')
-		
     def gen_children(self):
-        children = [YellowBlock.make_block({'fullpath': self.fullpath,'tag': 'xps:sys_block', 'board_id': '20', 'rev_maj': '1', 'rev_min': '0', 'rev_rcs': '1'}, self.platform)]
+        children = []
+        children.append(YellowBlock.make_block({'fullpath': self.fullpath, 'tag': 'xps:sys_block', 'board_id': '166', 'rev_maj': '2', 'rev_min': '0', 'rev_rcs': '1'}, self.platform))
+
+        # instance block design containing mpsoc, and axi protocol converter for casper
+        # mermory map (HPM0)
+        zynq_blk = {
+            'tag'     : 'xps:zynq_usplus',
+            'name'    : 'mpsoc',
+            'presets' : 'rfsoc4x2_mpsoc',
+            'maxi_0'  : {'conf': {'enable': 1, 'data_width': 32},  'intf': {'dest': 'axi_proto_conv/S_AXI'}},
+            'maxi_1'  : {'conf': {'enable': 0, 'data_width': 128}, 'intf': {}},
+            'maxi_2'  : {'conf': {'enable': 0, 'data_width': 128}, 'intf': {}}
+            #'maxi_2'  : {'conf': {'enable': 1, 'data_width': 128}, 'intf': {'dest': 'M_AXI_0'}}
+        }
+        children.append(YellowBlock.make_block(zynq_blk, self.platform))
+
+        proto_conv_blk = {
+            'tag'             : 'xps:axi_protocol_converter',
+            'name'            : 'axi_proto_conv',
+            'saxi_intf'       : {'dest': 'mpsoc/M_AXI_HPM0_FPD'},
+            'maxi_intf'       : {'dest': 'M_AXI'},
+            'aruser_wid'      : 0,
+            'awuser_wid'      : 0,
+            'buser_wid'       : 0,
+            'data_wid'        : 32,
+            'id_wid'          : 16,
+            'mi_protocol'     : 'AXI4LITE',
+            'rw_mode'         : 'READ_WRITE',
+            'ruser_wid'       : 0,
+            'si_protocol'     : 'AXI4',
+            'translation_mode': 2,
+            'wuser_wid'       : 0
+        }
+        children.append(YellowBlock.make_block(proto_conv_blk, self.platform))
         return children
+
 
     def gen_constraints(self):
         cons = []
-        cons.append(PortConstraint('clk_300_p', 'clk_300_p'))
-        cons.append(ClockConstraint('clk_300_p','clk_300_p', period=3.3333, port_en=True, virtual_en=False, waveform_min=0.0, waveform_max=1.66667))
-        if self.clk_src == "arb_clk":
-            cons.append(ClockGroupConstraint('-of_objects [get_pins htg_zrf16_infr_inst/user_clk_mmcm_inst/CLKOUT0]', '-of_objects [get_pins htg_zrf16_inst/zynq_ultra_ps_e_0/U0/PS8_i/PLCLK[0]]', 'asynchronous'))
-        cons.append(ClockGroupConstraint('-of_objects [get_pins htg_zrf16_infr_inst/sys_clk_mmcm_inst/CLKOUT0]', '-of_objects [get_pins htg_zrf16_inst/zynq_ultra_ps_e_0/U0/PS8_i/PLCLK[0]]', 'asynchronous'))
-        #cons.append(ClockGroupConstraint('-of_objects [get_pins htg_zrf16_inst/zynq_ultra_ps_e_0/U0/PS8_i/PLCLK[0]]', '-of_objects [get_pins htg_zrf16_infr_inst/user_clk_mmcm_inst/CLKOUT0]', 'asynchronous'))
-        cons.append(RawConstraint("set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN Enable [current_design]"))
+        cons.append(ClockConstraint('pl_clk_p', 'pl_clk_p', period=self.T_pl_clk_ns, port_en=True, virtual_en=False))
+        cons.append(PortConstraint('pl_clk_p', 'pl_clk_p'))
+
+        cons.append(ClockGroupConstraint('clk_pl_0', 'pl_clk_mmcm', 'asynchronous'))
 
         return cons
+
+
     def gen_tcl_cmds(self):
         tcl_cmds = {}
+        tcl_cmds['init'] = []
+        tcl_cmds['create_bd'] = []
         tcl_cmds['pre_synth'] = []
-        """
-        Add a block design to project with wrapper via its exported tcl script.
-        1. Source the tcl script.
-        2. Generate the block design via generate_target.
-        3. Have vivado make an HDL wrapper around the block design.
-        4. Add the wrapper HDL file to project.
-        """
-        tcl_cmds['pre_synth'] += ['source {}'.format(self.hdl_root + '/infrastructure/htg_zrf16.tcl')]
-        tcl_cmds['pre_synth'] += ['generate_target all [get_files [get_property directory [current_project]]/myproj.srcs/sources_1/bd/htg_zrf16/htg_zrf16.bd]']        
-        tcl_cmds['pre_synth'] += ['make_wrapper -files [get_files [get_property directory [current_project]]/myproj.srcs/sources_1/bd/htg_zrf16/htg_zrf16.bd] -top']
-        tcl_cmds['pre_synth'] += ['add_files -norecurse [get_property directory [current_project]]/myproj.srcs/sources_1/bd/htg_zrf16/hdl/htg_zrf16_wrapper.vhd']
-        tcl_cmds['pre_synth'] += ['update_compile_order -fileset sources_1']
+
+        # export hardware design xsa for software
+        tcl_cmds['post_bitgen'] = []
+        # TODO: $xsa_file comes from the backends class. Could re-write the path here but $xsa_file exists, use it instead.
+        # This then begs the question as to if there should be some sort of known tcl variables to check against
+        tcl_cmds['post_bitgen'] += ['write_hw_platform -fixed -include_bit -force -file $xsa_file']
+
         return tcl_cmds

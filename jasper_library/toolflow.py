@@ -427,6 +427,9 @@ class Toolflow(object):
             self.periph_objs.append(yellow_block.YellowBlock.make_block(
                 self.peripherals[pk], self.plat))
         self._expand_children(self.periph_objs)
+        for obj in self.periph_objs:
+            self.logger.debug('Initializing obj %s' % obj.name)
+            obj.initialize()
         
         self._drc()
         
@@ -480,6 +483,7 @@ class Toolflow(object):
             axi4lite_interconnect = yellow_block.YellowBlock.make_block(
                 {'tag': 'xps:axi4lite_interconnect', 'name': 'axi4lite_interconnect', 
                 'fullpath': list(sorted(self.user_modules.keys()))[0] +'/axi4lite_interconnect'}, self.plat)
+            axi4lite_interconnect.initialize()
             axi4lite_interconnect.modify_top(self.top)
             self.sources += axi4lite_interconnect.sources
             self.ips += axi4lite_interconnect.ips

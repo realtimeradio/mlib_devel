@@ -67,6 +67,7 @@ function cosin_init(blk,varargin)
     'bram',         'BRAM', ... %'BRAM' or 'distributed RAM'
     'misc',         'off', ...
     'reg_retiming', 'on', ...
+    'misc_extra_latency', 0, ...
   };
   if same_state(blk, 'defaults', defaults, varargin{:}), return, end
   munge_block(blk, varargin{:});
@@ -84,6 +85,7 @@ function cosin_init(blk,varargin)
   add_latency   = get_var('add_latency', 'defaults', defaults, varargin{:});
   mux_latency   = get_var('mux_latency', 'defaults', defaults, varargin{:});
   neg_latency   = get_var('neg_latency', 'defaults', defaults, varargin{:});
+  misc_extra_latency = get_var('misc_extra_latency', 'defaults', defaults, varargin{:});
   conv_latency  = get_var('conv_latency', 'defaults', defaults, varargin{:});
   pack          = get_var('pack', 'defaults', defaults, varargin{:});
   bram          = get_var('bram', 'defaults', defaults, varargin{:});         
@@ -237,7 +239,7 @@ function cosin_init(blk,varargin)
  
   %misc delay
   reuse_block(blk, 'Delay', 'xbsIndex_r4/Delay', ...
-          'latency', 'bram_latency', ...
+          'latency', 'bram_latency + misc_extra_latency', ...
           'reg_retiming', 'on', ...
           'Position', [450 336 480 354]);
   add_line(blk,'add_convert1/3', 'Delay/1');

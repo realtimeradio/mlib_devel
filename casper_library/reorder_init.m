@@ -56,6 +56,8 @@ defaults = { ...
   'n_inputs', 1, ...
   'double_buffer', 0, ...
   'software_controlled', 'off', ...
+  'use_control_fanout', 'on', ...
+  'hide_latency', 'off', ...
   'bram_map', 'on'};
 if same_state(blk, 'defaults', defaults, varargin{:}), return, end
 
@@ -71,6 +73,8 @@ n_inputs        = get_var('n_inputs', 'defaults', defaults, varargin{:});
 double_buffer   = get_var('double_buffer', 'defaults', defaults, varargin{:});
 bram_map        = get_var('bram_map', 'defaults', defaults, varargin{:});
 software_controlled = get_var('software_controlled', 'defaults', defaults, varargin{:});
+use_control_fanout = get_var('use_control_fanout', 'defaults', defaults, varargin{:});
+hide_latency = get_var('hide_latency', 'defaults', defaults, varargin{:});
 mux_latency     = 1;
 
 yinc = 20;
@@ -88,7 +92,10 @@ end %if
 map_length = length(map);
 map_bits = ceil(log2(map_length));
 if strcmp('on', software_controlled),
-    double_buffer = 1;
+    %double_buffer = 1;
+    if double_buffer == 0
+        warning('Using a software map without double buffering. The reorder-order will not be static!');
+    end
     if map_latency < 1,
         error('map_latency must be >=1');
     end
@@ -137,7 +144,11 @@ if 2^map_bits ~= map_length,
 end
 
 % make fanout as low as possible (2)
-rep_latency = log2(n_inputs);
+if strcmp(use_control_fanout, 'on')
+  rep_latency = log2(n_inputs);
+else
+  rep_latency = 0;
+end
 
 % en stuff
 % delays on way into buffer depend on double buffering 
@@ -148,15 +159,21 @@ if double_buffer == 0,
 else, pre_delay = map_latency;
 end
 
+if strcmp(hide_latency, 'on')
+  count_offset = pre_delay + rep_latency;
+else
+  count_offset = 0;
+end
+
 reuse_block(blk, 'en', 'built-in/inport', 'Position', [25   43    55   57], 'Port', '2');
 reuse_block(blk, 'delay_we0', 'xbsIndex_r4/Delay', ...
-  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency), 'Position', [305 40 345 60]);
+  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency-count_offset), 'Position', [305 40 345 60]);
 add_line(blk, 'en/1', 'delay_we0/1');
 reuse_block(blk, 'delay_we1', 'xbsIndex_r4/Delay', ...
-  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency), 'Position', [305 80 345 100]);
+  'reg_retiming', 'on', 'latency', num2str(pre_delay+rep_latency-count_offset), 'Position', [305 80 345 100]);
 add_line(blk, 'en/1', 'delay_we1/1');
 reuse_block(blk, 'delay_we2', 'xbsIndex_r4/Delay', ...
-  'reg_retiming', 'on', 'latency', num2str(pre_delay), 'Position', [305 120 345 140]);
+  'reg_retiming', 'on', 'latency', num2str(pre_delay-count_offset), 'Position', [305 120 345 140]);
 add_line(blk, 'en/1', 'delay_we2/1');
 reuse_block(blk, 'delay_valid', 'xbsIndex_r4/Delay', 'reg_retiming', 'on', ...
     'Position', [860  80  900  100], 'latency', num2str(bram_latency+fanout_latency));
@@ -179,7 +196,7 @@ add_line(blk, 'we_replicate/1', 'we_expand/1');
 % delay value here is time into BRAM + time for one vector + time out of BRAM
 reuse_block(blk, 'sync', 'built-in/inport', 'Position', [25    3    55    17], 'Port', '1');
 reuse_block(blk, 'pre_sync_delay', 'xbsIndex_r4/Delay', ...
-    'reg_retiming', 'on', 'Position', [305 0 345 20], 'latency', num2str(pre_delay+rep_latency));
+    'reg_retiming', 'on', 'Position', [305 0 345 20], 'latency', num2str(pre_delay+rep_latency-count_offset));
 add_line(blk, 'sync/1', 'pre_sync_delay/1');
 reuse_block(blk, 'or', 'xbsIndex_r4/Logical', ...
     'logical_function', 'OR', 'Position', [375 19 400 46], 'latency', '0');
@@ -203,7 +220,7 @@ for cnt=1:n_inputs,
   reuse_block(blk, ['din', num2str(cnt-1)], 'built-in/inport', ...
       'Position', [680    base+80*(cnt-1)+43   710    base+80*(cnt-1)+57], 'Port', num2str(2+cnt));
   reuse_block(blk, ['delay_din', num2str(cnt-1)], 'xbsIndex_r4/Delay', 'reg_retiming', 'on', ...
-      'Position', [760    base+80*(cnt-1)+40    800    base+80*(cnt-1)+60], 'latency', num2str(pre_delay+rep_latency));
+      'Position', [760    base+80*(cnt-1)+40    800    base+80*(cnt-1)+60], 'latency', num2str(pre_delay+rep_latency-count_offset));
   add_line(blk, ['din', num2str(cnt-1),'/1'], ['delay_din', num2str(cnt-1),'/1']);
   reuse_block(blk, ['dout', num2str(cnt-1)], 'built-in/outport', ...
       'Position', [965    base+80*(cnt-1)+43   995    base+80*(cnt-1)+57], 'Port', num2str(2+cnt));
@@ -214,7 +231,7 @@ if order ~= 1,
     reuse_block(blk, 'Counter', 'xbsIndex_r4/Counter', ...
         'Position', [95   base   145   base+55], 'n_bits', num2str(map_bits + order_bits), 'cnt_type', 'Free Running', ...
         'use_behavioral_HDL', 'on', 'implementation', 'Fabric', 'arith_type', 'Unsigned', ...
-        'en', 'on', 'rst', 'on');
+        'en', 'on', 'rst', 'on', 'start_count', num2str(count_offset));
     add_line(blk, 'sync/1', 'Counter/1');
     add_line(blk, 'en/1', 'Counter/2');
 
@@ -345,6 +362,7 @@ elseif double_buffer == 0,
     reuse_block(blk, 'Counter', 'xbsIndex_r4/Counter', ...
       'n_bits', num2str(map_bits), 'cnt_type', 'Free Running', ...
       'use_behavioral_HDL', 'on', 'implementation', 'Fabric', 'arith_type', 'Unsigned', 'en', 'on', 'rst', 'on', ...
+      'start_count', num2str(count_offset), ...
       'Position', [80  base+300   120   base+340]);
     add_line(blk, 'sync/1', 'Counter/1');
     add_line(blk, 'en/1', 'Counter/2');
@@ -430,15 +448,42 @@ elseif double_buffer == 0,
     add_line(blk, 'daddr1/1', 'current_map/1', 'autorouting', 'on');
 
     % memory holding change to current map
-    reuse_block(blk, 'map_mod', 'xbsIndex_r4/ROM', ...
-      'depth', num2str(map_length), 'initVector', 'map', 'latency', num2str(map_latency), ...
-      'arith_type', 'Unsigned', 'n_bits', num2str(map_bits), 'bin_pt', '0', 'optimize', optimize, ...
-      'distributed_mem', map_memory_type, 'Position', [520  base+194   570    base+246]);
-    add_line(blk, 'map_mux/1', 'map_mod/1');
 
     reuse_block(blk, 'dnew_map', 'xbsIndex_r4/Delay', 'reg_retiming', 'on', ...
       'latency', '1', 'Position', [620 base+210 645 base+230]);
-    add_line(blk, 'map_mod/1', 'dnew_map/1');
+    if strcmp('off', software_controlled),
+        reuse_block(blk, 'map_mod', 'xbsIndex_r4/ROM', ...
+          'depth', num2str(map_length), 'initVector', 'map', 'latency', num2str(map_latency), ...
+          'arith_type', 'Unsigned', 'n_bits', num2str(map_bits), 'bin_pt', '0', 'optimize', optimize, ...
+          'distributed_mem', map_memory_type, 'Position', [520  base+194   570    base+246]);
+        add_line(blk, 'map_mux/1', 'map_mod/1');
+        add_line(blk, 'map_mod/1', 'dnew_map/1');
+    else
+      reuse_block(blk, 'map', 'xps_library/Memory/shared_bram', ...
+          'addr_width', num2str(ceil(log2(map_length))), 'init_vals', 'map', 'reg_prim_output', reg_prim_output, ...
+          'reg_core_output', reg_core_output, 'addr_width', num2str(map_bits), 'data_width', '32', ...
+          'arith_type', 'Unsigned', 'data_bin_pt', '0', 'Position', [230  base+15+70   300    base+70+70], ...
+          'desc_str', ['Determines the remapping of input samples to output samples. I.e., if ' ...
+          ' the first entry is ``5``, then the first sample into the reorder will come out 5th'], ...
+          'type_desc', 'uint32');
+      reuse_block(blk, 'never', 'xbsIndex_r4/Constant', ...
+          'arith_type', 'Boolean', 'const', '0', 'explicit_period', 'on', 'period', '1', ...
+          'Position', [230-50  base+15+70+40   270-50    base+35+70+40]);
+      reuse_block(blk, 'zero', 'xbsIndex_r4/Constant', ...
+          'arith_type', 'Unsigned', 'const', '0', 'explicit_period', 'on', 'period', '1', ...
+          'n_bits', '32', 'bin_pt', '0', ...
+          'Position', [230-50  base+15+70+20   270-50    base+35+70+20]);
+      add_line(blk, 'never/1', 'map/3');
+      add_line(blk, 'zero/1', 'map/2');
+      add_line(blk, 'map_mux/1', 'map/1');
+      reuse_block(blk, 'sw_bram_slice', 'xbsIndex_r4/Slice', ...
+          'Position', [330  base+15+70+20   360    base+35+70+20], ...
+          'boolean_output', 'off', 'nbits', num2str(map_bits), ...
+          'mode', 'Lower Bit Location + Width', 'base0', 'LSB of Input', 'bit0', '0');
+      add_line(blk, 'map/1', 'sw_bram_slice/1');
+      add_line(blk, 'sw_bram_slice/1', 'dnew_map/1');
+    end
+
     add_line(blk, 'dnew_map/1', 'current_map/2', 'autorouting', 'on');
 
   end %if order == 2
