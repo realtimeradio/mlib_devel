@@ -60,7 +60,7 @@ defaults = {'PFBSize', 5, 'TotalTaps', 2, ...
     'quantization', 'Round  (unbiased: +/- Inf)', ...
     'fwidth', 1, 'mult_spec', [2 2], ...
     'n_pol_blocks', 1, ...
-    'oversample2x', 0, ...
+    'n_oversample', 1, ...
     'coeffs_share', 'off', 'coeffs_fold', 'off'};
 
 if same_state(blk, 'defaults', defaults, varargin{:}), return, end
@@ -86,7 +86,7 @@ quantization = get_var('quantization', 'defaults', defaults, varargin{:});
 fwidth = get_var('fwidth', 'defaults', defaults, varargin{:});
 mult_spec = get_var('mult_spec', 'defaults', defaults, varargin{:});
 coeffs_share = get_var('coeffs_share', 'defaults', defaults, varargin{:});
-oversample2x = get_var('oversample2x', 'defaults', defaults, varargin{:});
+n_oversample = str2num(get_var('n_oversample', 'defaults', defaults, varargin{:}))
 
 % serial FFT size
 PFBSizeSerial = PFBSize - n_inputs; % everything here is log2
@@ -124,7 +124,7 @@ all_coeffs = pfb_coeff_gen_calc(PFBSize, TotalTaps, WindowType, n_inputs, 0, fwi
 all_filters = reshape(all_coeffs, 2^PFBSize, TotalTaps);
 % Compute max gain
 % NB: sum rows, not columns!
-if oversample2x == 1
+if n_oversample == 2
     % If oversampling we sum the even and odd taps separately.
     max_gain_odd  = max(sum(abs(all_filters(:,1:2:TotalTaps)), 2));
     max_gain_even = max(sum(abs(all_filters(:,2:2:TotalTaps)), 2));
@@ -155,13 +155,15 @@ delete_lines(blk);
 % Add ports
 clog('adding inports and outports', 'pfb_fir_init_debug');
 % port position/quantity
-if oversample2x == 0
+if n_oversample ~= 2
     hoff = 1;
     voff = 50;
     n_outputs = n_inputs;
+    n_output_blocks = n_oversample;
 else
     hoff = 8;
     n_outputs = n_inputs+1; % variables are log2
+    n_output_blocks = 1;
     voff = 25;
 end
 portnum = 1;
@@ -180,12 +182,14 @@ for p=1:pols,
 end
 portnum = 1;
 for p=1:pols,
-    for n=1:2^n_outputs,
-        portnum = portnum + 1; % Skip one to allow sync & sync_out to be 1
-        out_name = ['pol',num2str(p),'_out',num2str(n)];
-        reuse_block(blk, out_name, 'built-in/outport', ...
-            'Position', [150*(TotalTaps+hoff) voff*portnum 150*(TotalTaps+hoff)+30 voff*portnum+15], ...
-            'Port', num2str(portnum));
+    for o=1:n_output_blocks
+        for n=1:2^n_outputs
+            portnum = portnum + 1; % Skip one to allow sync & sync_out to be 1
+            out_name = ['pol',num2str(p),'_out',num2str(n),'_',num2str(o)];
+            reuse_block(blk, out_name, 'built-in/outport', ...
+                'Position', [150*(TotalTaps+hoff) voff*portnum 150*(TotalTaps+hoff)+30 voff*portnum+15], ...
+                'Port', num2str(portnum));
+	end
     end
 end
 
@@ -233,10 +237,13 @@ for p=1:pols,
                 add_line(blk, [src_block,'/3'], [blk_name,'/3']);
             % last tap
             elseif t==TotalTaps,
-                if oversample2x == 1
-                    blk_libname = 'casper_library_pfbs/last_tap_oversample2x';
+		    n_oversample
+                if n_oversample == 2
+                    blk_libname = 'casper_library_pfbs/last_tap_oversample2x'
+		elseif n_oversample == 4
+                    blk_libname = 'casper_library_pfbs/last_tap_oversample4x'
                 else
-                    blk_libname = 'casper_library_pfbs/last_tap';
+                    blk_libname = 'casper_library_pfbs/last_tap'
                 end
                 blk_name = [in_name,'_last_tap'];
                 reuse_block(blk, blk_name, blk_libname, ...
@@ -308,11 +315,14 @@ for p=1:pols,
                 for nn=1:4
                     add_line(blk, [prev_blk_name,'/',num2str(nn)], [blk_name,'/',num2str(nn)]);
                 end
-                % Only connect to outputs if not oversampled
-                if oversample2x == 0
-                    add_line(blk, [blk_name,'/1'], [out_name,'/1']);
+                % Only connect to outputs if not oversampled by 2x.
+		% In the 2x case we instantiate reorder logic in this block first.
+                if n_oversample ~= 2
+		    for o=1:n_output_blocks
+                        add_line(blk, [blk_name,'/',num2str(o)], [out_name,'_',num2str(o),'/1']);
+		    end
                     if n==1 && p==1
-                        add_line(blk, [blk_name,'/2'], 'sync_out/1');
+                        add_line(blk, [blk_name,'/',num2str(n_oversample+1)], 'sync_out/1');
                     end
                 end
             % intermediary taps
@@ -336,8 +346,8 @@ for p=1:pols,
         end
     end
 end
-% If oversampled, instantiate the reordering logic
-if oversample2x == 1
+% If oversampled by 2, instantiate the reordering logic
+if n_oversample == 2
     portnum = 1;
     for p=1:pols,
         % Bus the even / odd taps ready to reorder
@@ -353,7 +363,7 @@ if oversample2x == 1
             last_tap_name = [in_name,'_last_tap'];
             for ii=1:2
                 bus_create_name = ['pol',num2str(p),'_in_bus_create', num2str(ii)];
-                add_line(blk, [last_tap_name,'/',num2str(ii+1)], [bus_create_name, '/', num2str(n)]);
+                add_line(blk, [last_tap_name,'/',num2str(ii)], [bus_create_name, '/', num2str(n)]);
             end
         end
 	% Multiplex input samples like "fftshift" every other FFT window
@@ -365,7 +375,7 @@ if oversample2x == 1
             'rst', 'on', 'en', 'off', ...
             'use_behavioral_HDL', 'on', 'implementation', 'Fabric', ...
             'Position', [150*(TotalTaps+2.5) 50*(portnum-1) 150*(TotalTaps+2.75) 50*(portnum-1)+30]);
-        add_line(blk, [last_tap_name,'/1'], [counter_name, '/1']);
+        add_line(blk, [last_tap_name,'/3'], [counter_name, '/1']);
 
 	slice_name = ['slice' num2str(p)];
 	reuse_block(blk, slice_name, 'xbsIndex_r4/Slice', ...
@@ -395,7 +405,7 @@ if oversample2x == 1
         reuse_block(blk, st_name, 'casper_library_reorder/square_transposer', ...
             'n_inputs', '1', 'async', 'off', ...
             'Position', [150*(TotalTaps+4.5) 50*portnum 150*(TotalTaps+5) 50*portnum+30]);
-        add_line(blk, [last_tap_name,'/1'], [st_name, '/1']);
+        add_line(blk, [last_tap_name,'/3'], [st_name, '/1']);
         for ii=1:2
             mux_name = ['mux',num2str(p),'_', num2str(ii)];
             add_line(blk, [mux_name,'/1'], [st_name, '/', num2str(ii+1)]);
@@ -445,7 +455,7 @@ if oversample2x == 1
             'Position', [150*(TotalTaps+7.25) 50*portnum 150*(TotalTaps+7.75) 50*portnum+30]);
         add_line(blk, [reorder_name, '/3'], [busexp_name, '/1']);
         for ii=1:2^n_outputs
-            out_name = ['pol',num2str(p),'_out',num2str(ii)];
+            out_name = ['pol',num2str(p),'_out',num2str(ii),'_1'];
             add_line(blk, [busexp_name, '/', num2str(ii)], [out_name, '/1']);
         end
     end
