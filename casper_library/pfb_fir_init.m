@@ -83,10 +83,11 @@ mult_latency = get_var('mult_latency', 'defaults', defaults, varargin{:});
 fan_latency = get_var('fan_latency', 'defaults', defaults, varargin{:});
 bram_latency = get_var('bram_latency', 'defaults', defaults, varargin{:});
 quantization = get_var('quantization', 'defaults', defaults, varargin{:});
+use_shift_reg = get_var('use_shift_reg', 'defaults', defaults, varargin{:});
 fwidth = get_var('fwidth', 'defaults', defaults, varargin{:});
 mult_spec = get_var('mult_spec', 'defaults', defaults, varargin{:});
 coeffs_share = get_var('coeffs_share', 'defaults', defaults, varargin{:});
-n_oversample = str2num(get_var('n_oversample', 'defaults', defaults, varargin{:}))
+n_oversample = str2num(get_var('n_oversample', 'defaults', defaults, varargin{:}));
 
 % serial FFT size
 PFBSizeSerial = PFBSize - n_inputs; % everything here is log2
@@ -223,6 +224,7 @@ for p=1:pols,
                 blk_name = [in_name,'_first_tap'];
                 reuse_block(blk, blk_name, 'casper_library_pfbs/first_tap', ...
                     'use_hdl', tap_multipliers(t).use_hdl, 'use_embedded', tap_multipliers(t).use_embedded,...
+		    'use_shift_reg', use_shift_reg, ...
                     'Position', [150*(t+1) 50*portnum 150*(t+1)+100 50*portnum+30]);
                 propagate_vars([blk,'/',blk_name],'defaults', defaults, varargin{:});
                 if (p == 2) && (share_coefficients == true)
@@ -237,13 +239,12 @@ for p=1:pols,
                 add_line(blk, [src_block,'/3'], [blk_name,'/3']);
             % last tap
             elseif t==TotalTaps,
-		    n_oversample
                 if n_oversample == 2
-                    blk_libname = 'casper_library_pfbs/last_tap_oversample2x'
+                    blk_libname = 'casper_library_pfbs/last_tap_oversample2x';
 		elseif n_oversample == 4
-                    blk_libname = 'casper_library_pfbs/last_tap_oversample4x'
+                    blk_libname = 'casper_library_pfbs/last_tap_oversample4x';
                 else
-                    blk_libname = 'casper_library_pfbs/last_tap'
+                    blk_libname = 'casper_library_pfbs/last_tap';
                 end
                 blk_name = [in_name,'_last_tap'];
                 reuse_block(blk, blk_name, blk_libname, ...
@@ -333,6 +334,7 @@ for p=1:pols,
                     'mult_latency',tostring(mult_latency), 'coeff_width', tostring(CoeffBitWidth), ...
                     'coeff_frac_width',tostring(CoeffBitWidth-1), 'delay', tostring(2^(PFBSize-n_inputs)*n_pol_blocks), ...
                     'data_width',tostring(BitWidthIn), 'bram_latency', tostring(bram_latency), ...
+		    'use_shift_reg', use_shift_reg, ...
                     'Position', [150*(t+1) 50*portnum 150*(t+1)+100 50*portnum+30]);
                 if t==2,
                     prev_blk_name = ['pol',num2str(p),'_in',num2str(n),'_first_tap'];
