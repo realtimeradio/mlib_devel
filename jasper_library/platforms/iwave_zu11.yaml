@@ -26,7 +26,7 @@ pins:
     loc: AN15
   pmod1:
     iostd: LVCMOS18
-    loc: [B16, A18, A13, B15]
+    loc: [B16, A18, A13, B15, C16, B18, A14, C15]
 
   fmc0_clk_n:
     iostd: lvds
