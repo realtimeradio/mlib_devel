@@ -153,15 +153,21 @@ class adi_jesd(YellowBlock):
         inst.add_port('dout_sync', self.fullname + '_dout_sync')
 
     def gen_constraints(self):
-        def add_con(conlist, name, pinname, iindex=[], oindex=[0]):
+        def add_con(conlist, name, pinname, iindex=[], oindex=[0], iobase=None):
             portname = self.pp + name
-            ioname = 'fmc%d_%s' % (self.fmc_port, pinname)
+            if iobase is None:
+                ioname = 'fmc%d_%s' % (self.fmc_port, pinname)
+            else:
+                ioname = iobase + pinname
             conlist.append(PortConstraint(portname, ioname, port_index=iindex, iogroup_index=oindex))
             return conlist
 
-        def add_con_se(conlist, name, pinname, iindex=[], oindex=[0]):
+        def add_con_se(conlist, name, pinname, iindex=[], oindex=[0], iobase=None):
             portname = self.pp + name
-            ioname = 'fmc%d_%s' % (self.fmc_port, pinname)
+            if iobase is None:
+                ioname = 'fmc%d_%s' % (self.fmc_port, pinname)
+            else:
+                ioname = iobase + pinname
             conlist.append(PortConstraint(portname, ioname, port_index=iindex, iogroup_index=oindex, iostd='LVCMOS18'))
             return conlist
         cons = []
@@ -181,7 +187,13 @@ class adi_jesd(YellowBlock):
         cons = add_con_se(cons, 'agc2', 'la_n', [1], [20])
         cons = add_con_se(cons, 'agc3', 'la_p', [0], [21])
         cons = add_con_se(cons, 'agc3', 'la_n', [1], [21])
-        cons = add_con(cons, 'fpga_refclk_in_n', 'gbtclk_n', [], [0])
+        if self.refclk_name is None:
+            self.logger.info('Using default GT reference clock')
+            cons = add_con(cons, 'fpga_refclk_in_n', 'gbtclk_n', [], [0])
+        else:
+            self.logger.info('Overriding default GT reference clock with %s' % self.refclk_name)
+            cons = add_con(cons, 'fpga_refclk_in_n', '%s_n' % self.refclk_name, [], [0], iobase='')
+
         cons = add_con_se(cons, 'gpio', 'la_p', [0], [15])
         cons = add_con_se(cons, 'gpio', 'la_n', [1], [15])
         cons = add_con_se(cons, 'gpio', 'la_p', [2], [19])
