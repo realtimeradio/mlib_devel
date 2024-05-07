@@ -58,7 +58,7 @@ defaults = {'PFBSize', 5, 'TotalTaps', 2, ...
     'CoeffDistMem', 'off', 'add_latency', 1, 'mult_latency', 2, ...
     'bram_latency', 2, ...
     'quantization', 'Round  (unbiased: +/- Inf)', ...
-    'fwidth', 1, 'mult_spec', [2 2], ...
+    'delay_implementation', 0, 'fwidth', 1, 'mult_spec', [2 2], ...
     'n_pol_blocks', 1, ...
     'n_oversample', 1, ...
     'coeffs_share', 'off', 'coeffs_fold', 'off'};
@@ -83,12 +83,27 @@ mult_latency = get_var('mult_latency', 'defaults', defaults, varargin{:});
 fan_latency = get_var('fan_latency', 'defaults', defaults, varargin{:});
 bram_latency = get_var('bram_latency', 'defaults', defaults, varargin{:});
 quantization = get_var('quantization', 'defaults', defaults, varargin{:});
-use_shift_reg = get_var('use_shift_reg', 'defaults', defaults, varargin{:});
+delay_implementation = get_var('delay_implementation', 'defaults', defaults, varargin{:});
 fwidth = get_var('fwidth', 'defaults', defaults, varargin{:});
 mult_spec = get_var('mult_spec', 'defaults', defaults, varargin{:});
 coeffs_share = get_var('coeffs_share', 'defaults', defaults, varargin{:});
 n_oversample = str2num(get_var('n_oversample', 'defaults', defaults, varargin{:}));
 
+% Accept integer and make all values identical, or pad right if list too short
+if isscalar(delay_implementation)
+    delay_implementation = repmat(delay_implementation, 1, TotalTaps);
+elseif isvector(delay_implementation) && numel(delay_implementation) < TotalTaps
+    delay_implementation = [delay_implementation, repmat(delay_implementation(end), 1, TotalTaps - numel(delay_implementation))];
+end
+
+function state = int2state(int)
+    if int == 1
+        state = 'on';
+    else
+        state = 'off';
+    end
+end
+  
 % serial FFT size
 PFBSizeSerial = PFBSize - n_inputs; % everything here is log2
 
@@ -224,7 +239,7 @@ for p=1:pols,
                 blk_name = [in_name,'_first_tap'];
                 reuse_block(blk, blk_name, 'casper_library_pfbs/first_tap', ...
                     'use_hdl', tap_multipliers(t).use_hdl, 'use_embedded', tap_multipliers(t).use_embedded,...
-		    'use_shift_reg', use_shift_reg, ...
+		    'use_shift_reg',int2state(delay_implementation(t)), ...
                     'Position', [150*(t+1) 50*portnum 150*(t+1)+100 50*portnum+30]);
                 propagate_vars([blk,'/',blk_name],'defaults', defaults, varargin{:});
                 if (p == 2) && (share_coefficients == true)
@@ -334,7 +349,7 @@ for p=1:pols,
                     'mult_latency',tostring(mult_latency), 'coeff_width', tostring(CoeffBitWidth), ...
                     'coeff_frac_width',tostring(CoeffBitWidth-1), 'delay', tostring(2^(PFBSize-n_inputs)*n_pol_blocks), ...
                     'data_width',tostring(BitWidthIn), 'bram_latency', tostring(bram_latency), ...
-		    'use_shift_reg', use_shift_reg, ...
+		    'use_shift_reg', int2state(delay_implementation(t)), ...
                     'Position', [150*(t+1) 50*portnum 150*(t+1)+100 50*portnum+30]);
                 if t==2,
                     prev_blk_name = ['pol',num2str(p),'_in',num2str(n),'_first_tap'];
@@ -470,3 +485,4 @@ fmtstr = sprintf('taps=%d, add_latency=%d\nmax scale %.3f', ...
 set_param(blk, 'AttributesFormatString', fmtstr);
 save_state(blk, 'defaults', defaults, varargin{:});
 clog('exiting pfb_fir_init','trace');
+end
