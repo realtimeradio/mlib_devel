@@ -16,7 +16,19 @@ module adi_jesd_top  #(
   parameter RX_JESD_L = 8,
   parameter RX_NUM_LINKS = 1,
   parameter SHARED_DEVCLK = 0,
-  parameter JESD_MODE = "64B66B"
+  parameter JESD_MODE = "64B66B",
+  // Generation of LMFC markers
+  //
+  // log2(adc_clk_out) cycles per LMFC
+  parameter LMFC_CTR_BITS = 5,
+  // Parameters for use of external pre-buffered, potentially very slow, SYSREF
+  //
+  // generate an internal sysref with a counter of this width:
+  parameter INT_SYSREF_CTR_BITS = 7,
+  // Debounce external sysref using a shift register of this length:
+  parameter EXT_SYSREF_DEBOUNCE_LEN = 4,
+  // Optionally use SYSREF generated from an external sync
+  parameter USE_EXT_SYNC = 0
 ) (
   // External IO
   //output [ 7:0] gpio_bd_o,
@@ -51,10 +63,12 @@ module adi_jesd_top  #(
   input         sysref2_n,
   input         sysref2_p,
   output [1:0]  txen,
+  input         sync_ext,
   // User IO
   output [511:0] dout,
   output dout_overflow,
   output dout_vld,
+  output dout_lmfc_posedge,
   output dout_sync,
   output adc_clk_out,
   output dsp_clk_out,
@@ -112,6 +126,7 @@ module adi_jesd_top  #(
   wire            spi1_miso;
 
   wire            ref_clk;
+  wire            ext_sysref;
   wire            sysref;
   wire            link_clk;
   assign          adc_clk_out = link_clk;
@@ -141,7 +156,7 @@ module adi_jesd_top  #(
   IBUFDS i_ibufds_sysref (
     .I (sysref2_p),
     .IB (sysref2_n),
-    .O (sysref));
+    .O (ext_sysref));
 
   //IBUFDS i_ibufds_tx_device_clk (
   //  .I (clkin6_p),
@@ -230,6 +245,28 @@ module adi_jesd_top  #(
   wire [511:0] adc_dout;
   wire adc_dout_vld;
   wire adc_dout_sync;
+
+  // Internal SYSREF generation from external pulse
+  // 1. Debounce external sync and find posedges
+  reg [EXT_SYSREF_DEBOUNCE_LEN-1:0] sync_ext_sr;
+  wire sync_ext_debounce = sync_ext_sr == {EXT_SYSREF_DEBOUNCE_LEN{1'b1}};
+  reg sync_ext_debounceR = 1'b0;
+  wire sync_ext_edge = sync_ext_debounce & ~sync_ext_debounceR;
+  // 2. Generate internal SYSREF
+  reg [INT_SYSREF_CTR_BITS-1:0] int_sysref_ctr = 0;
+  wire int_sysref = int_sysref_ctr == {INT_SYSREF_CTR_BITS{1'b0}};
+
+  always @(posedge adc_clk_out) begin
+    sync_ext_sr <= {sync_ext_sr[EXT_SYSREF_DEBOUNCE_LEN-2:0], sync_ext};
+    sync_ext_debounceR <= sync_ext_debounce;
+    if (sync_ext_edge) begin
+      int_sysref_ctr <= {INT_SYSREF_CTR_BITS{1'b0}};
+    end else begin
+      int_sysref_ctr <= int_sysref_ctr + 1'b1;
+    end
+  end
+
+  assign sysref = (USE_EXT_SYNC == 1) ? int_sysref : ext_sysref;
 
   iwave_zu11_bd_wrapper i_system_wrapper (
     // User clocks / reset
@@ -369,11 +406,31 @@ module adi_jesd_top  #(
    .CLKFBIN(clk_fb)      // 1-bit input: Feedback clock
   );
 
+  // Generation of LMFC markers, assuming first valid sample marks LMFC edge
+  reg adc_dout_vldR;
+  wire adc_dout_vld_posedge = adc_dout_vld & ~adc_dout_vldR;
+  reg [LMFC_CTR_BITS-1:0] lmfc_ctr = 0;
+  wire lmfc_posedge = lmfc_ctr == 0;
+  always @(posedge adc_clk_out) begin
+    adc_dout_vldR <= adc_dout_vld;
+    if (adc_dout_vld_posedge) begin
+      lmfc_ctr <= 1;
+    end else begin
+      lmfc_ctr <= lmfc_ctr + 1'b1;
+    end
+  end
+
+
+  // Bring data onto a different clock domain, which may be faster than
+  // adc_clk_out in order to support a downstream OSPFB.
+  // Pull sync signals through this FIFO to match latency. But note that
+  // sync edge hasn't been through the latency of the rest of the JESD
+  // interface.
   wire fifo_empty;
-  wire [511+1:0] fifo_dout;
+  wire [512+2-1:0] fifo_dout;
   data_fifo data_fifo_inst (
     .wr_clk(adc_clk_out),
-    .din({adc_dout_sync, adc_dout}),
+    .din({sync_ext_edge, lmfc_posedge, adc_dout}),
     .wr_en(adc_dout_vld),
     .rd_clk(user_clk),
     .empty(fifo_empty),
@@ -383,7 +440,8 @@ module adi_jesd_top  #(
     .rst(~dsp_clk_locked)
   );
   assign dout[511:0] = fifo_dout[511:0];
-  assign dout_sync = fifo_dout[512];
+  assign dout_lmfc_posedge = fifo_dout[512];
+  assign dout_sync = fifo_dout[513];
 
 
   assign rx_data_p_loc[RX_JESD_L*RX_NUM_LINKS-1:0] = rx_data_p[RX_JESD_L*RX_NUM_LINKS-1:0];

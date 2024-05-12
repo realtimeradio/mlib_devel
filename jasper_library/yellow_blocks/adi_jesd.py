@@ -46,6 +46,11 @@ class adi_jesd(YellowBlock):
         self.provides += ['dsp_clk90']  # lies
         self.provides += ['dsp_clk180'] # lies
         self.provides += ['dsp_clk270'] # lies
+        # Check if we are using an external sync/sysref rather than the default
+        if self.sync_bank_name is not None and self.sync_pin_id is not None:
+            self.use_ext_sync = 1
+        else:
+            self.use_ext_sync = 0
 
     def modify_top(self,top):
         inst = top.get_instance('adi_jesd_top', 'jesd_top_inst')
@@ -99,6 +104,11 @@ class adi_jesd(YellowBlock):
         def add_ext_port(inst, name, direction, width=0):
             port_name = self.pp + name
             inst.add_port(name, port_name, width=width, parent_port=True, dir=direction)
+        inst.add_parameter('USE_EXT_SYNC', self.use_ext_sync)
+        if self.use_ext_sync:
+            add_ext_port(inst, 'sync_ext', 'in')
+        else:
+            inst.add_port('sync_ext', '1\'b0')
         #add_ext_port(inst, 'gpio_bd_o', 'out', 8)
         add_ext_port(inst, 'agc0', 'in', 2)
         add_ext_port(inst, 'agc1', 'in', 2)
@@ -151,6 +161,7 @@ class adi_jesd(YellowBlock):
         inst.add_port('dout_vld', self.fullname + '_dout_vld')
         inst.add_port('dout_overflow', self.fullname + '_dout_overflow')
         inst.add_port('dout_sync', self.fullname + '_dout_sync')
+        inst.add_port('dout_lmfc_posedge', self.fullname + '_dout_lmfc_posedge')
 
     def gen_constraints(self):
         def add_con(conlist, name, pinname, iindex=[], oindex=[0], iobase=None):
@@ -170,7 +181,10 @@ class adi_jesd(YellowBlock):
                 ioname = iobase + pinname
             conlist.append(PortConstraint(portname, ioname, port_index=iindex, iogroup_index=oindex, iostd='LVCMOS18'))
             return conlist
+
         cons = []
+        if self.use_ext_sync:
+            cons = add_con(cons, 'sync_ext', self.sync_bank_name, None, [self.sync_pin_id], iobase='')
         #cons = add_con(cons, 'gpio_bd_o', '', [0], [])
         #cons = add_con(cons, 'gpio_bd_o', '', [1], [])
         #cons = add_con(cons, 'gpio_bd_o', '', [2], [])
@@ -193,6 +207,7 @@ class adi_jesd(YellowBlock):
         else:
             self.logger.info('Overriding default GT reference clock with %s' % self.refclk_name)
             cons = add_con(cons, 'fpga_refclk_in_n', '%s_n' % self.refclk_name, [], [0], iobase='')
+
 
         cons = add_con_se(cons, 'gpio', 'la_p', [0], [15])
         cons = add_con_se(cons, 'gpio', 'la_n', [1], [15])

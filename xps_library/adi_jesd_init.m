@@ -14,6 +14,9 @@ for n = 1:length(gateway_ins)
     elseif regexp(get_param(gw,'Name'),'(dout_sync)$')
         toks = regexp(get_param(gw,'Name'),'(dout_sync)$','tokens');
         set_param(gw,'Name',clear_name([blk,'_',toks{1}{1}]));
+    elseif regexp(get_param(gw,'Name'),'(dout_lmfc_posedge)$')
+        toks = regexp(get_param(gw,'Name'),'(dout_lmfc_posedge)$','tokens');
+        set_param(gw,'Name',clear_name([blk,'_',toks{1}{1}]));
     elseif regexp(get_param(gw,'Name'),'(dout_overflow)$')
         toks = regexp(get_param(gw,'Name'),'(dout_overflow)$','tokens');
         set_param(gw,'Name',clear_name([blk,'_',toks{1}{1}]));
