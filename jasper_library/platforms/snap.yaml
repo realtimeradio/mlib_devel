@@ -75,6 +75,9 @@ pins:
   sync_out:
     iostd: LVCMOS25
     loc: H9
+  sync_out_se: # Toolflow assumes "sync_out" is differential, so create a new name!
+    iostd: LVCMOS25
+    loc: H9
   pmbus_alert:
     iostd: LVCMOS18
     loc: W13
