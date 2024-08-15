@@ -1,5 +1,5 @@
-from yellow_block import YellowBlock
-from yellow_block_typecodes import *
+from .yellow_block import YellowBlock
+from .yellow_block_typecodes import *
 from constraints import PortConstraint
 
 class pmbus_controller(YellowBlock):
@@ -15,7 +15,7 @@ class pmbus_controller(YellowBlock):
         self.add_source('wb_pmbus_controller')
 
     def gen_children(self):
-        children = [YellowBlock.make_block({'tag':'xps:i2c', 'fullpath':'%s/pmbus_i2c' % self.name, 'name':'pmbus_i2c',
+        children = [YellowBlock.make_block({'tag':'xps:i2c_interface', 'fullpath':'%s/pmbus_i2c' % self.name, 'name':'pmbus_i2c',
            'scl_gpio':'pmbus_clk', 'sda_gpio':'pmbus_data', 'scl_gpio_index':0, 'sda_gpio_index':0}, self.platform)]
         return children
 
