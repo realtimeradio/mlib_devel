@@ -23,8 +23,12 @@ class gpio(YellowBlock):
         # hack for new gpio parameters that don't include platform name
         self.io_group = self.io_group_real
         # provide an override if the user is using a custom IO bank name
+        self.is_signal=False
         if self.io_group == 'custom':
             self.io_group = self.io_group_custom
+            if self.io_group.startswith('signal/'):
+                self.is_signal = True
+                self.io_group = self.io_group[7:]
         self.use_diffio = ((self.io_group in ['zdok0','zdok1','mdr','qsh','sync_in','sync_out', 'aux_clk_diff']) and not self.use_single_ended)
 
         # Set the module we need to instantiate
@@ -65,6 +69,10 @@ class gpio(YellowBlock):
     def modify_top(self,top):
         instance_name = self.fullname
         gateway_name = '{}_gateway'.format(self.fullname)
+
+        if self.is_signal:
+            top.assign_signal(gateway_name, self.io_group)
+            return
 
         # If the io_group is set to gateway, propagate the signal
         # straight to the top-level. This is probably only useful
@@ -125,7 +133,7 @@ class gpio(YellowBlock):
                 inst.add_port('io_pad', signal=external_port_name, dir=self.io_dir, width=self.pad_bitwidth, parent_port=True)
         
     def gen_constraints(self):
-        if self.io_group == 'gateway':
+        if self.is_signal or self.io_group == 'gateway':
             return []
         if self.use_diffio:
             const = []
