@@ -3,6 +3,8 @@ from .yellow_block import YellowBlock
 
 class dcp(YellowBlock):
     def initialize(self):
+        if not os.path.isfile(self.dcp_file):
+            raise RuntimeError('DCP file %s does not exist!' % self.dcp_file)
         self.add_source(self.dcp_file)
 
     def gen_tcl_cmds(self):

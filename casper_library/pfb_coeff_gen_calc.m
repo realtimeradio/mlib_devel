@@ -56,7 +56,7 @@ else
 	end
     catch err
         switch err.identifier
-            case 'MATLAB:license:NoFeature'
+            case {'MATLAB:license:NoFeature', 'MATLAB:license:checkouterror'}
                 warning('window function not available in MATLAB toolboxes. Attempting to use python variant')
                 try
                     windowval = cellfun(@double, cell(py.window.window(WindowType, int32(alltaps))));
@@ -64,6 +64,7 @@ else
                     error('Python call to window() failed!')
                 end
             otherwise
+                err.identifier
                 rethrow(err)
         end
     end
@@ -71,7 +72,7 @@ else
         total_coeffs = windowval .* sinc(fwidth * ([0.5:1:alltaps-0.5]/(2^PFBSize)-TotalTaps/2));
     catch err
         switch err.identifier
-            case 'MATLAB:license:NoFeature'
+            case {'MATLAB:license:NoFeature', 'MATLAB:license:checkouterror'}
                 warning('sinc function not available in MATLAB toolboxes. Attempting to use python variant')
                 try
                     total_coeffs = windowval .* cellfun(@double, cell(py.window.sinc(py.list(fwidth * ([0.5:alltaps-0.5]/(2^PFBSize)-TotalTaps/2)))));

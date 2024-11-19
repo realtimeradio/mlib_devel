@@ -52,7 +52,11 @@ log_group = 'fft_stage_n_init_debug';
 clog('entering fft_stage_n_init', {log_group, 'trace'});
 
 % Don't use BRAMs with fanout control
-USE_DUMB_BRAMS = 0;
+if strcmp(getenv('USE_DUMB_BRAMS'), '1'),
+    USE_DUMB_BRAMS = 1;
+else
+    USE_DUMB_BRAMS = 0;
+end
 
 % Set default vararg values.
 % reg_retiming is not an actual parameter of this block, but it is included

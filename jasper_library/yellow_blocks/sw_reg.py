@@ -59,7 +59,7 @@ class sw_reg(YellowBlock):
                 inst.add_parameter('INIT_VAL', "32'h%x"%self.init_val)
                 inst.add_wb_interface(regname=self.unique_name, mode='rw', nbytes=4, typecode=self.typecode)
                 inst.add_port('user_clk', signal='user_clk', parent_sig=False)
-                inst.add_port('user_data_out', signal='%s_user_data_out'%self.unique_name, width=32)
+                inst.add_port('user_data_out', signal='%s_user_data_out'%self.fullname, width=32)
 
     #def gen_constraints(self):
     #    if self.platform.mmbus_architecture[0] == 'AXI4-Lite':
