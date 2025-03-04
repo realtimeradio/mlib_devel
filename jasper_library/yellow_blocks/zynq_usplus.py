@@ -96,6 +96,8 @@ class zynq_ultra_ps_e(zynq_usplus):
       if m.enable:
         # if the path for the connection is not in the current block design a port
         # must be made and the top module must expose it
+        if m.dest is None:
+          continue
         if len(m.dest.split('/')) == 1:
           top_intf_prefix = m.dest.lower()
           bd_intf_prefix = m.dest
@@ -161,6 +163,8 @@ class zynq_ultra_ps_e(zynq_usplus):
         bd.connect_net('pl_sys_clk', '{:s}/{:s}'.format(self.name, m.clk_net_name))
 
         # make interfaces external if they have no board design connections, otherwise the slave interface must make the connection
+        if m.dest is None:
+          continue
         if len(m.dest.split('/')) == 1:
           intf_pin_name = "{:s}/{:s}".format(self.name, m.port_net_name)
           ext_intf_name = m.dest
@@ -219,7 +223,7 @@ class zynq_ultra_ps_e(zynq_usplus):
 
     # assign address spaces
     # TODO hard coded information needs to be dynamic
-    bd.assign_address('mpsoc/Data', 'M_AXI/Reg', '0xA0000000', '0x00010000')
+    bd.assign_address('mpsoc/Data', 'M_AXI/Reg', '0xA0000000', '0x00100000')
 
 
   def gen_children(self):
