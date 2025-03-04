@@ -154,22 +154,6 @@ class axi_smartconnect(YellowBlock):
           bd.connect_intf_net(ext_intf_name, intf_pin_name)
           bd.add_raw_cmd(f'set_property CONFIG.PROTOCOL {maxi.protocol} [get_bd_intf_ports /{ext_intf_name}]')
           bd.add_raw_cmd(f'set_property CONFIG.ASSOCIATED_BUSIF {{{ext_intf_name}}} [get_bd_ports /{maxi.clk_src}]')
-          #bd.add_raw_cmd('set_property -dict [list \\')
-          #bd.add_raw_cmd('CONFIG.PROTOCOL [get_property CONFIG.PROTOCOL {:s} [get_bd_intf_pins {:s}]] \\'.format(maxi.protocol, intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.ADDR_WIDTH [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.DATA_WIDTH [get_property CONFIG.DATA_WIDTH [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.HAS_BURST [get_property CONFIG.HAS_BURST [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.HAS_LOCK [get_property CONFIG.HAS_LOCK [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.HAS_PROT [get_property CONFIG.HAS_PROT [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.HAS_CACHE [get_property CONFIG.HAS_CACHE [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.HAS_QOS [get_property CONFIG.HAS_QOS [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.HAS_REGION [get_property CONFIG.HAS_REGION [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.SUPPORTS_NARROW_BURST [get_property CONFIG.SUPPORTS_NARROW_BURST [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          #bd.add_raw_cmd('CONFIG.MAX_BURST_LENGTH [get_property CONFIG.MAX_BURST_LENGTH [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name))
-          ## there is a bug, ideally this would have worked, but the parameter propagation has not happened for the clock field
-          ##bd.add_raw_cmd('CONFIG.FREQ_HZ [get_property CONFIG.FREQ_HZ [get_bd_intf_pins {:s}]] \\'.format(intf_pin_name)))
-          #bd.add_raw_cmd('CONFIG.FREQ_HZ $ps_freq_hz \\') # TODO ASSUMES $ps_freq_hz is defined
-          #bd.add_raw_cmd('] [get_bd_intf_ports {:s}]'.format(ext_intf_name))
         else:
           a2w_instname = f'{self.name}_wb{mi}'
           wb_pins = ['DAT_I', 'ACK_I', 'RST_O', 'DAT_O', 'ADR_O', 'CYC_O', 'SEL_O', 'STB_O', 'WE_O']

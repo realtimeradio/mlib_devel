@@ -4,6 +4,8 @@ from constraints import PortConstraint, ClockConstraint, GenClockConstraint, Clo
 from helpers import to_int_list
 from .yellow_block_typecodes import *
 
+SOC_IP = "mpsoc"
+
 class onegbe(YellowBlock):
     @staticmethod
     def factory(blk, plat, hdl_root=None):
@@ -17,11 +19,23 @@ class onegbe(YellowBlock):
             return onegbe_casia_k7(blk, plat, hdl_root)
         elif plat.name in ['skarab']:
             return onegbe_skarab(blk, plat, hdl_root)
+        elif plat.name in ['rfsoc4x2']:
+            return onegbe_fifo(blk, plat, hdl_root)
         else:
             return onegbe_snap(blk, plat, hdl_root)
 
     def _instantiate_udp(self, top):
-        gbe_udp = top.get_instance(entity='gbe_udp', name=self.fullname)
+        try:
+            version = self.udp_version
+        except AttributeError:
+            version = 1
+
+        if version == 2:
+            entity = 'gbe_udp2'
+        else:
+            entity = 'gbe_udp'
+
+        gbe_udp = top.get_instance(entity=entity, name=self.fullname)
         gbe_udp.add_parameter('LOCAL_ENABLE',   '%d' % int(self.local_en))
         gbe_udp.add_parameter('LOCAL_MAC',      '48\'d%d' % self.local_mac)
         gbe_udp.add_parameter('LOCAL_IP',       '32\'d%d' % self.local_ip)
@@ -61,6 +75,9 @@ class onegbe(YellowBlock):
         gbe_udp.add_port('mac_tx_data', self.fullname + '_mac_tx_data', width=8)
         gbe_udp.add_port('mac_tx_dvld', self.fullname + '_mac_tx_dvld')
         gbe_udp.add_port('mac_tx_ack',  self.fullname + '_mac_tx_ack')
+        if version == 2:
+            gbe_udp.add_port('sop',  self.fullname + '_sop')
+            gbe_udp.add_port('eop',  self.fullname + '_eop')
 
         gbe_udp.add_port('mac_rx_clk',       'gbe_userclk2_out')
         gbe_udp.add_port('mac_rx_rst',       self.fullname + '_app_rx_rst')
@@ -339,6 +356,69 @@ class onegbe_vcu128(onegbe):
             consts += [RawConstraint('set_clock_groups -name asyncclocks_gbe -asynchronous -group [get_clocks -include_generated_clocks sys_clk_p_CLK] -group [get_clocks -include_generated_clocks %s_refclk625_p]' %self.fullname)]
             return consts
         
+class onegbe_fifo(onegbe):
+    def initialize(self):
+        self.typecode = TYPECODE_ETHCORE
+        self.add_source('onegbe/*.v')
+        self.add_source('onegbe/virtexuplus/*.xci')
+
+        self.provides = ['ethernet']
+        self.dis_cpu_tx = True
+        self.dis_cpu_rx = True
+        self.udp_version = 2
+
+        try:
+            self.gem = self.platform.conf["onegbe"]["gem"]
+        except KeyError:
+            self.logger.error("Missing onegbe: gem: entry in platform YAML")
+            raise
+
+    def modify_top(self,top):
+        self._instantiate_udp(top)
+        # Connect up RX side with fake signals
+        pname = self.platform.name
+        bd = top.get_instance(f'{pname}_bd', f'{pname}_bd_inst') # fragile
+        bd.add_port(f'fmio_gem{self.gem}_fifo_tx_clk_to_pl_bufg_0', 'gbe_userclk2_out')
+        top.assign_signal(self.fullname + '_mac_rx_data', "8'b0")
+        top.assign_signal(self.fullname + '_mac_rx_dvld', "1'b0")
+        top.assign_signal(self.fullname + '_mac_rx_goodframe', "1'b0")
+        top.assign_signal(self.fullname + '_mac_rx_badframe', "1'b0")
+        top.assign_signal(self.fullname + '_mac_syncacquired', "1'b1")
+
+        # Connect the block diagram's FIFO TX interface
+        pp = f'FIFO_ENET{self.gem}_0_'
+        bd.add_port(pp+'tx_r_control', '')
+        bd.add_port(pp+'tx_r_data', self.fullname+'_mac_tx_data', width=8)
+        bd.add_port(pp+'tx_r_data_rdy', '')
+        bd.add_port(pp+'tx_r_eop', self.fullname+'_eop')
+        bd.add_port(pp+'tx_r_err', "1'b0")
+        bd.add_port(pp+'tx_r_flushed', "1'b0")
+        bd.add_port(pp+'tx_r_rd', self.fullname+'_mac_tx_ack')
+        bd.add_port(pp+'tx_r_sop', self.fullname+'_sop')
+        bd.add_port(pp+'tx_r_underflow', "1'b0")
+        bd.add_port(pp+'tx_r_valid', self.fullname+'_mac_tx_dvld')
+
+    def modify_bd(self, bd):
+        bd.add_raw_cmd(f'set_property -dict [list CONFIG.PSU__ENET{self.gem}__FIFO__ENABLE {{1}}] [get_bd_cells {SOC_IP}]', stage='assign_bd_addrs')
+        bd.add_raw_cmd(f'make_bd_intf_pins_external [get_bd_intf_pins {SOC_IP}/FIFO_ENET{self.gem}]', stage='assign_bd_addrs')
+        bd.add_raw_cmd(f'make_bd_pins_external  [get_bd_pins {SOC_IP}/fmio_gem{self.gem}_fifo_tx_clk_to_pl_bufg]', stage='assign_bd_addrs')
+        bd.add_raw_cmd(f'make_bd_pins_external  [get_bd_pins {SOC_IP}/fmio_gem{self.gem}_fifo_rx_clk_to_pl_bufg]', stage='assign_bd_addrs')
+
+    def _instantiate_mac(self, top):
+        return
+
+    def _instantiate_phy(self, top):
+        return
+
+    def _instantiate_mdio(self, top):
+        return
+
+    def gen_tcl_cmds(self):
+        tcl_cmds = {}
+        tcl_cmds['pre_impl'] = []
+        tcl_cmds['pre_impl'] += [f'set_clock_groups -asynchronous -group [get_clocks $user_clk] -group [get_clocks -include_generated_clocks clk_gem{self.gem}_tx_0]']
+        tcl_cmds['pre_impl'] += [f'set_clock_groups -asynchronous -group [get_clocks $sys_clk]  -group [get_clocks -include_generated_clocks clk_gem{self.gem}_tx_0]']
+        return tcl_cmds
 
 class onegbe_vcu118(onegbe):
     def initialize(self):

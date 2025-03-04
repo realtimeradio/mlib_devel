@@ -2123,6 +2123,11 @@ proc puts_red {s} {
             # Post-Synthesis Commands
             self.add_tcl_cmd('open_run synth_1', stage='post_synth')
             self.add_tcl_cmd('set synth_critical_count [get_msg_config -count -severity {CRITICAL WARNING}]', stage='post_synth')
+            # Define $user_clk so it can be used to define clock async rules
+            self.add_tcl_cmd('set user_clk [get_clocks -of_objects [get_nets user_clk]]', stage='post_synth')
+            self.add_tcl_cmd('set sys_clk [get_clocks -of_objects [get_nets sys_clk]]', stage='post_synth')
+            self.add_tcl_cmd('create_clock -name user_clk -period [get_property PERIOD [get_clocks $user_clk]] [get_nets user_clk]', stage='post_synth')
+            self.add_tcl_cmd('create_clock -name sys_clk -period [get_property PERIOD [get_clocks $sys_clk]] [get_nets sys_clk]', stage='post_synth')
 
             # Pre-Implementation Commands
             self.add_tcl_cmd('set_property STEPS.POST_PLACE_POWER_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]', stage='pre_impl')
