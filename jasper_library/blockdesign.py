@@ -37,11 +37,11 @@ class BlockDesign(object):
       self.create_intf_port(name, mode, 'axi4')
 
 
-  def create_cell(self, ip, inst_name):
+  def create_cell(self, ip, inst_name, vendor='xilinx.com', library='ip', version='*'):
     """
     Add an ip to the block design
     """
-    self.bd_tcl_cmds['place_bd_ip'] += ['create_bd_cell -type ip -vlnv xilinx.com:ip:{:s}:* {:s}'.format(ip, inst_name)]
+    self.bd_tcl_cmds['place_bd_ip'] += ['create_bd_cell -type ip -vlnv {:s}:{:s}:{:s}:{:s} {:s} '.format(vendor, library, ip, version, inst_name)]
     self.design_ips.append(ip)
 
 

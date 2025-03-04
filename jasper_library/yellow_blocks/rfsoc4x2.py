@@ -2,11 +2,14 @@ from .yellow_block import YellowBlock
 from clk_factors import clk_factors
 from constraints import ClockConstraint, ClockGroupConstraint, PortConstraint, RawConstraint
 
+MPSOC_IP_NAME = 'mpsoc'
 
 class rfsoc4x2(YellowBlock):
     def initialize(self):
         self.add_source('infrastructure/zcu216_clk_infrastructure.sv')
         self.add_source('utils/cdc_synchroniser.vhd')
+        self.add_source('wbs_arbiter/*.v')
+
 
         # create reference to block design name
         self.blkdesign = '{:s}_bd'.format(self.platform.conf['name'])
@@ -21,6 +24,9 @@ class rfsoc4x2(YellowBlock):
         self.provides.append('adc_clk_rst')
 
         self.provides.append('sys_clk')
+        self.provides.append('sys_clk90')  # Lies
+        self.provides.append('sys_clk180') # Lies
+        self.provides.append('sys_clk270') # Lies
         self.provides.append('sys_rst')
 
         # TODO: is a bug that `axi4lite_interconnect` does not make a `requires` on `axil_clk`.
@@ -40,6 +46,9 @@ class rfsoc4x2(YellowBlock):
         top.assign_signal('axil_rst_n', 'axil_arst_n') # TODO RENAME the board design one `axil_arst_n`
         top.assign_signal('sys_clk', 'pl_sys_clk')
         top.assign_signal('sys_rst', '~axil_arst_n')
+        top.add_signal('sys_clk90')  # Unconnected
+        top.add_signal('sys_clk180') # Unconnected
+        top.add_signal('sys_clk270') # Unconnected
 
         # generate clock parameters to use pl_clk to drive as the user IP clock
         # TODO: will need to make changes when other user ip clk source options provided
@@ -67,33 +76,26 @@ class rfsoc4x2(YellowBlock):
         # mermory map (HPM0)
         zynq_blk = {
             'tag'     : 'xps:zynq_usplus',
-            'name'    : 'mpsoc',
+            'name'    : MPSOC_IP_NAME,
             'presets' : 'rfsoc4x2_mpsoc',
-            'maxi_0'  : {'conf': {'enable': 1, 'data_width': 32},  'intf': {'dest': 'axi_proto_conv/S_AXI'}},
-            'maxi_1'  : {'conf': {'enable': 0, 'data_width': 128}, 'intf': {}},
-            'maxi_2'  : {'conf': {'enable': 0, 'data_width': 128}, 'intf': {}}
-            #'maxi_2'  : {'conf': {'enable': 1, 'data_width': 128}, 'intf': {'dest': 'M_AXI_0'}}
+            'maxi_0'  : {'conf': {'enable': 1, 'data_width': 32},  'intf': {'dest': 'axi_proto_conv1/S_AXI'}},
+            'maxi_1'  : {'conf': {'enable': 0, 'data_width': 32}, 'intf': {}},
+            'maxi_2'  : {'conf': {'enable': 0, 'data_width': 128}, 'intf': {}},
+            'use_wishbone': False,
+            'wb_interface': f'{MPSOC_IP_NAME}/M_AXI_HPM1_FPD',
+            'wb_addr_width': 32,
         }
         children.append(YellowBlock.make_block(zynq_blk, self.platform))
 
-        proto_conv_blk = {
-            'tag'             : 'xps:axi_protocol_converter',
-            'name'            : 'axi_proto_conv',
-            'saxi_intf'       : {'dest': 'mpsoc/M_AXI_HPM0_FPD'},
-            'maxi_intf'       : {'dest': 'M_AXI'},
-            'aruser_wid'      : 0,
-            'awuser_wid'      : 0,
-            'buser_wid'       : 0,
-            'data_wid'        : 32,
-            'id_wid'          : 16,
-            'mi_protocol'     : 'AXI4LITE',
-            'rw_mode'         : 'READ_WRITE',
-            'ruser_wid'       : 0,
-            'si_protocol'     : 'AXI4',
-            'translation_mode': 2,
-            'wuser_wid'       : 0
+        sc_blk = {
+            'tag'             : 'xps:axi_smartconnect',
+            'name'            : 'smartconnect_inst',
+            'saxi_intf'       : {'dest': f'{MPSOC_IP_NAME}/M_AXI_HPM0_FPD'},
+            'maxi_intfs'       : [{'dest': 'M_AXI', 'protocol':'AXI4LITE'}, {'dest': 'wb', 'protocol': 'wishbone'}],
         }
-        children.append(YellowBlock.make_block(proto_conv_blk, self.platform))
+
+        children.append(YellowBlock.make_block(sc_blk, self.platform))
+
         return children
 
 
@@ -107,7 +109,6 @@ class rfsoc4x2(YellowBlock):
         cons.append(RawConstraint('set_property -dict { PACKAGE_PIN AU10 IOSTANDARD LVCMOS18 } [get_ports { mmcm_locked }]'))
 
         return cons
-
 
     def gen_tcl_cmds(self):
         tcl_cmds = {}

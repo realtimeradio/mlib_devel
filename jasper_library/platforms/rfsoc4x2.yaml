@@ -5,8 +5,9 @@ family: rfsoc
 config_voltage: 1.8
 cfgbvs: GND
 backend_target: vivado
-mmbus_architecture: AXI4-Lite
+mmbus_architecture: ['AXI4-Lite', 'wishbone']
 mmbus_base_address: 0xA0000000
+dsp_wb_base_address: 0xA0100000
 # How to address each 32-bit (i.e. 4 indicates byte-addressable)
 mmbus_address_alignment: 4
 sources: []
@@ -45,6 +46,8 @@ rfdc:
     has_dac_clk: False
     dac_clk_src: 6
 
+onegbe:
+  gem: 1
 
 onehundredgbe:
   refclk_freq_str: "156.25"
