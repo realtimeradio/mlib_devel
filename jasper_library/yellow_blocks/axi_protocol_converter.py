@@ -4,6 +4,8 @@ from six import iteritems
 
 from .yellow_block import YellowBlock
 
+DEFAULT_ADDR_WIDTH = 40
+
 class axi_protocol_converter(YellowBlock):
   attr_map = {
     'aruser_wid'      : {'param': 'ARUSER_WIDTH',     'fmt': "{{:d}}"},
@@ -16,7 +18,8 @@ class axi_protocol_converter(YellowBlock):
     'ruser_wid'       : {'param': 'RUSER_WIDTH',      'fmt': "{{:d}}"},
     'si_protocol'     : {'param': 'SI_PROTOCOL',      'fmt': "{{:s}}"},
     'translation_mode': {'param': 'TRANSLATION_MODE', 'fmt': "{{:d}}"}, #2 \\'] # split incompatible burts into multiple transactions
-    'wuser_wid'       : {'param': 'WUSER_WIDTH',      'fmt': "{{:d}}"}
+    'wuser_wid'       : {'param': 'WUSER_WIDTH',      'fmt': "{{:d}}"},
+    'addr_wid'        : {'param': 'ADDR_WIDTH',       'fmt': "{{:d}}"},
   }
 
   class axi_interface(object):
@@ -35,7 +38,14 @@ class axi_protocol_converter(YellowBlock):
   def initialize(self):
     # deserialize block from its parameter attribute map
     for attr, _ in iteritems(self.attr_map):
-      setattr(self, attr, self.blk[attr])
+      try:
+          v = self.blk[attr]
+      except KeyError:
+          if attr == 'addr_wid':
+              v = DEFAULT_ADDR_WIDTH
+          else:
+              raise KeyError
+      setattr(self, attr, v)
 
     saxi_intf = self.blk['saxi_intf']
     self.saxi = self.axi_interface('Slave', 0, dest=saxi_intf['dest'])
@@ -60,7 +70,7 @@ class axi_protocol_converter(YellowBlock):
     if len(self.maxi_intf['dest'].split('/')) == 1:
       top_intf_prefix = self.maxi_intf['dest'].lower()
       bd_intf_prefix = self.maxi_intf['dest']
-      bd_inst.add_port('{:s}_awaddr'.format(top_intf_prefix), '{:s}_awaddr'.format(bd_intf_prefix),  width=40)
+      bd_inst.add_port('{:s}_awaddr'.format(top_intf_prefix), '{:s}_awaddr'.format(bd_intf_prefix),  width=self.addr_wid)
       bd_inst.add_port('{:s}_awprot'.format(top_intf_prefix), '{:s}_awprot'.format(bd_intf_prefix),  width=3)
       bd_inst.add_port('{:s}_awvalid'.format(top_intf_prefix), '{:s}_awvalid'.format(bd_intf_prefix))
       bd_inst.add_port('{:s}_awready'.format(top_intf_prefix), '{:s}_awready'.format(bd_intf_prefix))
@@ -71,7 +81,7 @@ class axi_protocol_converter(YellowBlock):
       bd_inst.add_port('{:s}_bresp'.format(top_intf_prefix), '{:s}_bresp'.format(bd_intf_prefix),  width=2)
       bd_inst.add_port('{:s}_bvalid'.format(top_intf_prefix), '{:s}_bvalid'.format(bd_intf_prefix))
       bd_inst.add_port('{:s}_bready'.format(top_intf_prefix), '{:s}_bready'.format(bd_intf_prefix))
-      bd_inst.add_port('{:s}_araddr'.format(top_intf_prefix), '{:s}_araddr'.format(bd_intf_prefix),  width=40)
+      bd_inst.add_port('{:s}_araddr'.format(top_intf_prefix), '{:s}_araddr'.format(bd_intf_prefix),  width=self.addr_wid)
       bd_inst.add_port('{:s}_arprot'.format(top_intf_prefix), '{:s}_arprot'.format(bd_intf_prefix),  width=3)
       bd_inst.add_port('{:s}_arvalid'.format(top_intf_prefix), '{:s}_arvalid'.format(bd_intf_prefix))
       bd_inst.add_port('{:s}_arready'.format(top_intf_prefix), '{:s}_arready'.format(bd_intf_prefix))
@@ -86,6 +96,7 @@ class axi_protocol_converter(YellowBlock):
 
     # apply configurations
     bd.add_raw_cmd('set_property -dict [list \\')
+    bd.add_raw_cmd('CONFIG.ADDR_WIDTH.VALUE_SRC USER \\')
     bd.build_config_cmd(self, self.attr_map, None)
     bd.add_raw_cmd('] [get_bd_cells {:s}]'.format(self.name))
 
