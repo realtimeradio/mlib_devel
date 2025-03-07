@@ -49,7 +49,7 @@ function [] = update_axis_clk(gcb,tile)
       end
       sys_clk_mhz = round(sys_clk_mhz, 3);
 
-      clk_max_mhz = 512.0;
+      clk_max_mhz = 615.0;
       I = find(sys_clk_mhz <= clk_max_mhz);
       % the required `sys_clocks` for the seleceted parallel samples `w`
       % are at, sys_clk_mhz(I) w(I), respectively.

@@ -52,6 +52,7 @@ function [] = rfdc_mask(gcb,force)
   msk = Simulink.Mask.get(gcb);
 
   [gen, adc_tile_arch, dac_tile_arch, adc_num_tile, dac_num_tile, fs_max, fs_min] = get_rfsoc_properties(gcb);
+  ext_demux = str2num(get_param(gcb, 'ext_demux'));
 
   adcbits = 16;
   gw_arith_type = 'Signed';
@@ -273,22 +274,22 @@ function [] = rfdc_mask(gcb,force)
               mixer_mode_param   = ['t', num2str(t), '_', prefix, '_adc', num2str(a), '_mixer_mode'];
               if chk_param(gcb, digital_mode_param, 'Real')
                 maxis = sprintf(maxis_template, t-224, 2*a);
-                [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate);
+                [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate, ext_demux);
 
               else % digital mode is I/Q
                 if chk_param(gcb, mixer_mode_param, 'Real -> I/Q')
                   %only need to draw the one port, not two at a time
                   maxis = sprintf(maxis_template, t-224, 2*a);
-                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate);
+                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate, ext_demux);
 
                   maxis = sprintf(maxis_template, t-224, 2*a+1);
-                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate);
+                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate, ext_demux);
 
                 elseif chk_param(gcb, mixer_mode_param, 'I/Q -> I/Q')
                   % In this case ADC 1 must be enabled so here we are assuming that the gui logic has been
                   % correct to pass adc = [0 ,1] and the both interfaces will be subsequently created
                   maxis = sprintf(maxis_template, t-224, a);
-                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate);
+                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate, ext_demux);
 
                 else
                   if mod(a,2) %if odd slice, might have mixer mode mode 'off'
@@ -325,7 +326,7 @@ function [] = rfdc_mask(gcb,force)
               mixertype = get_param(gcb, ['t', num2str(t), '_', prefix, '_dac', num2str(a), '_mixer_type']);
               if ~strcmp(mixertype,'Off')
                 maxis = sprintf(saxis_template, t-228, a);
-                [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate);
+                [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate, ext_demux);
               end
             else %dual tile stuff
 
@@ -333,13 +334,13 @@ function [] = rfdc_mask(gcb,force)
               mixer_mode_param   = ['t', num2str(t), '_', prefix, '_dac', num2str(a), '_mixer_mode'];
               if chk_param(gcb, analog_mode_param, 'Real')
                 maxis = sprintf(saxis_template, t-228, a);
-                [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate);
+                [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate, ext_demux);
 
               else % analog mode is I/Q
                 %only the base slice (0 or 2) gets created
                 if (a == 0 || a == 2)
                   maxis = sprintf(saxis_template, t-228, a);
-                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate);
+                  [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate, ext_demux);
                 end
               end
             end % Four_Tiles: add gw's/draw ports
@@ -366,7 +367,7 @@ end % function rfdc_mask
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ypos, port_num] = add_gw(gcb, base_gw_name, arith_type, n_bits, bin_pt, maxis, port_num, xpos, ypos, type)
+function [ypos, port_num] = add_gw(gcb, base_gw_name, arith_type, n_bits, bin_pt, maxis, port_num, xpos, ypos, type, ext_demux)
   if type == 1 %1 is adc
     iport = sprintf('%s_sim', maxis);
     oport = sprintf('%s', maxis);
@@ -388,7 +389,7 @@ function [ypos, port_num] = add_gw(gcb, base_gw_name, arith_type, n_bits, bin_pt
     xil_gate = 'xbsIndex_r4/Gateway In';
     reuse_block(gcb, gwname, xil_gate, ...
       'arith_type', arith_type, ...
-      'n_bits', num2str(n_bits), ...
+      'n_bits', num2str(ext_demux * n_bits), ...
       'bin_pt', num2str(bin_pt), ...
       'Position', gw_pos);
   elseif type == 0
