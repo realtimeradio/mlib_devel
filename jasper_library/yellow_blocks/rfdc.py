@@ -392,6 +392,13 @@ class rfdc(YellowBlock):
       self.provides.append('rfdc_adc{:s}_clk180'.format(a[0])) # Not true, but keep toolflow happy
       self.provides.append('rfdc_adc{:s}_clk270'.format(a[0])) # Not true, but keep toolflow happy
 
+  def gen_children(self):
+    swreg = YellowBlock.make_block({
+        'tag':'xps:sw_reg',
+        'fullpath':'%s/rfdc_mmcm_rst'%self.name,
+        'io_dir':'From Processor',
+        'name':'rfdc_mmcm_rst'}, self.platform)
+    return[swreg]
 
   def modify_top(self, top):
     # instantiate rfdc
@@ -477,7 +484,7 @@ class rfdc(YellowBlock):
         mmcm.add_port('CLKOUT0', f'user_clk_{self.ext_demux}x_mmcm')
         mmcm.add_port('LOCKED', locked)
         mmcm.add_port('PWRDWN', '1\'b0')
-        mmcm.add_port('RST', '!axil_rst_n')
+        mmcm.add_port('RST', '%s_rfdc_mmcm_rst_user_data_out[0]' % self.name, parent_sig=False)
 
         bufg = top.get_instance('BUFG', 'clk_doubler_bufg_inst')
         bufg.add_port('I', f'user_clk_{self.ext_demux}x_mmcm')
@@ -489,7 +496,6 @@ class rfdc(YellowBlock):
     for tidx in self.enabled_adc_tiles:
       # maxis clk, reset and output clock (when using mts, this output clock is not typically used)
       bd_inst.add_port('m{:d}_axis_aclk'.format(tidx), 'm{:d}_axis_aclk'.format(tidx))       #self.fullname+'_m0_axis_aclk'
-      bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
       bd_inst.add_port('clk_adc{:d}'.format(tidx), 'rfdc_adc{:d}_clk'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
       top.add_signal('rfdc_adc{:d}_clk90'.format(tidx))
       top.add_signal('rfdc_adc{:d}_clk180'.format(tidx))
@@ -498,8 +504,10 @@ class rfdc(YellowBlock):
       # wire these ports to supporting infrastructure
       if self.ext_demux == 1:
         top.assign_signal('m{:d}_axis_aclk'.format(tidx), 'user_clk')
+        bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
       else:
         top.assign_signal('m{:d}_axis_aclk'.format(tidx), f'user_clk_{self.ext_demux}x')
+        bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), locked)
 
 
       #Tile source information from simulink
@@ -536,7 +544,7 @@ class rfdc(YellowBlock):
                 fifo.add_port('din', '{:s}_m{:d}{:d}_axis_tdata_int'.format(self.fullname, tidx, n_aidx), width=data_width)
                 fifo.add_port('wr_clk', f'user_clk_{self.ext_demux}x')
                 fifo.add_port('wr_en', f'~wr_rst_busy{tidx}{n_aidx} & valid_m{tidx}{n_aidx}')
-                fifo.add_port('srst', '~axil_rst_n') # wrong clock domain?
+                fifo.add_port('rst', '~'+locked)
                 fifo.add_port('wr_rst_busy', 'wr_rst_busy{:d}{:d}'.format(tidx, n_aidx))
                 # FIFO read interface
                 fifo.add_port('rd_clk', 'user_clk')
@@ -569,7 +577,7 @@ class rfdc(YellowBlock):
                 fifo.add_port('din', '{:s}_m{:d}{:d}_axis_tdata_int'.format(self.fullname, tidx, 2*n_aidx), width=data_width)
                 fifo.add_port('wr_clk', f'user_clk_{self.ext_demux}x')
                 fifo.add_port('wr_en', f'~wr_rst_busy{tidx}{2*n_aidx} & valid_m{tidx}{2*n_aidx}')
-                fifo.add_port('srst', '~axil_rst_n') # wrong clock domain?
+                fifo.add_port('rst', '~'+locked)
                 fifo.add_port('wr_rst_busy', 'wr_rst_busy{:d}{:d}'.format(tidx, 2*n_aidx))
                 # FIFO read interface
                 fifo.add_port('rd_clk', 'user_clk')
@@ -606,14 +614,15 @@ class rfdc(YellowBlock):
     for tidx in self.enabled_dac_tiles:
       # maxis clk, reset and output clock (when using mts, this output clock is not typically used)
       bd_inst.add_port('s{:d}_axis_aclk'.format(tidx), 's{:d}_axis_aclk'.format(tidx))       #self.fullname+'_m0_axis_aclk'
-      bd_inst.add_port('s{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
       bd_inst.add_port('clk_dac{:d}'.format(tidx), 'rfdc_dac{:d}_clk'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
 
       # wire these ports to supporting infrastructure
       if self.ext_demux == 1:
         top.assign_signal('s{:d}_axis_aclk'.format(tidx), 'user_clk')
+        bd_inst.add_port('s{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
       else:
         top.assign_signal('s{:d}_axis_aclk'.format(tidx), f'user_clk_{self.ext_demux}x')
+        bd_inst.add_port('s{:d}_axis_aresetn'.format(tidx), locked) 
 
       # gen3 parts support clock forwarding, user provides information about provided clock to the board sources in simulink mask (e.g.,
       # current gen3 xilinx eval boards only have clocks coming to 2 adc and 2 dac tiles, requiring clocks to be forwarded)
@@ -685,15 +694,15 @@ class rfdc(YellowBlock):
     sysclk  = '-of_objects [get_nets sys_clk]'
     for tidx in self.enabled_adc_tiles:
         const.append(ClockGroupConstraint('RFADC{:d}_CLK'.format(tidx), sysclk, 'asynchronous'))
-        if self.ext_demux != 1:
-            const.append(ClockGroupConstraint('RFADC{:d}_CLK'.format(tidx), fastclk, 'asynchronous'))
+        #if self.ext_demux != 1:
+        #    const.append(ClockGroupConstraint('RFADC{:d}_CLK'.format(tidx), fastclk, 'asynchronous'))
     for tidx in self.enabled_dac_tiles:
         const.append(ClockGroupConstraint('RFDAC{:d}_CLK'.format(tidx), sysclk, 'asynchronous'))
-        if self.ext_demux != 1:
-            const.append(ClockGroupConstraint('RFDAC{:d}_CLK'.format(tidx), fastclk, 'asynchronous'))
-    if self.ext_demux != 1:
-        const.append(RawConstraint(f'set_false_path -from [get_clocks {slowclk}] -to [get_clocks {fastclk}]'))
-        const.append(ClockGroupConstraint(sysclk, fastclk, 'asynchronous'))
+        #if self.ext_demux != 1:
+        #    const.append(ClockGroupConstraint('RFDAC{:d}_CLK'.format(tidx), fastclk, 'asynchronous'))
+    #if self.ext_demux != 1:
+    #    const.append(RawConstraint(f'set_false_path -from [get_clocks {slowclk}] -to [get_clocks {fastclk}]'))
+    #    const.append(ClockGroupConstraint(sysclk, fastclk, 'asynchronous'))
     return const
 
 
@@ -935,20 +944,20 @@ class rfdc(YellowBlock):
 
       # Fifo properties
       fifo_config = {
-        "Fifo_Implementation": "Independent_Clocks_Builtin_FIFO",
+        "Fifo_Implementation": "Independent_Clocks_Block_RAM",
         "synchronization_stages": "3",
         "INTERFACE_TYPE": "Native",
         "Performance_Options": "Standard_FIFO",
         "asymmetric_port_width": "true",
         "Input_Data_Width": "%d" % (data_width),
-        "Input_Depth": "1024",
+        "Input_Depth": "256",
         "Output_Data_Width": "%d" % (self.ext_demux * data_width),
         "Use_Embedded_Registers": "false",
-        "Reset_Type": "Synchronous_Reset",
-        "Output_Depth": "512",
+        "Reset_Type": "Asynchronous_Reset",
+        "Output_Depth": "128",
         "Use_Embedded_Registers": "false",
         "Reset_Type": "Synchronous_Reset",
-        "Full_Flags_Reset_Value": "0",
+        "Full_Flags_Reset_Value": "1",
         "Valid_Flag": "false",
         "Underflow_Flag": "true",
         "Overflow_Flag": "true",
@@ -980,7 +989,7 @@ class rfdc(YellowBlock):
         "Empty_Threshold_Assert_Value_rdch": "1018",
         "FIFO_Implementation_axis": "Independent_Clocks_Block_RAM",
         "Empty_Threshold_Assert_Value_axis": "1018",
-        "Enable_Safety_Circuit": "false",
+        "Enable_Safety_Circuit": "true",
       }
 
       tcl_cmds['pre_synth'].append(
