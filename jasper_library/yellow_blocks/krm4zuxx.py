@@ -89,6 +89,9 @@ class krm4zuxx(YellowBlock):
         #add_iobuf(top, 'SPI_1_0_io1', bd_inst) # MISO
         bd_inst.add_port('SPI_1_0_io1_i', 'SPI_1_0_miso_demux_o')
 
+        bd_inst.add_port('emio_enet2_tsu_inc_ctrl_0', '2\'b11')
+        bd_inst.add_port('emio_enet2_tsu_timer_cmp_val_0', 'emio_enet2_tsu_timer_cmp_val_0')
+
         spi_mux = top.get_instance('spi_mux', 'spi_mux_inst')
         spi_mux.add_parameter('N', '3')
         spi_mux.add_port('cs_n', '{SPI_1_0_ss2_o, SPI_1_0_ss1_o, SPI_1_0_ss_o | SPI_1_0_ss_t}', parent_sig=False)
@@ -173,6 +176,12 @@ class krm4zuxx(YellowBlock):
         tcl_cmds['pre_synth'] += ['endgroup']
         tcl_cmds['pre_synth'] += ['startgroup']
         tcl_cmds['pre_synth'] += [f'make_bd_intf_pins_external [get_bd_intf_pins {self.zynq_core_name}/SPI_1]']
+        tcl_cmds['pre_synth'] += ['endgroup']
+        tcl_cmds['pre_synth'] += ['startgroup']
+        tcl_cmds['pre_synth'] += [f'make_bd_pins_external  [get_bd_pins {self.zynq_core_name}/emio_enet2_tsu_inc_ctrl]']
+        tcl_cmds['pre_synth'] += ['endgroup']
+        tcl_cmds['pre_synth'] += ['startgroup']
+        tcl_cmds['pre_synth'] += [f'make_bd_pins_external  [get_bd_pins {self.zynq_core_name}/emio_enet2_tsu_timer_cmp_val]']
         tcl_cmds['pre_synth'] += ['endgroup']
 
         # export hardware design xsa for software
