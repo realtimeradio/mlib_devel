@@ -592,7 +592,7 @@ class rfdc(YellowBlock):
                 bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx))
             else: # digital mode is I/Q
               if a.mixer_mode == 'Real -> I/Q':
-                for i in enumerate(['I', 'Q']):
+                for i, iq in enumerate(['I', 'Q']):
                   if self.ext_demux != 1:
                     raise RuntimeError('External Demux != 1 not supported for I/Q output')
                   bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx + i),   '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, 2*n_aidx + i), width=data_width)
