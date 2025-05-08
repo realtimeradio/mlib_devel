@@ -8,6 +8,8 @@ import struct
 from six import iteritems
 import re
 
+DEMUX_FIFO_NAME = 'demux_fifo'
+
 class rfdc(YellowBlock):
   # maps tile and adc attributes to vivado parameters
   adc_tile_attr_map = {
@@ -267,12 +269,12 @@ class rfdc(YellowBlock):
 
       # validate platform user clk against expected core axi stream clk
       if self.blk['Tile{:d}_enable'.format(tidx)]:
-        print("platform clk rate={:.3f}, rfdc clk={:.3f}".format(self.platform.user_clk_rate, t.axi_stream_clk))
-        if (t.axi_stream_clk != self.platform.user_clk_rate):
+        print("platform clk rate={:.3f}, rfdc clk={:.3f}".format(self.platform.user_clk_rate, t.axi_stream_clk / self.ext_demux))
+        if (t.axi_stream_clk / self.ext_demux != self.platform.user_clk_rate):
           s = '\n\n'
           s += 'ERROR: expected rfdc core axi stream clock rate {:.3f} MHz on tile {:d} does not match platform selected clock\n'
           s += 'rate of {:.3f} MHz.\n'
-          s = s.format(t.axi_stream_clk, tidx, self.platform.user_clk_rate)
+          s = s.format(t.axi_stream_clk / self.ext_demux, tidx, self.platform.user_clk_rate)
           self.throw_error(s)
 
       self.tiles.append(t)
@@ -390,6 +392,13 @@ class rfdc(YellowBlock):
       self.provides.append('rfdc_adc{:s}_clk180'.format(a[0])) # Not true, but keep toolflow happy
       self.provides.append('rfdc_adc{:s}_clk270'.format(a[0])) # Not true, but keep toolflow happy
 
+  def gen_children(self):
+    swreg = YellowBlock.make_block({
+        'tag':'xps:sw_reg',
+        'fullpath':'%s/rfdc_mmcm_rst'%self.name,
+        'io_dir':'From Processor',
+        'name':'rfdc_mmcm_rst'}, self.platform)
+    return[swreg]
 
   def modify_top(self, top):
     # instantiate rfdc
@@ -461,20 +470,45 @@ class rfdc(YellowBlock):
       # else:
       #   mts_inst.add_port('user_sysref_dac', '')
 
+    # If necessary, instantiate the demux logic
+    if self.ext_demux != 1:
+        mmcm = top.get_instance('MMCME2_BASE', 'clk_doubler_inst')
+        fb_clk = 'clk_doubler_fb_clk'
+        locked = 'clk_doubler_locked'
+        mmcm.add_parameter('CLKFBOUT_MULT_F', 4.0)
+        mmcm.add_parameter('DIVCLK_DIVIDE', 1)
+        mmcm.add_parameter('CLKOUT0_DIVIDE_F', 2.0)
+        mmcm.add_port('CLKIN1', 'user_clk')
+        mmcm.add_port('CLKFBIN', fb_clk)
+        mmcm.add_port('CLKFBOUT', fb_clk)
+        mmcm.add_port('CLKOUT0', f'user_clk_{self.ext_demux}x_mmcm')
+        mmcm.add_port('LOCKED', locked)
+        mmcm.add_port('PWRDWN', '1\'b0')
+        mmcm.add_port('RST', '%s_rfdc_mmcm_rst_user_data_out[0]' % self.name, parent_sig=False)
+
+        bufg = top.get_instance('BUFG', 'clk_doubler_bufg_inst')
+        bufg.add_port('I', f'user_clk_{self.ext_demux}x_mmcm')
+        bufg.add_port('O', f'user_clk_{self.ext_demux}x')
+
     """
     adc tile/slice interfaces
     """
     for tidx in self.enabled_adc_tiles:
       # maxis clk, reset and output clock (when using mts, this output clock is not typically used)
       bd_inst.add_port('m{:d}_axis_aclk'.format(tidx), 'm{:d}_axis_aclk'.format(tidx))       #self.fullname+'_m0_axis_aclk'
-      bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
       bd_inst.add_port('clk_adc{:d}'.format(tidx), 'rfdc_adc{:d}_clk'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
       top.add_signal('rfdc_adc{:d}_clk90'.format(tidx))
       top.add_signal('rfdc_adc{:d}_clk180'.format(tidx))
       top.add_signal('rfdc_adc{:d}_clk270'.format(tidx))
 
       # wire these ports to supporting infrastructure
-      top.assign_signal('m{:d}_axis_aclk'.format(tidx), 'user_clk')
+      if self.ext_demux == 1:
+        top.assign_signal('m{:d}_axis_aclk'.format(tidx), 'user_clk')
+        bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
+      else:
+        top.assign_signal('m{:d}_axis_aclk'.format(tidx), f'user_clk_{self.ext_demux}x')
+        bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), locked)
+
 
       #Tile source information from simulink
       if self.gen > 1:
@@ -498,9 +532,31 @@ class rfdc(YellowBlock):
             bd_inst.add_port('vin{:d}{:d}_n'.format(tidx, n_aidx), 'vin{:d}{:d}_n'.format(tidx, n_aidx),  dir='in', parent_port=True)
             # maxis data ports
             if a.mixer_type != 'Off' and a.mixer_type != False: #only add slices that aren't odd and in a IQ->IQ config
-              bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_aidx), width=data_width)
-              bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), "1'b1",)
-              bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, n_aidx))
+              # Optional demux logic:
+              if self.ext_demux != 1:
+                bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), '{:s}_m{:d}{:d}_axis_tdata_int'.format(self.fullname, tidx, n_aidx), width=data_width)
+                bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), "1'b1");
+                bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), 'valid_m{:d}{:d}'.format(tidx, n_aidx))
+                # Resizer
+                fifo = top.get_instance(DEMUX_FIFO_NAME, 'demux_fifo{:d}{:d}'.format(tidx, n_aidx))
+                # FIFO write interface
+                fifo.add_port('full', '')
+                fifo.add_port('din', '{:s}_m{:d}{:d}_axis_tdata_int'.format(self.fullname, tidx, n_aidx), width=data_width)
+                fifo.add_port('wr_clk', f'user_clk_{self.ext_demux}x')
+                fifo.add_port('wr_en', f'~wr_rst_busy{tidx}{n_aidx} & valid_m{tidx}{n_aidx}')
+                fifo.add_port('rst', '~'+locked)
+                fifo.add_port('wr_rst_busy', 'wr_rst_busy{:d}{:d}'.format(tidx, n_aidx))
+                # FIFO read interface
+                fifo.add_port('rd_clk', 'user_clk')
+                fifo.add_port('empty', 'fifo_empty{:d}{:d}'.format(tidx, n_aidx))
+                fifo.add_port('rd_en', f'~prog_empty{tidx}{n_aidx} & ~rd_rst_busy{tidx}{n_aidx}')
+                fifo.add_port('rd_rst_busy', 'rd_rst_busy{:d}{:d}'.format(tidx, n_aidx))
+                fifo.add_port('prog_empty', 'prog_empty{:d}{:d}'.format(tidx, n_aidx))
+                fifo.add_port('dout', '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_aidx), width=self.ext_demux * data_width)
+              else:
+                bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_aidx), width=data_width)
+                bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), "1'b1",)
+                bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, n_aidx))
           else: # Dual tile architecture
             a = self.adcs[n_aidx+2*int(aidx[0])] # 2 adc slices for each DT tile
             data_width = 16*a.sample_per_cycle
@@ -509,22 +565,45 @@ class rfdc(YellowBlock):
             bd_inst.add_port('vin{:d}_{:d}{:d}_n'.format(tidx, 2*n_aidx, 2*n_aidx+1), 'vin{:d}_{:d}{:d}_n'.format(tidx, 2*n_aidx, 2*n_aidx+1), dir='in', parent_port=True)
             # maxis ports-dual architecture rfsocs the I/Q streams are output on seperate maxis interfaces needing different rules depending on the configuration
             if a.digital_output == 'Real':
-              bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx), '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, 2*n_aidx), width=data_width)
-              bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), "1'b1",)
-              bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, n_aidx))
+              # Optional demux logic:
+              if self.ext_demux != 1:
+                bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx), '{:s}_m{:d}{:d}_axis_tdata_int'.format(self.fullname, tidx, 2*n_aidx), width=data_width)
+                bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), "1'b1",)
+                bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), 'valid_m{:d}{:d}'.format(tidx, 2*n_aidx))
+                # Resizer
+                fifo = top.get_instance(DEMUX_FIFO_NAME, 'demux_fifo{:d}{:d}'.format(tidx, 2*n_aidx))
+                # FIFO write interface
+                fifo.add_port('full', '')
+                fifo.add_port('din', '{:s}_m{:d}{:d}_axis_tdata_int'.format(self.fullname, tidx, 2*n_aidx), width=data_width)
+                fifo.add_port('wr_clk', f'user_clk_{self.ext_demux}x')
+                fifo.add_port('wr_en', f'~wr_rst_busy{tidx}{2*n_aidx} & valid_m{tidx}{2*n_aidx}')
+                fifo.add_port('rst', '~'+locked)
+                fifo.add_port('wr_rst_busy', 'wr_rst_busy{:d}{:d}'.format(tidx, 2*n_aidx))
+                # FIFO read interface
+                fifo.add_port('rd_clk', 'user_clk')
+                fifo.add_port('empty', 'fifo_empty{:d}{:d}'.format(tidx, 2*n_aidx))
+                fifo.add_port('rd_en', f'~prog_empty{tidx}{2*n_aidx} & ~rd_rst_busy{tidx}{2*n_aidx}')
+                fifo.add_port('rd_rst_busy', 'rd_rst_busy{:d}{:d}'.format(tidx, 2*n_aidx))
+                fifo.add_port('prog_empty', 'prog_empty{:d}{:d}'.format(tidx, 2*n_aidx))
+                fifo.add_port('dout', '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, 2*n_aidx), width=self.ext_demux * data_width)
+              else:
+                bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx), '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, 2*n_aidx), width=data_width)
+                bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), "1'b1",)
+                bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx))
             else: # digital mode is I/Q
               if a.mixer_mode == 'Real -> I/Q':
-                # I data
-                bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx),   '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, 2*n_aidx), width=data_width)
-                bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), "1'b1",)
-                bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, n_aidx))
-                # Q data
-                bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx+1), '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, 2*n_aidx+1), width=data_width)
-                bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx+1), "1'b1",)
-                bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx+1), 'm{:d}{:d}_axis_tvalid'.format(tidx, n_aidx))
+                for i, iq in enumerate(['I', 'Q']):
+                  if self.ext_demux != 1:
+                    raise RuntimeError('External Demux != 1 not supported for I/Q output')
+                  bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx + i),   '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, 2*n_aidx + i), width=data_width)
+                  bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx + i), "1'b1",)
+                  bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx + i), 'm{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx + i))
               else: # mixer mode is 'I/Q -> I/Q'
                 # in this case ADC 1 better be also set or we are in trouble so here we are assuming that the logic is correct and that
                 # enabled adcs is both [0, 1]
+                # Optional demux logic:
+                if self.ext_demux != 1:
+                    raise RuntimeError('External Demux != 1 not supported for I/Q output')
                 bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_aidx), width=data_width)
                 bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), "1'b1",)
                 bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, n_aidx))
@@ -535,11 +614,15 @@ class rfdc(YellowBlock):
     for tidx in self.enabled_dac_tiles:
       # maxis clk, reset and output clock (when using mts, this output clock is not typically used)
       bd_inst.add_port('s{:d}_axis_aclk'.format(tidx), 's{:d}_axis_aclk'.format(tidx))       #self.fullname+'_m0_axis_aclk'
-      bd_inst.add_port('s{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
       bd_inst.add_port('clk_dac{:d}'.format(tidx), 'rfdc_dac{:d}_clk'.format(tidx), dir='out') #self.fullname+'_clk_adc0'
 
       # wire these ports to supporting infrastructure
-      top.assign_signal('s{:d}_axis_aclk'.format(tidx), 'user_clk')
+      if self.ext_demux == 1:
+        top.assign_signal('s{:d}_axis_aclk'.format(tidx), 'user_clk')
+        bd_inst.add_port('s{:d}_axis_aresetn'.format(tidx), 'axil_rst_n') #'m{:d}_axis_aresetn'.format(tidx)) #self.fullname+'_m0_axis_aresetn'
+      else:
+        top.assign_signal('s{:d}_axis_aclk'.format(tidx), f'user_clk_{self.ext_demux}x')
+        bd_inst.add_port('s{:d}_axis_aresetn'.format(tidx), locked) 
 
       # gen3 parts support clock forwarding, user provides information about provided clock to the board sources in simulink mask (e.g.,
       # current gen3 xilinx eval boards only have clocks coming to 2 adc and 2 dac tiles, requiring clocks to be forwarded)
@@ -606,18 +689,27 @@ class rfdc(YellowBlock):
 
     # Add RFDC output clocks and make them asynchronous to sys_clk
     # TODO: are these clock names deterministic?
+    fastclk = '-of_objects [get_pins clk_doubler_inst/CLKOUT0]'
+    slowclk = '-of_objects [get_pins clk_doubler_inst/CLKOUT0]'
+    sysclk  = '-of_objects [get_nets sys_clk]'
     for tidx in self.enabled_adc_tiles:
-        t = self.tiles[tidx]
-        const.append(ClockGroupConstraint('RFADC{:d}_CLK'.format(tidx), '-of_objects [get_nets sys_clk]', 'asynchronous'))
+        const.append(ClockGroupConstraint('RFADC{:d}_CLK'.format(tidx), sysclk, 'asynchronous'))
+        #if self.ext_demux != 1:
+        #    const.append(ClockGroupConstraint('RFADC{:d}_CLK'.format(tidx), fastclk, 'asynchronous'))
     for tidx in self.enabled_dac_tiles:
-        t = self.tiles[tidx]
-        const.append(ClockGroupConstraint('RFDAC{:d}_CLK'.format(tidx), '-of_objects [get_nets sys_clk]', 'asynchronous'))
+        const.append(ClockGroupConstraint('RFDAC{:d}_CLK'.format(tidx), sysclk, 'asynchronous'))
+        #if self.ext_demux != 1:
+        #    const.append(ClockGroupConstraint('RFDAC{:d}_CLK'.format(tidx), fastclk, 'asynchronous'))
+    #if self.ext_demux != 1:
+    #    const.append(RawConstraint(f'set_false_path -from [get_clocks {slowclk}] -to [get_clocks {fastclk}]'))
+    #    const.append(ClockGroupConstraint(sysclk, fastclk, 'asynchronous'))
     return const
 
 
   def gen_tcl_cmds(self):
     tcl_cmds = {}
     tcl_cmds['init'] = []
+    #tcl_cmds['pre_impl'] = [f'set_clock_groups -asynchronous -group [get_clocks sys_clk] -group [get_clocks -include_generated_clocks user_clk_{self.ext_demux}x_mmcm1]']
 
     tcl_cmds['pre_synth'] = []
 
@@ -714,6 +806,7 @@ class rfdc(YellowBlock):
 
     tcl_cmds['pre_synth'] += ['] [get_bd_cells $rfdc]']
     # create board interface ports for axis data/clk/reset pins and adc tile output clock for each enabled tile
+    clk_out_mhz = 1 # Default
     for tidx in self.enabled_adc_tiles:
       t = self.tiles[tidx]
       # gen3 parts support clock forwarding, user provides information about provided clock to the board sources in simulink mask (e.g.,
@@ -732,6 +825,7 @@ class rfdc(YellowBlock):
       tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('clk_adc{:d}'.format(tidx), port_dir='out', port_type='clk'))
       # create port for m_axis_aclk for each tile enabled
       tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}_axis_aclk'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.clk_out*1e6)) # clk out is mhz
+      clk_out_mhz = t.clk_out # Use this for FIFO settings
       # create port for m_axis_aresetn for each tile enabled
       tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}_axis_aresetn'.format(tidx), port_dir='in', port_type='rst'))
       # create port vin and m_axis ports for each tile enable
@@ -797,6 +891,7 @@ class rfdc(YellowBlock):
       tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('clk_dac{:d}'.format(tidx), port_dir='out', port_type='clk'))
       # create port for m_axis_aclk for each tile enabled
       tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}_axis_aclk'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.clk_out*1e6)) # clk out is mhz
+      clk_out_mhz = t.clk_out # Use this for FIFO settings
       # create port for m_axis_aresetn for each tile enabled
       tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}_axis_aresetn'.format(tidx), port_dir='in', port_type='rst'))
       # create port vout and m_axis ports for each tile enable
@@ -842,6 +937,69 @@ class rfdc(YellowBlock):
 
     if self.enable_mts_dac:
       tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('user_sysref_dac', port_dir='in'))
+
+    # If necessary build appropriate demux FIFO
+    if self.ext_demux != 1:
+      nbytes = data_width // 8
+
+      # Fifo properties
+      fifo_config = {
+        "Fifo_Implementation": "Independent_Clocks_Block_RAM",
+        "synchronization_stages": "3",
+        "INTERFACE_TYPE": "Native",
+        "Performance_Options": "Standard_FIFO",
+        "asymmetric_port_width": "true",
+        "Input_Data_Width": "%d" % (data_width),
+        "Input_Depth": "256",
+        "Output_Data_Width": "%d" % (self.ext_demux * data_width),
+        "Use_Embedded_Registers": "false",
+        "Reset_Type": "Asynchronous_Reset",
+        "Output_Depth": "128",
+        "Use_Embedded_Registers": "false",
+        "Reset_Type": "Synchronous_Reset",
+        "Full_Flags_Reset_Value": "1",
+        "Valid_Flag": "false",
+        "Underflow_Flag": "true",
+        "Overflow_Flag": "true",
+        "Data_Count_Width": "10",
+        "Write_Data_Count_Width": "10",
+        "Read_Data_Count_Width": "9",
+        "Read_Clock_Frequency": "%d" % clk_out_mhz,
+        "Write_Clock_Frequency": "%d" % (self.ext_demux * clk_out_mhz),
+        "Programmable_Full_Type": "No_Programmable_Full_Threshold",
+        "Programmable_Empty_Type": "Single_Programmable_Empty_Threshold_Constant",
+        "Empty_Threshold_Assert_Value": "16",
+        "Empty_Threshold_Negate_Value": "17",
+        "Clock_Type_AXI": "Independent_Clock",
+        "TDATA_NUM_BYTES": "8",
+        "TSTRB_WIDTH": "8",
+        "TKEEP_WIDTH": "8",
+        "FIFO_Implementation_wach": "Independent_Clocks_Distributed_RAM",
+        "Full_Threshold_Assert_Value_wach": "15",
+        "Empty_Threshold_Assert_Value_wach": "13",
+        "FIFO_Implementation_wdch": "Independent_Clocks_Block_RAM",
+        "Empty_Threshold_Assert_Value_wdch": "1018",
+        "FIFO_Implementation_wrch": "Independent_Clocks_Distributed_RAM",
+        "Full_Threshold_Assert_Value_wrch": "15",
+        "Empty_Threshold_Assert_Value_wrch": "13",
+        "FIFO_Implementation_rach": "Independent_Clocks_Distributed_RAM",
+        "Full_Threshold_Assert_Value_rach": "15",
+        "Empty_Threshold_Assert_Value_rach": "13",
+        "FIFO_Implementation_rdch": "Independent_Clocks_Block_RAM",
+        "Empty_Threshold_Assert_Value_rdch": "1018",
+        "FIFO_Implementation_axis": "Independent_Clocks_Block_RAM",
+        "Empty_Threshold_Assert_Value_axis": "1018",
+        "Enable_Safety_Circuit": "true",
+      }
+
+      tcl_cmds['pre_synth'].append(
+              'create_ip -name fifo_generator -vendor xilinx.com -library ip -version 13.2 -module_name %s' % DEMUX_FIFO_NAME
+              )
+
+      tcl_cmds['pre_synth'].append('set_property -dict [list \\')
+      for k,v in fifo_config.items():
+        tcl_cmds['pre_synth'].append('CONFIG.%s {%s} \\' % (k,v))
+      tcl_cmds['pre_synth'].append('] [get_ips %s]' % DEMUX_FIFO_NAME)
 
     return tcl_cmds
 
