@@ -187,7 +187,10 @@ architecture arch_ska_forty_gb_eth of ska_forty_gb_eth is
     component ska_fge_tx
     generic (
         TTL             : std_logic_vector(7 downto 0);
-        USE_CPU_TX      : integer);
+        USE_CPU_TX      : integer;
+		FABRIC_IP       : std_logic_vector(31 downto 0);
+		FABRIC_NETMASK  : std_logic_vector(31 downto 0);
+		FABRIC_GATEWAY  : std_logic_vector(7 downto 0));
     port (
         local_enable          : in  std_logic;
         local_mac             : in  std_logic_vector(47 downto 0);
@@ -473,6 +476,7 @@ architecture arch_ska_forty_gb_eth of ska_forty_gb_eth is
     
     signal rstD1        : std_logic;
     signal rstD2        : std_logic;
+	attribute ASYNC_REG : string;
     attribute ASYNC_REG of rstD1 : signal is "TRUE";
     attribute ASYNC_REG of rstD2 : signal is "TRUE";	
     signal rstbD1        : std_logic;
@@ -724,7 +728,10 @@ begin
     ska_fge_tx_0 : ska_fge_tx
     generic map (
         TTL            => TTL,
-        USE_CPU_TX     => USE_CPU_TX)
+        USE_CPU_TX     => USE_CPU_TX,
+		FABRIC_IP	   => FABRIC_IP,
+		FABRIC_NETMASK => FABRIC_NETMASK,
+	    FABRIC_GATEWAY => FABRIC_GATEWAY)
     port map(
         local_enable          => local_enable,
         local_mac             => local_mac,

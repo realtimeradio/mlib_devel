@@ -76,7 +76,8 @@ begin
         DELAY_FORMAT => "COUNT",
         UPDATE_MODE => "ASYNC",
         CASCADE => "None",
-        REFCLK_FREQUENCY => 200.0
+        REFCLK_FREQUENCY => 200.0,
+        SIM_DEVICE => "ULTRASCALE_PLUS"
       )
       port map(
         CLK => sample_clk,

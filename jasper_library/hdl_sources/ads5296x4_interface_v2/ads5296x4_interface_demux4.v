@@ -178,7 +178,7 @@ module ads5296x4_interface_v2 #(
     .DELAY_SRC("IDATAIN"),
     .DELAY_VALUE(1100),
     .CASCADE("NONE"),
-    .SIM_DEVICE("ULTRASCALE"),
+    .SIM_DEVICE("ULTRASCALE_PLUS"),
     .REFCLK_FREQUENCY(200.0)
   ) iodelay_in [ 4*2*G_NUM_UNITS : 0] (
     .CLK     (lclk_d4),
@@ -245,7 +245,7 @@ module ads5296x4_interface_v2 #(
   // some slicing.
   ISERDESE3 #(
     .DATA_WIDTH(4),
-    .SIM_DEVICE("ULTRASCALE")
+    .SIM_DEVICE("ULTRASCALE_PLUS")
   ) iserdes_fclk (
     .CLK(lclk),
     .CLK_B(~lclk),
@@ -263,7 +263,7 @@ module ads5296x4_interface_v2 #(
     for (i=0; i<4*2*G_NUM_UNITS; i=i+1) begin
       ISERDESE3 #(
         .DATA_WIDTH(4),
-        .SIM_DEVICE("ULTRASCALE")
+        .SIM_DEVICE("ULTRASCALE_PLUS")
       ) iserdes_data (
         .CLK(lclk),
         .CLK_B(~lclk),

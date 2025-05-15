@@ -1,6 +1,7 @@
 import os
 import re
 from six import iteritems
+from constraints import PortConstraint, ClockConstraint, RawConstraint, InputDelayConstraint, FalsePathConstraint
 
 from .yellow_block import YellowBlock
 
@@ -219,7 +220,8 @@ class zynq_ultra_ps_e(zynq_usplus):
 
     # assign address spaces
     # TODO hard coded information needs to be dynamic
-    bd.assign_address('mpsoc/Data', 'M_AXI/Reg', '0xA0000000', '0x00010000')
+    bd.assign_address('mpsoc/Data', 'M_AXI/Reg', '0xB0000000', '0x00200000')
+    #bd.assign_address('mpsoc/Data', 'M_AXI/Reg', '0xA0000000', '0x00200000')
 
 
   def gen_children(self):
@@ -229,6 +231,10 @@ class zynq_ultra_ps_e(zynq_usplus):
 
   def gen_constraints(self):
     cons = []
+    #clkconsts0 = []
+    #clkconsts0 += [ClockConstraint('{:s}/pl_sys_clk'.format(self.fullname), name='pl_sys_clk', freq=100)]
+    #cons.append(clkconsts0)
+    #clocks = [clkconsts0]
     return cons
 
 

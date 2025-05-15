@@ -266,7 +266,7 @@ class fortygbe_main(forty_gbe):
         inst.add_port('qsfp_soft_reset',           '1\'b0', width=1,  dir='in', parent_sig=False)
 
         #inst.add_port('eth_if_present',            'eth_if_%s_present'%str(self.port),  width=1,  dir='out', parent_sig=False)
-        inst.add_port('eth_if_present',            '',  width=1,  dir='out', parent_sig=False)
+        #inst.add_port('eth_if_present',            '',  width=1,  dir='out', parent_sig=False)
 
         #inst.add_port('phy_rx_up',                 'phy_rx_up_%s' %str(self.port),   width=1,  dir='out', parent_sig=False)
         #inst.add_port('xlgmii_txled',              'xlgmii_txled_%s' %str(self.port),   width=2,  dir='out', parent_sig=False)
@@ -284,6 +284,9 @@ class fortygbe_main(forty_gbe):
         elif self.platform.fpga.startswith('xc7'):
             self.add_source("forty_gbe/SKA_40GBE_PHY/IEEE802_3_XL_PMA/ip/XLAUI/xlaui.xci")
             self.add_source('forty_gbe/SKA_40GBE_PHY/IEEE802_3_XL_PMA/hdl/7series/*')
+        elif self.platform.fpga.startswith('xczu'):
+            self.add_source("forty_gbe/SKA_40GBE_PHY/IEEE802_3_XL_PMA/ip/XLAUI/xlaui_us.xci")
+            self.add_source('forty_gbe/SKA_40GBE_PHY/IEEE802_3_XL_PMA/hdl/ultrascaleplus/*')
             
 
         #self.add_source('forty_gbe/SKA_10GBE_MAC')
@@ -325,6 +328,8 @@ class fortygbe_main(forty_gbe):
         self.add_source("forty_gbe/SKA_40GBE_PHY/IEEE802_3_XL_PCS/ip/XGMII_FIFO_DUAL_SYNC/*.xci")
         self.add_source("forty_gbe/cpu_rx_packet_size/*.xci")
         self.add_source("forty_gbe/SKA_40GBE_PHY/IEEE802_3_XL_PCS/ip/RS256_FIFO/*.xci")
+        self.add_source("forty_gbe/counter.v")
+        self.add_source("forty_gbe/rate_counter.v")
         #self.add_source("forty_gbe/SKA_40GBE_PHY/IEEE802_3_XL_PHY/ip/IEEE802_3_XL_VIO/*.xci") # Only for debugging
         #self.add_source("forty_gbe/WISHBONE/wishbone_forty_gb_eth_attach.vhd") # The original SARAO/SKARAB Wb attachment
         self.add_source("forty_gbe/WISHBONE/wishbone_forty_gb_eth_attach2.v") # An attachment based on the 10GbE module
@@ -355,8 +360,11 @@ class fortygbe_main(forty_gbe):
         clockconst = ClockConstraint('forty_gbe_refclk' + self.suffix + '_p', period=6.4, port_en=True, virtual_en=False, waveform_min=0.0, waveform_max=3.2)
         cons.append(clockconst)
 
-        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets user_clk]', 'asynchronous'))
-        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets wb_clk_i]', 'asynchronous'))
+        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks clk_pl_0', 'asynchronous'))
+        #cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets zcu102_bd_inst/pl_sys_clk]', 'asynchronous'))
+        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks sclk2_mmcm', 'asynchronous'))
+        #cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets user_clk]', 'asynchronous'))
+        #cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets wb_clk_i]', 'asynchronous'))
 
         return cons
 
@@ -379,5 +387,12 @@ class fortygbe_main(forty_gbe):
         tcl_cmds.append('set_property processing_order LATE [get_files [get_property directory [current_project]]/myproj.srcs/constrs_1/imports/constraints/IEEE802_3_XL_PHY.xdc]')
         tcl_cmds.append('set_property SCOPED_TO_REF DUAL_CLOCK_STROBE_GENERATOR [get_files [get_property directory [current_project]]/myproj.srcs/constrs_1/imports/constraints/DUAL_CLOCK_STROBE_GENERATOR.xdc]')
         tcl_cmds.append('set_property processing_order LATE [get_files [get_property directory [current_project]]/myproj.srcs/constrs_1/imports/constraints/DUAL_CLOCK_STROBE_GENERATOR.xdc]')
+        #tcl_cmds.append('generate_target all [get_files *.xci]') # Regenerate IP outputs
+        #tcl_cmds.append('export_ip_user_files -no_script -force')  # Refresh IP catalog
+        # Disable checkpoint writing for all steps in implementation
+        tcl_cmds.append('set_property STEPS.OPT_DESIGN.TCL.POST {} [get_runs impl_1]')
+        tcl_cmds.append('set_property STEPS.PLACE_DESIGN.TCL.POST {} [get_runs impl_1]')
+        tcl_cmds.append('set_property STEPS.ROUTE_DESIGN.TCL.POST {} [get_runs impl_1]')
+        tcl_cmds.append('set_param constraints.enableBinaryConstraints false')
 
         return {'pre_synth': tcl_cmds}

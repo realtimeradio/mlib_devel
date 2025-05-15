@@ -203,14 +203,14 @@ module wb_ads5296_attach #(
               wb_data_out_reg[4*2*G_NUM_UNITS - 1 : 0] <= delay_load_reg[4*2*G_NUM_UNITS - 1 : 0];
             end
             1: begin
-              wb_data_out_reg[31 : G_NUM_FCLKS - 1] = {(32 - G_NUM_FCLKS - 1){1'b0}};
+              wb_data_out_reg[31 : G_NUM_FCLKS - 1] <= {(32 - G_NUM_FCLKS - 1){1'b0}};
               wb_data_out_reg[G_NUM_FCLKS + 1 - 1 : 0] <= delay_load_reg[4*2*G_NUM_UNITS + G_NUM_FCLKS + 1- 1 : 4*2*G_NUM_UNITS];
             end
             2: begin
               wb_data_out_reg[4*2*G_NUM_UNITS - 1 : 0] <= delay_rst_reg[4*2*G_NUM_UNITS - 1 : 0];
             end
             3: begin
-              wb_data_out_reg[31 : G_NUM_FCLKS - 1] = {(32 - G_NUM_FCLKS - 1){1'b0}};
+              wb_data_out_reg[31 : G_NUM_FCLKS - 1] <= {(32 - G_NUM_FCLKS - 1){1'b0}};
               wb_data_out_reg[G_NUM_FCLKS + 1 - 1 : 0] <= delay_rst_reg[4*2*G_NUM_UNITS + G_NUM_FCLKS + 1 - 1 : 4*2*G_NUM_UNITS];
             end
             4: begin

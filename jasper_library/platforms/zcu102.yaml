@@ -5,10 +5,12 @@ family: ultrascaleplus
 config_voltage: 1.8
 cfgbvs: GND
 backend_target: vivado
-mmbus_architecture: AXI4-Lite
-mmbus_base_address: 0xA0000000
+#mmbus_architecture: ['AXI4-Lite', 'wishbone']
+mmbus_architecture: 'wishbone'
+#mmbus_base_address: 0xB0000000
+dsp_wb_base_address: 0xA0000000
 # How to address each 32-bit (i.e. 4 indicates byte-addressable)
-mmbus_address_alignment: 4
+#mmbus_address_alignment: 4
 sources: []
 constraints: []
 
@@ -19,6 +21,12 @@ pins:
   clk_125_n:
     iostd: LVDS_25
     loc: F21
+  eth_clk_125_p:
+    iostd: LVDS_25
+    loc: G21
+  eth_clk_125_n:
+    iostd: LVDS_25
+    loc: F21
   clk_300_p:
     iostd: DIFF_STTL12
     loc: AL8
@@ -26,12 +34,14 @@ pins:
     iostd: DIFF_STILL12
     loc: AL7
 
+  # The "forty_gbe_*" indexing below
+  # reflects the schematic net names "QSFP1..4"
   qsfp_mgt_ref_clk_p:
-    loc:
-      - [L27, C8]
+    loc: C8
+      #- [L27, C8]
   qsfp_mgt_ref_clk_n:
-    loc:
-      - [L28, C7]
+    loc: C7
+      #- [L28, C7]
   # SFP connected to MGT bank 128
   qsfp_mgt_tx_p:
     loc: [RT18, RL18, LT18, LL18]
@@ -64,3 +74,1142 @@ pins:
       - AF15 # SW_W
       - AE15 # SW_S
       - AG13 # SW_C
+
+  miso:
+    #loc: AK26
+    loc: A20
+    iostd: LVCMOS25
+  mosi:
+    #loc: AJ25
+    loc: C21
+    iostd: LVCMOS25
+  sclk:
+    #loc: AK25
+    loc: A22
+    iostd: LVCMOS25
+  cs_n:
+    #loc: AP25
+    loc: D21
+    iostd: LVCMOS25
+
+  sync_in: #have to see but it can be from PPS
+    iostd: LVCMOS33
+    loc: J19
+  sync_in_p: #have to see but it can be from PPS
+    iostd: LVDS
+    loc: J19
+  sync_in_n:
+    iostd: LVDS
+    loc: J20
+  trig: # Schematic net TRIG_EXT, its used by gpio blocks look at the code
+    iostd: LVCMOS33
+    loc: A20
+  trig_oe: # Schematic net TRIG_IO
+    iostd: LVCMOS33
+    loc: B20
+
+######################################################################
+#################### OLD SFP COMPATIBILITY: START ####################
+######################################################################
+
+  eth_clk_p:
+    loc: C8
+      #- L27
+      #- C8
+  eth_clk_n:
+    loc: C7
+      #- L28
+      #- C7
+  mgt_tx_p:
+    loc: 
+      - E4
+      - D6
+      - B6
+      - A8
+  mgt_tx_n:
+    loc:
+      - E3
+      - D5
+      - B5
+      - A7
+  mgt_rx_p:
+    loc:
+      - D2
+      - C4
+      - B2
+      - A4
+  mgt_rx_n:
+    loc:
+      - D1
+      - C3
+      - B1
+      - A3
+  sfp_disable:
+    iostd: LVCMOS33
+    loc:
+      - A12
+      - A13
+      - B13
+      - C13
+
+# Defining one more clock high speed signal for forty_gbe_refclk* just to trick the tools, the last one is from the SMA connector on the ZCU102 board
+  forty_gbe_refclk_p:
+    loc:
+      #- L27
+      - C8
+      - J79
+      - L27
+  forty_gbe_refclk_n:
+    loc:
+      #- L28
+      - C7
+      - J80
+      - L28
+# Defining four more high speed signals for forty_gbe_* just to trick the tools, the last eight signals don't have any SFP cage, they are from the FMC HPC1 and HPC0 connector
+  forty_gbe_tx_p:
+    loc:
+      - E4
+      - D6
+      - B6
+      - A8
+      - D33
+      - C31
+      - B33
+      - L31
+      - J4
+      - F2
+      - K2
+      - L4
+  forty_gbe_tx_n:
+    loc:
+      - E3
+      - D5
+      - B5
+      - A7
+      - D34
+      - C32
+      - B34
+      - L32
+      - J3
+      - F1
+      - K1
+      - L3
+  forty_gbe_rx_p:
+    loc:
+      - D2
+      - C4
+      - B2
+      - A4
+      - K33
+      - D29
+      - B29
+      - A31
+      - P2
+      - H6
+      - F6
+      - K6
+  forty_gbe_rx_n:
+    loc:
+      - D1
+      - C3
+      - B1
+      - A3
+      - K34
+      - D30
+      - B30
+      - A32
+      - P1
+      - H5
+      - F5
+      - K5
+
+  #mgt_tx_p:
+    #iostd: DIFF_HSTL_I_18
+    #loc: 
+      #- M29
+  #mgt_tx_n:
+    #iostd: DIFF_HSTL_I_18
+    #loc:
+      #- M30
+  #mgt_rx_p:
+    #iostd: DIFF_HSTL_I_18
+    #loc:
+      #- M33
+  #mgt_rx_n:
+    #iostd: DIFF_HSTL_I_18
+    #loc:
+      #- M34
+
+######################################################################
+#################### OLD SFP COMPATIBILITY: END   ####################
+######################################################################
+
+  # The "gth_*" indexing below doesn't
+  # reflect the schematic net names "QSFP1..4"
+  gth_clk_p:
+    #iostd: DIFF_HSTL_I_18
+    loc:
+      - C8
+      - None
+      - None
+      - None
+  gth_clk_n:
+    #iostd: DIFF_HSTL_I_18
+    loc:
+      - C7
+      - None
+      - None
+      - None
+  gth_tx_p:
+    #iostd: DIFF_HSTL_I_18
+    loc:
+      - E4
+      - D6
+      - B6
+      - A8
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  gth_tx_n:
+    #iostd: DIFF_HSTL_I_18
+    loc:
+      - E3
+      - D5
+      - B5
+      - A7
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  gth_rx_p:
+    #iostd: DIFF_HSTL_I_18
+    loc:
+      - D2
+      - C4
+      - B2
+      - A4
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  gth_rx_n:
+    #iostd: DIFF_HSTL_I_18
+    loc:
+      - D1
+      - C3
+      - B1
+      - A3
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  #sfp_disable:
+    #iostd: LVCMOS25
+    #loc:
+      #- AU20
+  usb_tx:
+    loc: E13
+    iostd: LVCMOS25
+  usb_cts:
+    loc: E12
+    iostd: LVCMOS25
+  usb_rts:
+    loc: D12
+    iostd: LVCMOS25
+  usb_rx:
+    loc: F13
+    iostd: LVCMOS25
+  phy_rst_n:
+    loc: None
+    iostd: LVCMOS18
+#  spi_flash_data:
+#    iostd: LVCMOS18
+#    loc:
+#      - AJ9
+#      - AH9
+#      - AG10
+#      - AG9
+#  spi_flash_clk:
+#    iostd: LVCMOS18
+#    loc: AD10
+#  spi_flash_csn:
+#    iostd: LVCMOS18
+#    loc: AF9
+
+  fmc0_ha_p:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc0_hb_p:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc0_la_p:
+    iostd: lvds
+    loc:
+      - Y4
+      - AB4
+      - V2
+      - Y2
+      - AA2
+      - AB3
+      - AC2
+      - U5
+      - V4
+      - W2
+      - W5
+      - AB6
+      - W7
+      - AB8
+      - AC7
+      - Y10
+      - Y12
+      - P11
+      - N9
+      - L13
+      - N13
+      - P12
+      - M15
+      - L16
+      - L12
+      - M11
+      - L15
+      - M10
+      - T7
+      - U9
+      - V6
+      - V8
+      - U11
+      - V12
+  fmc0_clk_p:
+    iostd: lvds
+    loc:
+      - AA7  # clk0_m2c
+      - None # clk0_c2m; Clock chip -> mezz card
+      - None  # clk1_m2c
+      - None # clk1_c2m; NC
+  fmc0_gbtclk_p:
+    #iostd: lvds
+    loc:
+      - G8
+      - L8
+
+  fmc0_ha_n:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc0_hb_n:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc0_la_n:
+    iostd: lvds
+    loc:
+      - Y3
+      - AC4
+      - V1
+      - Y1
+      - AA1
+      - AC3
+      - AC1
+      - U4
+      - V3
+      - W1
+      - W4
+      - AB5
+      - W6
+      - AC8
+      - AC6
+      - Y9
+      - AA12
+      - N11
+      - N8
+      - K13
+      - M13
+      - N12
+      - M14
+      - K16
+      - K12
+      - L11
+      - K15
+      - L10
+      - T6
+      - U8
+      - U6
+      - V7
+      - T11
+      - V11
+  fmc0_clk_n:
+    iostd: lvds
+    loc:
+      - AA6  # clk0_m2c
+      - None # clk0_c2m; Clock chip -> mezz card
+      - None  # clk1_m2c
+      - None # clk1_c2m; NC
+  fmc0_gbtclk_n:
+    #iostd: lvds
+    loc:
+      - G7
+      - L7
+
+  fmc1_ha_p:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc1_hb_p:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - BB22
+      - None
+      - None
+      - None
+      - None
+  fmc1_la_p:
+    iostd: lvds
+    loc:
+      - AE5
+      - AJ6
+      - AD2
+      - AH1
+      - AF2
+      - AG3
+      - AH2
+      - AD4
+      - AE3
+      - AE2
+      - AH4
+      - AE8
+      - AD7
+      - AG8
+      - AH7
+      - AD10
+      - AG10
+      - Y5
+      - Y8
+      - AA11
+      - AB11
+      - AC12
+      - AF11
+      - AE12
+      - AH12
+      - AE10
+      - T12
+      - U10
+      - T13
+      - W12
+      - AE7
+      - P10
+      - 
+      - 
+  fmc1_clk_p:
+    iostd: lvds
+    loc:
+      - T8 # clk0_m2c
+      - None # clk0_c2m; Clock chip -> mezz card
+      - None # clk1_m2c
+      - None # clk1_c2m; NC
+  fmc1_gbtclk_p:
+    #iostd: lvds
+    loc:
+      - G27
+      - E27
+
+  fmc1_ha_n:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc1_hb_n:
+    iostd: lvds
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc1_la_n:
+    iostd: lvds
+    loc:
+      - AF5
+      - AJ5
+      - AD1
+      - AJ1
+      - AF1
+      - AH3
+      - AJ2
+      - AE4
+      - AF3
+      - AE1
+      - AJ4
+      - AF8
+      - AD6
+      - AH8
+      - AH6
+      - AE9
+      - AG9
+      - AA5
+      - Y7
+      - AA10
+      - AB10
+      - AC11
+      - AG11
+      - AF12
+      - AH11
+      - AF10
+      - R12
+      - T10
+      - R13
+      - W11
+      - AF7
+      - P9
+      - 
+      - 
+  fmc1_clk_n:
+    iostd: lvds
+    loc:
+      - R8 # clk0_m2c
+      - None # clk0_c2m; Clock chip -> mezz card
+      - None # clk1_m2c
+      - None # clk1_c2m; NC
+  fmc1_gbtclk_n:
+    #iostd: lvds
+    loc:
+      - G28
+      - E28
+
+  # Single-ended FMC interface
+  fmc0_ha:
+    iostd: LVCMOS18
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc0_hb:
+    iostd: LVCMOS18
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc0_la:
+    iostd: LVCMOS18
+    loc:
+      - Y4
+      - Y3
+      - AB4
+      - AC4
+      - B2
+      - V1
+      - Y2
+      - Y1
+      - AA2
+      - AA1
+      - AB3
+      - AC3
+      - AC2
+      - AC1
+      - U5
+      - U4
+      - V4
+      - V3
+      - W2
+      - W1
+      - W5
+      - W4
+      - AB6
+      - AB5
+      - W7
+      - W6
+      - AB8
+      - AC8
+      - AC7
+      - AC6
+      - Y10
+      - Y9
+      - Y12
+      - AA12
+      - P11
+      - N11
+      - N9
+      - N8
+      - L13
+      - K13
+      - N13
+      - M13
+      - P12
+      - N12
+      - M15
+      - M14
+      - L16
+      - K16
+      - L12
+      - K12
+      - M11
+      - L11
+      - L15
+      - K15
+      - M10
+      - L10
+      - T7
+      - T6
+      - U9
+      - U8
+      - V6
+      - U6
+      - V8
+      - V7
+      - U11
+      - T11
+      - V12
+      - V11
+
+
+  fmc1_ha:
+    iostd: LVCMOS18
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc1_hb:
+    iostd: LVCMOS18
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+  fmc1_la:
+    iostd: LVCMOS18
+    loc:
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+      - None
+#  qsfp_mod_seln:
+#    iostd: LVCMOS18
+#    loc: [J14, V12, AN19, T15]
+#  qsfp_lp_mod:
+#    iostd: LVCMOS18
+#    loc: [V14, U12, AN18, T14]
+#  qsfp_mod_prsn:
+#    iostd: LVCMOS18
+#    loc: [V11, W10, AL17, T10]
+#  qsfp_mod_rstn:
+#    iostd: LVCMOS18
+#    loc: [U14, W11, AK17, U10]
+#  qsfp_scl:
+#    iostd: LVCMOS18
+#    loc: H14
+#  qsfp_sda:
+#    iostd: LVCMOS18
+#    loc: G14
+  f_z7_link_p:
+    iostd: LVCMOS33
+    loc: [J10, A21, C21, D21]
+    #loc: [G20, A21, C21, D21]
+  f_z7_link_n:
+    iostd: LVCMOS33
+    loc: [J11, A22, B21, C22]
+    #loc: [F20, A22, B21, C22]
+
+# I'm defining these pins as 1.8 volts but on the ZCU102 the bank is 3.3 volts powered.
+  aux0_adc_miso:
+    loc: G14
+    iostd: LVCMOS33
+  aux0_adc_mosi:
+    loc: V12
+    iostd: LVCMOS18
+  aux0_adc_sclk:
+    loc: V11
+    iostd: LVCMOS18
+  aux0_adc_sync:
+    loc: H14
+    iostd: LVCMOS33
+  aux0_adc_rst:
+    loc: J14
+    iostd: LVCMOS33
+  aux0_adc_cs0:
+    loc: U11
+    iostd: LVCMOS18
+  aux0_adc_cs1:
+    loc: T11
+    iostd: LVCMOS18
+  aux1_adc_miso:
+    loc: G15
+    iostd: LVCMOS33
+  aux1_adc_mosi:
+    loc: H16
+    iostd: LVCMOS33
+  aux1_adc_sclk:
+    loc: G16
+    iostd: LVCMOS33
+  aux1_adc_sync:
+    loc: G13
+    iostd: LVCMOS33
+  aux1_adc_rst:
+    loc: H13
+    iostd: LVCMOS33
+  aux1_adc_cs0:
+    loc: J16
+    iostd: LVCMOS33
+  aux1_adc_cs1:
+    loc: J15
+    iostd: LVCMOS33
+# aux0_adc_cs2 is really not connected and it is tied to a pullup resistor
+# this is only here to trick casper into thinking there is a signal.
+  aux0_adc_cs2:
+    loc: D20
+    iostd: LVCMOS33
+  aux1_adc_cs2:
+    loc: E20
+    iostd: LVCMOS33
+

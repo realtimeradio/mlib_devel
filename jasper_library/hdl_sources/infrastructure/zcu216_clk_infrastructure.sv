@@ -6,8 +6,9 @@ module zcu216_clk_infrastructure #(
   parameter DIVIDE   = 1,
   parameter DIVCLK   = 1
 ) (
-  input wire logic pl_clk_n,
-  input wire logic pl_clk_p,
+  //input wire logic pl_clk_n,
+  //input wire logic pl_clk_p,
+  input wire logic pl_clk,
 
   output logic adc_clk,
   output logic adc_clk90,
@@ -16,14 +17,14 @@ module zcu216_clk_infrastructure #(
   output logic mmcm_locked
 );
 
-  logic pl_clk;
+  //logic pl_clk;
   logic pl_clk_buf;
   logic pl_clk_mmcm_fb;
   logic pl_clk_mmcm_fb_buf; // for deskew bufg instance to have known phase alignment relationship to input clk (UG572 v1.10 pg.39)
   logic pl_clk_mmcm, pl_clk_mmcm90, pl_clk_mmcm180, pl_clk_mmcm270;
 
   // diferential clock input
-  IBUFDS i_clk (.I (pl_clk_p), .IB (pl_clk_n), .O (pl_clk));
+  //IBUFDS i_clk (.I (pl_clk_p), .IB (pl_clk_n), .O (pl_clk));
 
   // TODO: This buffer may not be needed, but was added for placement by the tool to ease
   // routing to allow a HD CLK drive an MMCM...

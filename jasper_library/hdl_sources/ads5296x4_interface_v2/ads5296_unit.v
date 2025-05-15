@@ -17,14 +17,22 @@ module ads5296_unit (
   
   (* shreg_extract = "no" *) reg bitslipR;
   (* shreg_extract = "no" *) reg bitslipRR;
-  (* async_reg = "true" *) reg bitslip_unstable;
-  (* async_reg = "true" *) reg bitslip_stable;
+  //(* ASYNC_REG = "TRUE" *) reg bitslip_unstable;
+  //(* ASYNC_REG = "TRUE" *) reg bitslip_stable;
+  //(* ASYNC_REG = "TRUE" *) reg slip_index_unstable;
+  //(* ASYNC_REG = "TRUE" *) reg slip_index_stable;
+  reg bitslip_unstable;
+  reg bitslip_stable;
+  reg slip_index_unstable;
+  reg slip_index_stable;
   (* mark_debug = "true" *) wire bitslip_strobe = bitslipR & ~bitslipRR;
   always @(posedge lclk) begin
     bitslip_unstable <= bitslip;
     bitslip_stable <= bitslip_unstable;
     bitslipR <= bitslip_stable;
     bitslipRR <= bitslipR;
+    slip_index_unstable <= slip_index;
+    slip_index_stable <= slip_index_unstable;
   end
 
   /* 
@@ -73,7 +81,7 @@ module ads5296_unit (
     
     // Copy shift register contents only
     // At the end of a word 
-    if (bit_cnt == slip_index) begin
+    if (bit_cnt == slip_index_stable) begin
       shreg0R <= shreg0;
       shreg1R <= shreg1;
     end
@@ -86,8 +94,8 @@ module ads5296_unit (
   // a short path between these registers. In reality, the path
   // is synchronous (though _is_ inter-clock) but has a challenging timing
   // constraint
-  (* async_reg = "true" *) reg [9:0] shreg0RR;
-  (* async_reg = "true" *) reg [9:0] shreg1RR;
+  (* ASYNC_REG = "TRUE" *) reg [9:0] shreg0RR;
+  (* ASYNC_REG = "TRUE" *) reg [9:0] shreg1RR;
   always @(posedge clk_in) begin
     shreg0RR <= shreg0R;
     shreg1RR <= shreg1R;

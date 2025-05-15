@@ -8,6 +8,7 @@ import math, numpy as np
 from string import ascii_lowercase
 
 SNAPSHOT_ADDR_BITS = 9
+#SNAPSHOT_ADDR_BITS = 12
 
 class ads5296x4(YellowBlock):
     # Number of ADC chips per board
@@ -95,7 +96,7 @@ class ads5296x4(YellowBlock):
                 if self.board_count == 2:
                     inst.add_port('fclk_in', '{adc%d_fclk1, adc%d_fclk0}' % (self.clockport, self.clockport))
                 else:
-                    inst.add_port('fclk_in', '{adc%d_fclk0, adc%d_fclk0}' % (self.clockport))
+                    inst.add_port('fclk_in', '{adc%d_fclk0}' % (self.clockport))
                 top.add_port('%s_%d_fclk0_p' % (self.port_prefix, b), dir='in')
                 top.add_port('%s_%d_fclk0_n' % (self.port_prefix, b), dir='in')
                 top.assign_signal('%s_%d_fclk_p[0]' % (self.fullname, b), '%s_%d_fclk0_p' % (self.port_prefix, b))
@@ -307,57 +308,61 @@ class ads5296x4(YellowBlock):
                 # Chip 0
                 cons.append(PortConstraint(
                     '%s_0_din_%s' % (self.port_prefix, pol),
-                    'fmc%d_ha_%s' % (self.port, pol),
+                    'fmc%d_la_%s' % (self.port, pol),
                     port_index=list(range(8)),
-                    iogroup_index=range(1,1+8),
+                    iogroup_index=range(0,0+8),
                 ))
                 # Chip 1
                 cons.append(PortConstraint(
                     '%s_0_din_%s' % (self.port_prefix, pol),
-                    'fmc%d_ha_%s' % (self.port, pol),
+                    'fmc%d_la_%s' % (self.port, pol),
                     port_index=list(range(8,8+8)),
-                    iogroup_index=range(9,9+8),
+                    iogroup_index=range(8,8+8),
                 ))
             # Chip 2
             cons.append(PortConstraint(
                 '%s_0_din_%s' % (self.port_prefix, pol),
-                'fmc%d_hb_%s' % (self.port, pol),
+                'fmc%d_la_%s' % (self.port, pol),
                 port_index=list(range(16,16+8)),
-                iogroup_index=range(1,1+8),
+                iogroup_index=range(16,16+8),
             ))
             # Chip 3
             cons.append(PortConstraint(
                 '%s_0_din_%s' % (self.port_prefix, pol),
-                'fmc%d_hb_%s' % (self.port, pol),
+                'fmc%d_la_%s' % (self.port, pol),
                 port_index=list(range(24,24+8)),
-                iogroup_index=range(9,9+8),
+                iogroup_index=range(24,24+8),
             ))
 
         # Add the clock pins for board 0
-        cons.append(PortConstraint('%s_0_lclk_p' % (self.port_prefix), 'fmc%d_clk_p' % self.port, iogroup_index=2))
-        cons.append(PortConstraint('%s_0_lclk_n' % (self.port_prefix), 'fmc%d_clk_n' % self.port, iogroup_index=2))
+        cons.append(PortConstraint('%s_0_lclk_p' % (self.port_prefix), 'fmc%d_clk_p' % self.port, iogroup_index=0))
+        cons.append(PortConstraint('%s_0_lclk_n' % (self.port_prefix), 'fmc%d_clk_n' % self.port, iogroup_index=0))
         if self.version == 1:
             cons.append(PortConstraint('%s_0_fclk0_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=1))
             cons.append(PortConstraint('%s_0_fclk0_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=1))
             cons.append(PortConstraint('%s_0_fclk2_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=0))
             cons.append(PortConstraint('%s_0_fclk2_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=0))
         elif self.version == 2:
-            cons.append(PortConstraint('%s_0_fclk0_p' % (self.port_prefix), 'fmc%d_ha_p' % self.port, iogroup_index=0))
-            cons.append(PortConstraint('%s_0_fclk0_n' % (self.port_prefix), 'fmc%d_ha_n' % self.port, iogroup_index=0))
-            cons.append(PortConstraint('%s_0_fclk2_p' % (self.port_prefix), 'fmc%d_hb_p' % self.port, iogroup_index=0))
-            cons.append(PortConstraint('%s_0_fclk2_n' % (self.port_prefix), 'fmc%d_hb_n' % self.port, iogroup_index=0))
+            cons.append(PortConstraint('%s_0_fclk0_p' % (self.port_prefix), 'fmc%d_gbtclk_p' % self.port, iogroup_index=0))
+            cons.append(PortConstraint('%s_0_fclk0_n' % (self.port_prefix), 'fmc%d_gbtclk_n' % self.port, iogroup_index=0))
+            cons.append(PortConstraint('%s_0_fclk2_p' % (self.port_prefix), 'fmc%d_gbtclk_p' % self.port, iogroup_index=1))
+            cons.append(PortConstraint('%s_0_fclk2_n' % (self.port_prefix), 'fmc%d_gbtclk_n' % self.port, iogroup_index=1))
 
         # Add the single ended pins
         # in single-ended numbering, N pin is 1 greater than P pin
         # I.e. fmc0_la_p[33] = fmc0_la[66]; fmc0_la_n[33] = fmc0_la[67]
-        cons.append(PortConstraint('%s_cs' % self.port_prefix,  'fmc%d_la' % self.port, port_index=[0], iogroup_index=[2*32]))
-        cons.append(PortConstraint('%s_cs' % self.port_prefix,  'fmc%d_la' % self.port, port_index=[1], iogroup_index=[2*32+1]))
-        cons.append(PortConstraint('%s_cs' % self.port_prefix,  'fmc%d_hb' % self.port, port_index=[2], iogroup_index=[2*17]))
-        cons.append(PortConstraint('%s_mosi' % self.port_prefix,  'fmc%d_la' % self.port, iogroup_index=2*33))
-        cons.append(PortConstraint('%s_sclk' % self.port_prefix,  'fmc%d_la' % self.port, iogroup_index=2*33+1))
-        cons.append(PortConstraint('%s_miso' % self.port_prefix,  'fmc%d_hb' % self.port, iogroup_index=2*17+1))
-        cons.append(PortConstraint('%s_adc_sync' % self.port_prefix,  'fmc%d_hb' % self.port, iogroup_index=2*19))
-        cons.append(PortConstraint('%s_adc_rst' % self.port_prefix,  'fmc%d_hb' % self.port, iogroup_index=2*19+1))
+        #cons.append(PortConstraint('%s_cs' % self.port_prefix,  'fmc%d_la' % self.port, port_index=[0], iogroup_index=[2*32]))
+        #cons.append(PortConstraint('%s_cs' % self.port_prefix,  'fmc%d_la' % self.port, port_index=[1], iogroup_index=[2*32+1]))
+        cons.append(PortConstraint('%s_cs' % self.port_prefix,  'aux%d_adc_cs0' % self.port, port_index=[0], iogroup_index=0))
+        cons.append(PortConstraint('%s_cs' % self.port_prefix,  'aux%d_adc_cs1' % self.port, port_index=[1], iogroup_index=0))
+        cons.append(PortConstraint('%s_cs' % self.port_prefix,  'aux%d_adc_cs2' % self.port, port_index=[2], iogroup_index=0))
+        #cons.append(PortConstraint('%s_mosi' % self.port_prefix,  'fmc%d_la' % self.port, iogroup_index=2*33))
+        #cons.append(PortConstraint('%s_sclk' % self.port_prefix,  'fmc%d_la' % self.port, iogroup_index=2*33+1))
+        cons.append(PortConstraint('%s_mosi' % self.port_prefix,  'aux%d_adc_mosi' % self.port, iogroup_index=0))
+        cons.append(PortConstraint('%s_sclk' % self.port_prefix,  'aux%d_adc_sclk' % self.port, iogroup_index=0))
+        cons.append(PortConstraint('%s_miso' % self.port_prefix,  'aux%d_adc_miso' % self.port, iogroup_index=0))
+        cons.append(PortConstraint('%s_adc_sync' % self.port_prefix,  'aux%d_adc_sync' % self.port, iogroup_index=0))
+        cons.append(PortConstraint('%s_adc_rst' % self.port_prefix,  'aux%d_adc_rst' % self.port, iogroup_index=0))
 
 
         if self.board_count > 1:
@@ -395,10 +400,14 @@ class ads5296x4(YellowBlock):
         # Board 0 FCLK inputs
         clkconsts0 += [ClockConstraint('%s_0_fclk0_p' % self.port_prefix, name='adc_fclk%d_0_0' % self.port, freq=self.line_clock_freq_mhz / 5)]
         clkconsts0 += [ClockConstraint('%s_0_fclk2_p' % self.port_prefix, name='adc_fclk%d_0_2' % self.port, freq=self.line_clock_freq_mhz / 5)]
+        #clkconsts0 += [ClockConstraint('%s_0_lclk_p' % self.port_prefix, name='adc_lclk%d_0' % self.port, freq=self.line_clock_freq_mhz)]
+        clkconsts0 += [ClockConstraint(name='VIRT_ADC_CLK', period=2.0, port_en=False, virtual_en=True, waveform_min=0.0, waveform_max=1.0)]
+        #cons.append(RawConstraint('create_clock -period 2.000 -name VIRT_ADC_CLK'))
         # All these clocks are async with sys_clk
         for clkconst0 in clkconsts0:
             cons.append(clkconst0)
-            cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks sys_clk0_dcm]' % (clkconst0.name, clkconst0.name)))
+            #cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks pl_sys_clk]' % (clkconst0.name, clkconst0.name)))
+            cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks clk_pl_0]' % (clkconst0.name, clkconst0.name)))
 
         if self.board_count > 1:
             # Board 1 FCLK inputs
@@ -406,10 +415,12 @@ class ads5296x4(YellowBlock):
             clkconsts1 += [ClockConstraint('%s_1_fclk0_p' % self.port_prefix, name='adc_fclk%d_1_0' % self.port, freq=self.line_clock_freq_mhz / 5)]
             clkconsts1 += [ClockConstraint('%s_1_fclk1_p' % self.port_prefix, name='adc_fclk%d_1_1' % self.port, freq=self.line_clock_freq_mhz / 5)]
             clkconsts1 += [ClockConstraint('%s_1_fclk2_p' % self.port_prefix, name='adc_fclk%d_1_2' % self.port, freq=self.line_clock_freq_mhz / 5)]
+            #clkconsts1 += [ClockConstraint('%s_1_lclk_p' % self.port_prefix, name='adc_lclk%d_1' % self.port, freq=self.line_clock_freq_mhz)]
             # Make async with sys_clk
             for clkconst1 in clkconsts1:
                 cons.append(clkconst1)
-                cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks sys_clk0_dcm]' % (clkconst1.name, clkconst1.name)))
+                #cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks pl_sys_clk]' % (clkconst1.name, clkconst1.name)))
+                cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks clk_pl_0]' % (clkconst1.name, clkconst1.name)))
             # Make clocks between boards async
             for clkconst1 in clkconsts1:
                 for clkconst0 in clkconsts0:
@@ -428,14 +439,27 @@ class ads5296x4(YellowBlock):
         # delays in ns
         input_setup_delay = (1000./self.line_clock_freq_mhz/2.) - 0.2
         input_hold_delay = 0.18
-        clocks = [clkconst0, clkconst1]
+
+        if self.board_count > 1:
+            clocks = [clkconst0, clkconst1]
+        else:
+            clocks = [clkconst0]
         # Don't constrain IO delays -- rely on runtime dynamic link training.
         # Explicitly set as false path to keep compiler from issuing warnings
+
         for b in range(self.board_count):
-            cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='min', constdelay_ns=1.3, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
-            cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='max', constdelay_ns=1.3, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
-            cons.append(FalsePathConstraint(sourcepath="[get_ports %s_%d_din_p[*]]" % (self.port_prefix, b)))
-        
+            cons.append(InputDelayConstraint(clkname='VIRT_ADC_CLK', consttype='min', constdelay_ns=-0.2, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
+            cons.append(InputDelayConstraint(clkname='VIRT_ADC_CLK', consttype='max', constdelay_ns=1.8, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
+            cons.append(FalsePathConstraint(sourcepath="[get_ports %s_%d_din_p[*]]" % (self.port_prefix, b), destpath="[get_cells -hier -filter {NAME =~ *data_iddr_inst*}]"))
+            #cons.append(InputDelayConstraint(clkname='sclk5_mmcm', consttype='min', constdelay_ns=0.5, portname="%s_%d_din_p[*]" % ('ads5296x4fmc0', b)))
+            #cons.append(InputDelayConstraint(clkname='sclk5_mmcm', consttype='max', constdelay_ns=0.5, portname="%s_%d_din_p[*]" % ('ads5296x4fmc0', b)))
+            #cons.append(InputDelayConstraint(clkname='sclk5_mmcm_1', consttype='min', constdelay_ns=0.5, portname="%s_%d_din_p[*]" % ('ads5296x4fmc1', b)))
+            #cons.append(InputDelayConstraint(clkname='sclk5_mmcm_1', consttype='max', constdelay_ns=0.5, portname="%s_%d_din_p[*]" % ('ads5296x4fmc1', b)))
+            #cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='min', constdelay_ns=0.8, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
+            #cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='max', constdelay_ns=0.8, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
+            #cons.append(FalsePathConstraint(sourcepath="[get_ports %s_%d_din_p[*]]" % (self.port_prefix, b)))
+        cons.append(RawConstraint('set_multicycle_path -setup -start -from [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT2]] -to [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT0]] 5' % (self.fullname, self.fullname)))
+        cons.append(RawConstraint('set_multicycle_path -hold -start -from [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT2]] -to [get_clocks -of_objects [get_pins %s_0/mmcm_inst/CLKOUT0]] 4' % (self.fullname, self.fullname)))
         #for b in range(self.board_count):
         #    # See https://forums.xilinx.com/t5/Timing-Analysis/Input-Delay-Timing-Constraints-Doubts/m-p/652627/highlight/true#M8652
         #    cons.append(InputDelayConstraint(clkname=clocks[b].name, consttype='min', constdelay_ns=input_hold_delay, portname="%s_%d_din_p[*]" % (self.port_prefix, b)))
@@ -451,7 +475,7 @@ class ads5296x4(YellowBlock):
         
         #for b1 in range(self.board_count):
         #    root1 = "%s_%d" % (self.fullname, b1)
-        #    cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks sys_clk0_dcm]' % (root1, clocks[b1].name)))
+        #    cons.append(RawConstraint('set_clock_groups -name async_%s -asynchronous -group [get_clocks -include_generated_clocks %s] -group [get_clocks -include_generated_clocks pl_sys_clk]' % (root1, clocks[b1].name)))
         #    # Since we're mux-ing the clocks, make all combinations of MMCM and LCLKs ignored
         #    for b2 in range(self.board_count):
         #        root2 = "%s_%d" % (self.fullname, b2)
@@ -467,15 +491,31 @@ class ads5296x4(YellowBlock):
         #    #cons.append(RawConstraint("set_false_path -from [get_pins {%s/wb_attach_inst/delay_val_reg_reg[*]/C}] -to [get_pins {%s/iodelay_in[*]/CNTVALUEIN[*]}]" % (root, root)))
         #    #cons.append(RawConstraint("set_false_path -from [get_pins {%s/wb_attach_inst/delay_load_reg_reg*/C}] -to [get_pins {%s/delay_loadR_reg[*]/D}]" % (root, root)))
 
+        # Hardcoding constraints for the data inputs
+        #cons.append(RawConstraint('create_clock -period 2.000 -name VIRT_ADC_CLK'))
+        #cons.append(RawConstraint('set_input_delay -clock VIRT_ADC_CLK -max 1.8 [get_ports {ads5296x4fmc0_0_din_p[*]}]'))
+        #cons.append(RawConstraint('set_input_delay -clock VIRT_ADC_CLK -min -0.2 [get_ports {ads5296x4fmc0_0_din_p[*]}]'))
+        #cons.append(RawConstraint('set_input_delay -clock VIRT_ADC_CLK -max 1.8 [get_ports {ads5296x4fmc1_0_din_p[*]}]'))
+        #cons.append(RawConstraint('set_input_delay -clock VIRT_ADC_CLK -min -0.2 [get_ports {ads5296x4fmc1_0_din_p[*]}]'))
+        cons.append(RawConstraint('set_clock_groups -asynchronous -group [get_clocks VIRT_ADC_CLK] -group [get_clocks sclk5_mmcm]'))
+        cons.append(RawConstraint('set_clock_groups -asynchronous -group [get_clocks VIRT_ADC_CLK] -group [get_clocks sclk5_mmcm_1]'))
+        
+        cons.append(RawConstraint('set_false_path -from [get_ports {ads5296x4fmc0_0_din_p[*]}] -to [get_cells -hier -filter {NAME =~ *data_iddr_inst*}]'))
+        cons.append(RawConstraint('set_false_path -from [get_ports {ads5296x4fmc1_0_din_p[*]}] -to [get_cells -hier -filter {NAME =~ *data_iddr_inst*}]'))
 
-
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_0_din_p[*]}]]' %self.port))
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_0_lclk_p}]]' %self.port))
-        cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_0_fclk*_p}]]' % self.port))
+        #cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_0_din_p[*]}]]' %self.port))
+        #cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_0_lclk_p}]]' %self.port))
+        #cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_0_fclk*_p}]]' % self.port))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports [list {ads5296x4fmc%s_0_din_p[*]}]]' %self.port))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports [list {ads5296x4fmc%s_0_lclk_p}]]' %self.port))
+        cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports [list {ads5296x4fmc%s_0_fclk*_p}]]' % self.port))
         if self.board_count > 1:
-            cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_1_din_p[*]}]]' %self.port))
-            cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_1_lclk_p}]]' %self.port))
-            cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_1_fclk*_p}]]' % self.port))
+            #cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_1_din_p[*]}]]' %self.port))
+            #cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_1_lclk_p}]]' %self.port))
+            #cons.append(RawConstraint('set_property DIFF_TERM_ADV TERM_100 [get_ports [list {ads5296x4fmc%s_1_fclk*_p}]]' % self.port))
+            cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports [list {ads5296x4fmc%s_1_din_p[*]}]]' %self.port))
+            cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports [list {ads5296x4fmc%s_1_lclk_p}]]' %self.port))
+            cons.append(RawConstraint('set_property DIFF_TERM TRUE [get_ports [list {ads5296x4fmc%s_1_fclk*_p}]]' % self.port))
 
         if self.port == 1:
             cons.append(RawConstraint('set_property UNAVAILABLE_DURING_CALIBRATION TRUE [get_ports %s_0_fclk0_p]' % self.port_prefix))
@@ -540,3 +580,4 @@ class ads5296x4(YellowBlock):
         #cons.append(RawConstraint(ila))
 
         return cons
+

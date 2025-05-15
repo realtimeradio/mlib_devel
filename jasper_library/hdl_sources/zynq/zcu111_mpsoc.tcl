@@ -1,4 +1,4 @@
-set_property -dict [ list CONFIG.PSU__PRESET_APPLIED {1}\
+																																																																																																																																																																													set_property -dict [ list CONFIG.PSU__PRESET_APPLIED {1}\
 CONFIG.PSU_BANK_0_IO_STANDARD {LVCMOS18}\
 CONFIG.PSU_BANK_1_IO_STANDARD {LVCMOS18}\
 CONFIG.PSU_BANK_2_IO_STANDARD {LVCMOS18}\

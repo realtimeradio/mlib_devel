@@ -1,0 +1,18 @@
+#-----------------------------------------------------------
+# Vivado v2021.1 (64-bit)
+# SW Build 3247384 on Thu Jun 10 19:36:07 MDT 2021
+# IP Build 3246043 on Fri Jun 11 00:30:35 MDT 2021
+# Start of session at: Thu Apr 11 17:16:43 2024
+# Process ID: 5832
+# Current directory: /home/casperlwa/mlib_devel
+# Command line: vivado
+# Log file: /home/casperlwa/mlib_devel/vivado.log
+# Journal file: /home/casperlwa/mlib_devel/vivado.jou
+#-----------------------------------------------------------
+start_gui
+open_hw_manager
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/opt/Xilinx/Vivado/2021.1/data/ip'.
+exit
+INFO: [Common 17-206] Exiting Vivado at Thu Apr 11 17:21:14 2024...

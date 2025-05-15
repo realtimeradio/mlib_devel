@@ -6,6 +6,7 @@ CASPER xps library.
 A work in progress.
 """
 import logging
+import time
 import os
 import casper_platform as platform
 import yellow_blocks.yellow_block as yellow_block
@@ -1981,7 +1982,8 @@ proc puts_red {s} {
 
         # Synthesis Commands
         tcl('reset_run {0}'.format(synth_run), stage='synth')
-        tcl('launch_runs {0} -jobs {1}'.format(synth_run, cores), stage='synth')
+        #tcl('launch_runs {0} -jobs {1}'.format(synth_run, cores), stage='synth')
+        tcl('launch_runs {0} -jobs {1}'.format(synth_run, 10), stage='synth')
         tcl('wait_on_run {0}'.format(synth_run), stage='synth')
 
         # Post-Synthesis Commands
@@ -2009,7 +2011,8 @@ proc puts_red {s} {
         #
         # This could well have unintended side effects, depending on what yellow blocks
         # Try to do, and how they assume things about when pre_impl commands are run.
-        tcl('launch_runs {0} -jobs {1} -to_step opt_design'.format(impl_run, cores), stage='pre_impl')
+        tcl('launch_runs {0} -jobs {1} -to_step opt_design'.format(impl_run, 10), stage='pre_impl')
+        #tcl('launch_runs {0} -jobs {1} -to_step opt_design'.format(impl_run, cores), stage='pre_impl')
         tcl('wait_on_run {0}'.format(impl_run), stage='pre_impl')
         tcl('open_checkpoint $impl_dir/top_opt.dcp ', stage='pre_impl')
         # Yellow block pre_impl commands run here....
@@ -2018,7 +2021,8 @@ proc puts_red {s} {
         # Implementation Commands
         tcl('write_checkpoint $impl_dir/top_opt.dcp -force', stage='impl')
         tcl('close_design', stage='impl')
-        tcl('launch_runs {0} -jobs {1}'.format(impl_run, cores), stage='impl')
+        tcl('launch_runs {0} -jobs {1}'.format(impl_run, 10), stage='impl')
+        #tcl('launch_runs {0} -jobs {1}'.format(impl_run, cores), stage='impl')
         tcl('wait_on_run {0}'.format(impl_run), stage='impl')
 
         # Post-Implementation Commands
@@ -2109,7 +2113,8 @@ proc puts_red {s} {
             # just ignore if key is not present as only some platforms will have the key.
             except KeyError:
                 s = ""
-            self.add_tcl_cmd('launch_runs synth_1 -jobs %d' % cores, stage='synth')
+            #self.add_tcl_cmd('launch_runs synth_1 -jobs %d' % cores, stage='synth')
+            self.add_tcl_cmd('launch_runs synth_1 -jobs %d' % 10, stage='synth')
             self.add_tcl_cmd('wait_on_run synth_1', stage='synth')
 
             # Post-Synthesis Commands
@@ -2126,7 +2131,8 @@ proc puts_red {s} {
             self.add_tcl_cmd('set_property STEPS.POST_ROUTE_PHYS_OPT_DESIGN.IS_ENABLED true [get_runs impl_1]', stage='pre_impl')
 
             # Implementation Commands
-            self.add_tcl_cmd('launch_runs impl_1 -jobs %d' % cores, stage='impl')
+            #self.add_tcl_cmd('launch_runs impl_1 -jobs %d' % cores, stage='impl')
+            self.add_tcl_cmd('launch_runs impl_1 -jobs %d' % 10, stage='impl')
             self.add_tcl_cmd('wait_on_run impl_1', stage='impl')
 
             # Post-Implementation Commands
@@ -2321,6 +2327,7 @@ proc puts_red {s} {
         # write tcl command to file
         tcl_file = self.compile_dir+'/gogogo.tcl'
         helpers.write_file(tcl_file, self.eval_tcl())
+        time.sleep(20)
 
         rv = os.system('vivado -jou {cdir}/vivado.jou -log {cdir}/vivado.log '
                        '-mode batch -source '

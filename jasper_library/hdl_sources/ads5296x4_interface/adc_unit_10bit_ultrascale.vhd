@@ -42,7 +42,8 @@ architecture adc_unit_arc of adc_unit_10bit_ultrascale is
         CASCADE                : string; 
         DELAY_TYPE             : string; 
         REFCLK_FREQUENCY       : real;
-        DELAY_FORMAT           : string
+        DELAY_FORMAT           : string,
+        SIM_DEVICE             : string
         );
      port (
          CASC_IN                : in std_logic;
@@ -207,7 +208,8 @@ architecture adc_unit_arc of adc_unit_10bit_ultrascale is
          CASCADE                => "NONE",           -- NONE, MASTER, SLAVE_MIDDLE, SLAVE_END
          DELAY_TYPE             => "VAR_LOAD",       -- FIXED, VARIABLE, or VAR_LOAD
          REFCLK_FREQUENCY       => 200.0,
-         DELAY_FORMAT           => "COUNT"           -- TIME, COUNT
+         DELAY_FORMAT           => "COUNT",          -- TIME, COUNT
+         SIM_DEVICE             => "ULTRASCALE_PLUS"
          )
        port map (
          CASC_IN                => '0',
@@ -232,7 +234,8 @@ architecture adc_unit_arc of adc_unit_10bit_ultrascale is
          CASCADE                => "NONE",           -- NONE, MASTER, SLAVE_MIDDLE, SLAVE_END
          DELAY_TYPE             => "VAR_LOAD",       -- FIXED, VARIABLE, or VAR_LOAD
          REFCLK_FREQUENCY       => 200.0,
-         DELAY_FORMAT           => "COUNT"           -- TIME, COUNT
+         DELAY_FORMAT           => "COUNT",          -- TIME, COUNT
+         SIM_DEVICE             => "ULTRASCALE_PLUS"
          )
        port map (
          CASC_IN                => '0',

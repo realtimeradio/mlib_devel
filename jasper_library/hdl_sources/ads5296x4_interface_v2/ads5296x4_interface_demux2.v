@@ -159,11 +159,26 @@ module ads5296x4_interface_demux2 #(
   wire [8*4*2*G_NUM_UNITS - 1:0] din8b;
   (* mark_debug = "true" *) wire [3:0] fclk4b;
 
-  IBUFDS fclk_ibuf [G_NUM_FCLKS - 1 : 0] (
-    .I(fclk_p),
-    .IB(fclk_n),
-    .O(fclk_int[G_NUM_FCLKS - 1 : 0])
+  // REPLACING CURRENT DRIVER WITH THE MGTREFCLK DRIVER PRIMITIVE CELL
+
+  IBUFDS_GTE4 #(
+     .REFCLK_EN_TX_PATH(1'b0),   // Refer to Transceiver User Guide.
+     .REFCLK_HROW_CK_SEL(2'b00), // Refer to Transceiver User Guide.
+     .REFCLK_ICNTL_RX(2'b00)     // Refer to Transceiver User Guide.
+  )
+  fclk_ibuf [G_NUM_FCLKS - 1 : 0] (
+    .I(fclk_p[G_NUM_FCLKS - 1 : 0]),
+    .IB(fclk_n[G_NUM_FCLKS - 1 : 0]),
+    .O(), // 1-bit output: Refer to Transceiver User Guide.
+    .CEB(1'b0),     // 1-bit input: Refer to Transceiver User Guide.
+    .ODIV2(fclk_int[G_NUM_FCLKS - 1 : 0])
   );
+
+//  IBUFDS fclk_ibuf [G_NUM_FCLKS - 1 : 0] (
+//    .I(fclk_p),
+//    .IB(fclk_n),
+//    .O(fclk_int[G_NUM_FCLKS - 1 : 0])
+//  );
   
   assign fclk_int[3 : G_NUM_FCLKS] = {(4-G_NUM_FCLKS){1'b0}};
    
@@ -184,13 +199,26 @@ module ads5296x4_interface_demux2 #(
     .O(din)
   );
   
+  BUFG_GT #(
+     .SIM_DEVICE("ULTRASCALE_PLUS")  // ULTRASCALE, ULTRASCALE_PLUS
+  )
+  fclk_buf (
+     .O(fclk),             // 1-bit output: Buffer
+     //.CE(1'b1),           // 1-bit input: Buffer enable
+     //.CEMASK(1'b0),   // 1-bit input: CE Mask
+     //.CLR(1'b0),         // 1-bit input: Asynchronous clear
+     //.CLRMASK(1'b0), // 1-bit input: CLR Mask
+     //.DIV(3'b000),         // 3-bit input: Dynamic divide Value
+     .I(fclk_int[G_FCLK_MASTER])              // 1-bit input: Buffer
+  );
+  
  // assign fclk_out = fclk_int[G_FCLK_MASTER];
   //assign fclk = fclk_in;
-  BUFG fclk_buf (
-    .I(fclk_int[G_FCLK_MASTER]),
-    .O(fclk)
-    //.O(fclk_out)
-  );
+  //BUFG fclk_buf (
+    //.I(fclk_int[G_FCLK_MASTER]),
+    //.O(fclk)
+    ////.O(fclk_out)
+  //);
   assign fclk_out = fclk;
   wire [3:0] fclk_reordered;
 
@@ -221,7 +249,7 @@ module ads5296x4_interface_demux2 #(
     */
     
     //MMCME3_BASE #(
-    MMCME3_ADV #(
+    MMCME4_ADV #(
       .BANDWIDTH("OPTIMIZED"),
       .DIVCLK_DIVIDE(2),
       .CLKFBOUT_MULT_F(20.000),
@@ -316,7 +344,7 @@ module ads5296x4_interface_demux2 #(
     .DELAY_SRC("IDATAIN"),
     //.DELAY_VALUE(1100),
     .CASCADE("MASTER"),
-    .SIM_DEVICE("ULTRASCALE"),
+    .SIM_DEVICE("ULTRASCALE_PLUS"),
     .REFCLK_FREQUENCY(200.0)
   ) idelay_in [ 4*2*G_NUM_UNITS - 1: 0] (
     .CLK     (sclk_in), // Not using CLKDIV in an ISERDES, so what are the rules here?
@@ -341,7 +369,7 @@ module ads5296x4_interface_demux2 #(
     .UPDATE_MODE("ASYNC"),
     //.DELAY_VALUE(1100),
     .CASCADE("SLAVE_END"),
-    .SIM_DEVICE("ULTRASCALE"),
+    .SIM_DEVICE("ULTRASCALE_PLUS"),
     .REFCLK_FREQUENCY(200.0)
   ) odelay_in [ 4*2*G_NUM_UNITS - 1: 0] (
     .CLK     (sclk_in), // Not using CLKDIV in an ISERDES, so what are the rules here?
@@ -361,10 +389,14 @@ module ads5296x4_interface_demux2 #(
   
   // Use the buffered FCLK signal for the counter driver. This just seems like good form.
   wire [3:0] fclk_ctr_clk;
-  assign fclk_ctr_clk[0] = G_FCLK_MASTER==0 ? fclk : fclk_int[0];
-  assign fclk_ctr_clk[1] = G_FCLK_MASTER==1 ? fclk : fclk_int[1];
-  assign fclk_ctr_clk[2] = G_FCLK_MASTER==2 ? fclk : fclk_int[2];
-  assign fclk_ctr_clk[3] = G_FCLK_MASTER==3 ? fclk : fclk_int[3];
+  //assign fclk_ctr_clk[0] = G_FCLK_MASTER==0 ? fclk : fclk_int[0];
+  //assign fclk_ctr_clk[1] = G_FCLK_MASTER==1 ? fclk : fclk_int[1];
+  //assign fclk_ctr_clk[2] = G_FCLK_MASTER==2 ? fclk : fclk_int[2];
+  //assign fclk_ctr_clk[3] = G_FCLK_MASTER==3 ? fclk : fclk_int[3];
+  assign fclk_ctr_clk[0] = fclk;
+  assign fclk_ctr_clk[1] = fclk;
+  assign fclk_ctr_clk[2] = fclk;
+  assign fclk_ctr_clk[3] = fclk;
 
   always @(posedge fclk_ctr_clk[0]) begin
     fclk0_ctr <= fclk0_ctr + 1'b1;
@@ -469,29 +501,31 @@ module ads5296x4_interface_demux2 #(
       sync_out_delay_rstR <= delay_rst[4*2*G_NUM_UNITS + 2 - 1];
       sync_out_delay_rstRR <= sync_out_delay_rstR;
     end
-    ODELAYE3 #(
-      .DELAY_TYPE("VAR_LOAD"),
-      .DELAY_FORMAT("COUNT"),//("TIME"),
-      .UPDATE_MODE("ASYNC"),
-      //.DELAY_VALUE(1100),
-      .CASCADE("NONE"),
-      .SIM_DEVICE("ULTRASCALE"),
-      .REFCLK_FREQUENCY(200.0)
-    ) odelay_in (
-      .CLK     (sclk2_in), // Not using CLKDIV in an ISERDES, so what are the rules here?
-      .LOAD    (sync_out_delay_load_strobe),
-      .ODATAIN (sync),
-      .CNTVALUEIN(delay_val),
-      .CNTVALUEOUT(),
-      .INC     (1'b0),
-      .CE      (1'b0),
-      .RST     (sync_out_delay_rstRR),
-      .DATAOUT (ext_sync_out),
-      .EN_VTC(1'b0),//(delay_en_vtc),
-      .CASC_IN(),
-      .CASC_OUT(),
-      .CASC_RETURN()
-    );
+    // ZCU102 can't use ODELAYE3 on these assigned pins
+    //ODELAYE3 #(
+    //  .DELAY_TYPE("VAR_LOAD"),
+    //  .DELAY_FORMAT("COUNT"),//("TIME"),
+    //  .UPDATE_MODE("ASYNC"),
+    //  //.DELAY_VALUE(1100),
+    //  .CASCADE("NONE"),
+    //  .SIM_DEVICE("ULTRASCALE_PLUS"),
+    //  .REFCLK_FREQUENCY(200.0)
+    //) odelay_in (
+    //  .CLK     (sclk2_in), // Not using CLKDIV in an ISERDES, so what are the rules here?
+    //  .LOAD    (sync_out_delay_load_strobe),
+    //  .ODATAIN (sync),
+    //  .CNTVALUEIN(delay_val),
+    //  .CNTVALUEOUT(),
+    //  .INC     (1'b0),
+    //  .CE      (1'b0),
+    //  .RST     (sync_out_delay_rstRR),
+    //  .DATAOUT (ext_sync_out),
+    //  .EN_VTC(1'b0),//(delay_en_vtc),
+    //  .CASC_IN(),
+    //  .CASC_OUT(),
+    //  .CASC_RETURN()
+    //);
+    assign ext_sync_out = sync;
   end else begin
     assign ext_sync_out = sync;
   end
