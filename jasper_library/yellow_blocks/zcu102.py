@@ -21,15 +21,14 @@ class zcu102(YellowBlock):
           self.pl_clk_mhz = 125.00
         elif self.clk_src == "adc0_clk":
           self.pl_clk_mhz = 200.00
-          #self.platform.user_clk_rate = 200
         elif self.clk_src == "adc1_clk":
           self.pl_clk_mhz = 200.00
-          #self.platform.user_clk_rate = 200
         elif self.clk_src == "qsfp_gtrefclk_0":
           self.pl_clk_mhz = 156.25
-          #self.platform.user_clk_rate = 200
+        elif self.clk_src == "sys_clk":
+          self.pl_clk_mhz = 100.00
         else:
-          self.throw_error("clk rate not specified")
+          self.pl_clk_mhz = self.clk_rate
 
         self.T_pl_clk_ns = 1.0/self.pl_clk_mhz*1000
 
@@ -172,7 +171,7 @@ class zcu102(YellowBlock):
         #cons.append(ClockGroupConstraint('clk_pl_0', 'pl_clk_mmcm', 'asynchronous'))
         #cons.append(ClockGroupConstraint('{:s}_p'.format(self.clk_src), 'zcu216_clk_infr_inst/pl_clk_p', 'asynchronous'))
         if self.clk_src == "clk_125":
-          cons.append(RawConstraint('set_clock_groups -name %s_p -asynchronous -group [get_clocks -include_generated_clocks %s_p] -group [get_clocks -include_generated_clocks zcu102_clk_125_infrastructure/pl_clk_p]' % (self.clk_src, self.clk_src)))
+          cons.append(RawConstraint('set_clock_groups -name %s_p -asynchronous -group [get_clocks -include_generated_clocks %s_p] -group [get_clocks -include_generated_clocks -of_objects [get_nets sys_clk]]' % (self.clk_src, self.clk_src)))
           cons.append(RawConstraint('set_property -dict { PACKAGE_PIN AL12 IOSTANDARD LVCMOS33} [get_ports { mmcm_locked }]'))
 
         return cons

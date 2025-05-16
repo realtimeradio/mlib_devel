@@ -360,11 +360,8 @@ class fortygbe_main(forty_gbe):
         clockconst = ClockConstraint('forty_gbe_refclk' + self.suffix + '_p', period=6.4, port_en=True, virtual_en=False, waveform_min=0.0, waveform_max=3.2)
         cons.append(clockconst)
 
-        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks clk_pl_0', 'asynchronous'))
-        #cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets zcu102_bd_inst/pl_sys_clk]', 'asynchronous'))
-        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks sclk2_mmcm', 'asynchronous'))
-        #cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets user_clk]', 'asynchronous'))
-        #cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets wb_clk_i]', 'asynchronous'))
+        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets user_clk]', 'asynchronous'))
+        cons.append(ClockGroupConstraint(clockconst.name, '-include_generated_clocks -of_objects [get_nets wb_clk_i]', 'asynchronous'))
 
         return cons
 
