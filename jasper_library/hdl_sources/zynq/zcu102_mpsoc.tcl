@@ -1,5 +1,3 @@
-set_property IP_REPO_PATHS {/opt/Xilinx/Vivado/2021.1/data/ip /home/casperlwa/mlib_devel/jasper_library/hdl_sources/axi_wb_bridge/ip_repo} [current_fileset]
-update_ip_catalog -rebuild
 create_bd_cell -type ip -vlnv peralex.com:user:axi_slave_wishbone_classic_master:1.0 axi_slave_wishbone_c_0
   set_property -dict [ list \
    CONFIG.PSU_BANK_0_IO_STANDARD {LVCMOS18} \

@@ -149,8 +149,6 @@ class axi_wb_bridge(YellowBlock):
         top.assign_signal('wb_rst_i', '~axil_rst_n')
         
     def modify_bd(self, bd):
-        bd.add_raw_cmd('set_property IP_REPO_PATHS {/opt/Xilinx/Vivado/2021.1/data/ip /home/casperlwa/mlib_devel/jasper_library/hdl_sources/axi_wb_bridge/ip_repo} [current_fileset]')
-        bd.add_raw_cmd('update_ip_catalog -rebuild')
         #bd.create_cell(self.blocktype, self.name)
 
         #bd.add_raw_cmd('create_bd_cell -type ip -vlnv peralex.com:user:axi_slave_wishbone_classic_master:1.0 {:s}'.format(self.name))

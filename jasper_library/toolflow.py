@@ -1678,6 +1678,7 @@ class VivadoBackend(ToolflowBackend):
         ToolflowBackend.__init__(self, plat=plat, compile_dir=compile_dir)
         self.tcl_cmds = {
             'init'        : '',
+            'post_init'   : '',
             'create_bd'   : '',
             'pre_synth'   : '',
             'synth'       : '',
@@ -1816,9 +1817,9 @@ proc puts_red {s} {
         """
         Add a library at <path>
         """
-        self.add_tcl_cmd('set repos [get_property ip_repo_paths [current_project]]')
-        self.add_tcl_cmd('set_property ip_repo_paths "$repos %s" [current_project]' % path)
-        self.add_tcl_cmd('update_ip_catalog')
+        self.add_tcl_cmd('set repos [get_property ip_repo_paths [current_project]]', stage='post_init')
+        self.add_tcl_cmd('set_property ip_repo_paths "$repos %s" [current_project]' % path, stage='post_init')
+        self.add_tcl_cmd('update_ip_catalog', stage='post_init')
 
     def add_ip(self, ip):
         """
@@ -1932,6 +1933,7 @@ proc puts_red {s} {
     def eval_tcl(self):
         s = ''
         s += self.tcl_cmds['init']
+        s += self.tcl_cmds['post_init']
         s += self.tcl_cmds['create_bd']
         s += self.tcl_cmds['pre_synth']
         s += self.tcl_cmds['synth']
