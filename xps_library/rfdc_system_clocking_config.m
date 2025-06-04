@@ -91,5 +91,14 @@ function [] = rfdc_system_clocking_config(gcb)
       msk.getParameter(t229_has_clk).Enabled = 'on';
       msk.getParameter(t230_has_clk).Enabled = 'on';
       msk.getParameter(t231_has_clk).Enabled = 'on';
+    otherwise
+      msk.getParameter(t224_has_clk).Enabled = 'on';
+      msk.getParameter(t225_has_clk).Enabled = 'on';
+      msk.getParameter(t226_has_clk).Enabled = 'on';
+      msk.getParameter(t227_has_clk).Enabled = 'on';
+      msk.getParameter(t228_has_clk).Enabled = 'on';
+      msk.getParameter(t229_has_clk).Enabled = 'on';
+      msk.getParameter(t230_has_clk).Enabled = 'on';
+      msk.getParameter(t231_has_clk).Enabled = 'on';
   end
 
