@@ -2,7 +2,7 @@ function [] = update_pll(gcb, tile)
 
   % apply changes to RF-PLL parameter and ref clock list
 
-  [gen, tile_arch, ~, ~] = get_rfsoc_properties(gcb);
+  [gen, tile_arch, ~, ~, ~, ~, ~] = get_rfsoc_properties(gcb);
 
   tile_is_dac = 0; % default to ADC
   %case for adcs

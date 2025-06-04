@@ -62,6 +62,7 @@ class rfdc(YellowBlock):
     'nyquist_zone'    : {'param' : 'DAC_Nyquist{:d}{:d}',             'fmt' : "{{:d}}"},
     'decode_mode'     : {'param' : 'DAC_Decoder_Mode{:d}{:d}',        'fmt' : "{{:d}}"},
     'inverse_sinc'    : {'param' : 'DAC_Invsinc_Ctrl{:d}{:d}',        'fmt' : "{{}}"},
+#   'datapath_mode'   : {'param' : 'DAC_Mode{:d}{:d}',                'fmt' : "{{:d}}"} # TODO: add implementation details for DAC DUC datapath mode
   }
 
   """
@@ -168,9 +169,12 @@ class rfdc(YellowBlock):
 
   def initialize(self):
     # IP generation and configuration parameters
-    self.tile_arch     = None
+    self.adc_tiles = None
+    self.dac_tiles = None
+    self.adc_tile_arch = None
+    self.dac_tile_arch = None
     self.num_adc_slice = None
-    self.num_dac_slice = 4
+    self.num_dac_slice = None
     self.enabled_adc_tiles = []
     self.enabled_dac_tiles = []
     self.enabled_adcs  = []
@@ -194,54 +198,62 @@ class rfdc(YellowBlock):
 
     # first digit from part designator indicates part generation (e.g., xczu28dr is gen 1)
     designator = m.group(0)
-    if   designator[0] == '4':
+    if designator[0] == '4':
       self.gen = 3
     elif designator[0] == '3':
       self.gen = 2
     elif designator[0] == '2':
       self.gen = 1
 
-    # second digit from part designator indicates RF tile architecture (e.g., xczu28dr is a Dual-Tile arch)
-    # This logic taken from xps_library/get_rfsoc_properties()
-    # Not sure this is right / needs other modifications
-    if self.gen == 3:
+    if self.gen == 1:
+      # second digit from part designator indicates RF tile architecture (e.g., xczu28dr is a Dual-Tile arch)
+      if designator[1] == '8':
+        self.adc_tiles = range(224, 228)
+        self.adc_tile_arch = 'DT'
+        self.num_adc_slice = 2
+        self.dac_tiles = range(228,230)
+        self.dac_tile_arch = 'QT'
+        self.num_dac_slice = 4
+      elif designator[1] == '9':
+        self.adc_tiles = range(224, 228)
+        self.adc_tile_arch = 'QT'
+        self.num_adc_slice = 4
+        self.dac_tiles = range(228, 232)
+        self.dac_tile_arch = 'QT'
+        self.num_dac_slice = 4
+    elif self.gen == 2:
+      raise NotImplemented
+    elif self.gen == 3:
       if designator[1] in ['7','8']:
+        self.adc_tiles = range(224, 228)
         self.adc_tile_arch = 'DT'
+        self.num_adc_slice = 2
+        self.dac_tiles = range(228, 232)
         self.dac_tile_arch = 'DT'
-        self.num_adc_slice = 2
-        lastTile = 232
+        self.num_dac_slice = 2
       elif designator[1] == '9':
+        self.adc_tiles = range(224, 228)
         self.adc_tile_arch = 'QT'
-        self.dac_tile_arch = 'QT'
         self.num_adc_slice = 4
-        lastTile = 232
-    else:
-      if   designator[1] == '8':
-        self.adc_tile_arch = 'DT'
+        self.dac_tiles = range(228, 232)
         self.dac_tile_arch = 'QT'
-        self.num_adc_slice = 2
-        lastTile = 230
-      elif designator[1] == '9':
-        self.adc_tile_arch = 'QT'
-        self.dac_tile_arch = 'QT'
-        self.num_adc_slice = 4
-        lastTile = 232
+        self.num_dac_slice = 4
 
     # build tile and adc slice objects for IP instantiation and configuration
     # determine enabled adc tiles
-    for tidx in range(224,228):
+    for tidx in self.adc_tiles:
       if self.blk['Tile{:d}_enable'.format(tidx)]:
         print("adding Tile {:d} to enabled ADC tiles".format(tidx))
         self.enabled_adc_tiles.append(tidx-224)
 
     # determine enabled dac tiles
-    for tidx in range(228,lastTile):
+    for tidx in self.dac_tiles:
       if self.blk['Tile{:d}_enable'.format(tidx)]:
         print("adding Tile {:d} to enabled DAC tiles".format(tidx))
         self.enabled_dac_tiles.append(tidx-228)
 
     # build adc tile objects
-    for tidx in range(224, 228):
+    for tidx in self.adc_tiles:
       t = self.tile()
       t.enable = (tidx-224 in self.enabled_adc_tiles)
 
@@ -280,7 +292,7 @@ class rfdc(YellowBlock):
       self.tiles.append(t)
 
     # build dac tile objects
-    for tidx in range(228, lastTile):
+    for tidx in self.dac_tiles:
       t = self.tile()
       t.enable = (tidx-228 in self.enabled_dac_tiles)
 
@@ -331,7 +343,7 @@ class rfdc(YellowBlock):
           print("adding Slice {:d} to ADC tile {:d}".format(aidx, tidx+224))
           self.enabled_adcs.append(str(tidx)+str(aidx))
 
-    for tidx in range(224,228):
+    for tidx in self.adc_tiles:
       # build adc objects
       adc_mask_fmt = 't{:d}_{:s}_adc{:d}_{:s}'
       for aidx in range(0, self.num_adc_slice):
@@ -350,7 +362,7 @@ class rfdc(YellowBlock):
           print("adding Slice {:d} to DAC tile {:d}".format(didx, tidx+228))
           self.enabled_dacs.append(str(tidx)+str(didx))
 
-    for tidx in range(228,lastTile):
+    for tidx in self.dac_tiles:
       # build dac objects
       dac_mask_fmt = 't{:d}_{:s}_dac{:d}_{:s}'
       for didx in range(0, self.num_dac_slice):
@@ -361,6 +373,14 @@ class rfdc(YellowBlock):
             setattr(d, dac_attr, self.blk[attr_key])
 
         self.dacs.append(d)
+
+    if self.blk['ADCRTS']:
+      self.adc_rts_o = ['over_range', 'over_threshold1', 'over_threshold2', 'over_voltage']
+      self.adc_rts_i = ["pl_event", "clear_or"];
+      if self.gen == 3:
+        self.adc_rts_o.append('cm_over_voltage')
+        self.adc_rts_o.append('cm_under_voltage')
+        self.adc_rts_i.append('clear_ov')
 
     """
     how do we now handle clock distribution validation? should/will it be in the mask now?
@@ -441,7 +461,7 @@ class rfdc(YellowBlock):
     bd_inst.add_port('rfdc_rvalid',  'm_axi4lite_rfdc_rvalid')
     bd_inst.add_port('rfdc_rready',  'm_axi4lite_rfdc_rready')
 
-    bd_inst.add_port('irq', 'rfdc_irq') #self.fullname+'_irq'
+    bd_inst.add_port('irq', 'rfdc_irq')
 
     bd_inst.add_port('sysref_in_p', 'sysref_in_p', dir='in', parent_port=True)
     bd_inst.add_port('sysref_in_n', 'sysref_in_n', dir='in', parent_port=True)
@@ -457,18 +477,22 @@ class rfdc(YellowBlock):
       mts_inst.add_port('pl_sysref_n', 'pl_sysref_n', dir='in', parent_port=True)
       mts_inst.add_port('pl_clk', 'user_clk')
       if self.enable_mts_adc:
+        mts_inst.add_parameter('ADC_SYSREF', 1)
         mts_inst.add_port('user_sysref_adc', 'user_sysref_adc')
         # add port to pass to board design
         bd_inst.add_port('user_sysref_adc', 'user_sysref_adc', dir='in')
       else:
+        mts_inst.add_parameter('ADC_SYSREF', 0)
         mts_inst.add_port('user_sysref_adc', '')
-      # TODO: add DAC MTS support
-      # if self.enable_mts_dac:
-      #   mts_inst.add_port('user_sysref_dac', 'user_sysref_dac')
-      #   # add port to pass to board design
-      #   bd_inst.add_port('user_sysref_dac', 'user_sysref_dac', dir='in')
-      # else:
-      #   mts_inst.add_port('user_sysref_dac', '')
+
+      if self.enable_mts_dac:
+        mts_inst.add_parameter('DAC_SYSREF', 1)
+        mts_inst.add_port('user_sysref_dac', 'user_sysref_dac')
+        # add port to pass to board design
+        bd_inst.add_port('user_sysref_dac', 'user_sysref_dac', dir='in')
+      else:
+        mts_inst.add_parameter('DAC_SYSREF', 0)
+        mts_inst.add_port('user_sysref_dac', '')
 
     # If necessary, instantiate the demux logic
     if self.ext_demux != 1:
@@ -510,7 +534,7 @@ class rfdc(YellowBlock):
         bd_inst.add_port('m{:d}_axis_aresetn'.format(tidx), locked)
 
 
-      #Tile source information from simulink
+      # Tile source information from simulink
       if self.gen > 1:
         if (self.blk['t{:d}_adc_clk_src'.format(tidx+224)]-224 == tidx):
           bd_inst.add_port('adc{:d}_clk_p'.format(tidx), 'adc{:d}_clk_p'.format(tidx), dir='in', parent_port=True)
@@ -521,7 +545,7 @@ class rfdc(YellowBlock):
           bd_inst.add_port('adc{:d}_clk_n'.format(tidx), 'adc{:d}_clk_n'.format(tidx), dir='in', parent_port=True)
 
       for aidx in self.enabled_adcs:
-        if int(aidx[0]) == tidx: # need this becuase of enabled_adcs stores ALL enabled slices across all adc tiles, we only want the adcs associated with this tile
+        if int(aidx[0]) == tidx: # need this becuase enabled_adcs stores ALL enabled slices across all adc tiles, we only want the adcs associated with this tile
           n_aidx = int(aidx[1])
 
           if self.adc_tile_arch == 'QT':
@@ -607,6 +631,112 @@ class rfdc(YellowBlock):
                 bd_inst.add_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), '{:s}_m{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_aidx), width=data_width)
                 bd_inst.add_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), "1'b1",)
                 bd_inst.add_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), 'm{:d}{:d}_axis_tvalid'.format(tidx, n_aidx))
+          """
+          adc rts ports
+          """
+          if self.blk['ADCRTS']:
+            """ output rts ports """
+            for p in self.adc_rts_o:
+              if self.adc_tile_arch == 'QT':
+                rts_port_name = 'adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p)
+                rts_net_name  = '{:s}_adc{:d}{:d}_{:s}'.format(self.fullname, tidx, n_aidx, p)
+              else:
+                rts_port_name = 'adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx==0 else '23'), p)
+                rts_net_name = '{:s}_adc{:d}_{:s}_{:s}'.format(self.fullname, tidx, ('01' if n_aidx == 0 else '23'), p)
+
+              """ add synchronizer for port signals orginating from a different domain """
+              if p in ['over_threshold1', 'over_threshold2']:
+                rts_cdc_wire = rts_net_name+"_cdc_sync"
+                cdc_mod  = 'xpm_cdc_single'
+                cdc_inst = top.get_instance(entity=cdc_mod, name=(rts_port_name+"_cdc_sync"))
+
+                cdc_inst.add_parameter('DEST_SYNC_FF',   value=2)
+                cdc_inst.add_parameter('INIT_SYNC_FF',   value=1)
+                cdc_inst.add_parameter('SIM_ASSERT_CHK', value=1)
+                cdc_inst.add_parameter('SRC_INPUT_REG',  value=0)
+                cdc_inst.add_port('dest_out', signal=rts_net_name, parent_sig=False)
+                cdc_inst.add_port('dest_clk', signal='user_clk', parent_sig=False)
+                cdc_inst.add_port('src_clk',  signal='clk_adc{:d}'.format(tidx), parent_sig=False)
+                cdc_inst.add_port('src_in',   signal=rts_cdc_wire, width=1, parent_sig=False)
+
+                bd_inst.add_port(rts_port_name, rts_cdc_wire, width=1)
+              else:
+                bd_inst.add_port(rts_port_name, rts_net_name, width=1)
+
+            """ input rts ports """
+            for p in self.adc_rts_i:
+              if self.adc_tile_arch == 'QT':
+                rts_port_name = 'adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p)
+                rts_net_name  = '{:s}_adc{:d}{:d}_{:s}'.format(self.fullname, tidx, n_aidx, p)
+                # bd_inst.add_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), '{:s}_adc{:d}{:d}_{:s}'.format(self.fullname, tidx, n_aidx, p), width=1)
+              else:
+                if p == "pl_event":
+                  rts_port_name = 'adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p)
+                  rts_net_name  = '{:s}_adc{:d}{:d}_{:s}'.format(self.fullname, tidx, n_aidx, p)
+                  #bd_inst.add_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), '{:s}_adc{:d}{:d}_{:s}'.format(self.fullname, tidx, n_aidx, p), width=1)
+                elif p == "clear_or" or p == "clear_ov":
+                  rts_port_name = 'adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx==0 else '23'), p)
+                  rts_net_name  = '{:s}_adc{:d}_{:s}_{:s}'.format(self.fullname, tidx, ('01' if n_aidx == 0 else '23'), p)
+                  #bd_inst.add_port('adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx==0 else '23'), p), '{:s}_adc{:d}_{:s}_{:s}'.format(self.fullname, tidx, ('01' if n_aidx == 0 else '23'), p), width=1)
+
+              """ add synchronizer for port signals destined for a different domain """
+              if p == "pl_event": # pl_event destination clock is clk_adcX
+                rts_cdc_wire = rts_net_name+"_cdc_sync"
+                cdc_mod  = 'xpm_cdc_single'
+                cdc_inst = top.get_instance(entity=cdc_mod, name=(rts_port_name+"_cdc_sync"))
+
+                cdc_inst.add_parameter('DEST_SYNC_FF',   value=2)
+                cdc_inst.add_parameter('INIT_SYNC_FF',   value=1)
+                cdc_inst.add_parameter('SIM_ASSERT_CHK', value=1)
+                cdc_inst.add_parameter('SRC_INPUT_REG',  value=0)
+                cdc_inst.add_port('dest_out', signal=rts_cdc_wire, parent_sig=False)
+                cdc_inst.add_port('dest_clk', signal='clk_adc{:d}'.format(tidx), parent_sig=False)
+                cdc_inst.add_port('src_clk',  signal='user_clk', parent_sig=False)
+                cdc_inst.add_port('src_in',   signal=rts_net_name, width=1, parent_sig=False)
+
+                bd_inst.add_port(rts_port_name, rts_cdc_wire, width=1)
+              elif p in ["clear_or", "clear_ov"]: # clear sticky signals destination is axi4lite clock
+                rts_cdc_wire = rts_net_name+"_cdc_sync"
+                cdc_mod  = 'xpm_cdc_single'
+                cdc_inst = top.get_instance(entity=cdc_mod, name=(rts_port_name+"_cdc_sync"))
+
+                cdc_inst.add_parameter('DEST_SYNC_FF',   value=2)
+                cdc_inst.add_parameter('INIT_SYNC_FF',   value=1)
+                cdc_inst.add_parameter('SIM_ASSERT_CHK', value=1)
+                cdc_inst.add_parameter('SRC_INPUT_REG',  value=0)
+                cdc_inst.add_port('dest_out', signal=rts_cdc_wire, parent_sig=False)
+                cdc_inst.add_port('dest_clk', signal='axil_clk', parent_sig=False)
+                cdc_inst.add_port('src_clk',  signal='user_clk', parent_sig=False)
+                cdc_inst.add_port('src_in',   signal=rts_net_name, width=1, parent_sig=False)
+
+                bd_inst.add_port(rts_port_name, rts_cdc_wire, width=1)
+              else:
+                bd_inst.add_port(rts_port_name, rts_net_name, width=1)
+
+      """ gen 3 parts have an additional input/output, one per enabled tile """
+      if self.blk['ADCRTS'] and self.gen > 1 and self.enable_mts_adc:
+        bd_inst.add_port('adc{:d}_{:s}'.format(tidx, 'sysref_gate'), '{:s}_adc{:d}_{:s}'.format(self.fullname, tidx, 'sysref_gate'), width=1)
+
+        """ add synchronizer for sync_out """
+        rts_port_name = 'adc{:d}_{:s}'.format(tidx, 'sync_out')
+        rts_net_name  = '{:s}_adc{:d}_{:s}'.format(self.fullname, tidx, 'sync_out')
+
+        rts_cdc_wire = rts_net_name+"_cdc_sync"
+        cdc_mod  = 'xpm_cdc_single'
+        cdc_inst = top.get_instance(entity=cdc_mod, name=(rts_port_name+"_cdc_sync"))
+
+        cdc_inst.add_parameter('DEST_SYNC_FF',   value=2)
+        cdc_inst.add_parameter('INIT_SYNC_FF',   value=1)
+        cdc_inst.add_parameter('SIM_ASSERT_CHK', value=1)
+        cdc_inst.add_parameter('SRC_INPUT_REG',  value=0)
+        cdc_inst.add_port('dest_out', signal=rts_net_name, parent_sig=False)
+        cdc_inst.add_port('dest_clk', signal='user_clk', parent_sig=False)
+        cdc_inst.add_port('src_clk',  signal='clk_adc{:d}'.format(tidx), parent_sig=False)
+        cdc_inst.add_port('src_in',   signal=rts_cdc_wire, width=1, parent_sig=False)
+
+        bd_inst.add_port(rts_port_name, rts_cdc_wire, width=1)
+        #bd_inst.add_port('adc{:d}_{:s}'.format(tidx, 'sync_out'), '{:s}_adc{:d}_{:s}'.format(self.fullname, tidx, 'sync_out'), width=1)
+
 
     """
     dac tile/slice interfaces
@@ -638,12 +768,12 @@ class rfdc(YellowBlock):
           bd_inst.add_port('dac{:d}_clk_n'.format(tidx), 'dac{:d}_clk_n'.format(tidx), dir='in', parent_port=True)
 
       for didx in self.enabled_dacs:
-        if int(didx[0]) == tidx: # need this becuase of enabled_dacs stores ALL enabled slices across all dac tiles, we only want the adcs associated with this tile
-          d = self.dacs[int(didx[1])+4*int(didx[0])]
-          data_width = 16*d.sample_per_cycle
-          
+        if int(didx[0]) == tidx: # need this becuase enabled_dacs stores ALL enabled slices across all dac tiles, we only want the dacs associated with this tile
+          n_didx = int(didx[1])
+
           if self.dac_tile_arch == 'QT':
-            print("adding vin and axis ports for DAC Tile {:d} Slice {:d}".format(int(didx[0]), int(didx[1])))
+            d = self.dacs[n_didx+4*int(didx[0])] # 4 dac slices for each QT tile
+            data_width = 16*d.sample_per_cycle
             # vout ports
             bd_inst.add_port('vout{:s}_p'.format(didx), 'vout{:s}_p'.format(didx),  dir='out', parent_port=True)
             bd_inst.add_port('vout{:s}_n'.format(didx), 'vout{:s}_n'.format(didx),  dir='out', parent_port=True)
@@ -653,23 +783,25 @@ class rfdc(YellowBlock):
               bd_inst.add_port('s{:s}_axis_tready'.format(didx), "1'b1",)
               bd_inst.add_port('s{:s}_axis_tvalid'.format(didx), 's{:s}_axis_tvalid'.format(didx))
           else: # Dual tile architecture
+            d = self.dacs[n_didx+2*int(didx[0])] # 2 dac slices for each QT tile
+            data_width = 16*d.sample_per_cycle
             # vin ports
-            n_didx = int(didx[1])
-            bd_inst.add_port('vout{:s}_p'.format(didx), 'vout{:s}_p'.format(didx),  dir='out', parent_port=True)
-            bd_inst.add_port('vout{:s}_n'.format(didx), 'vout{:s}_n'.format(didx),  dir='out', parent_port=True)
+            # n_didx = int(didx[1])
+            bd_inst.add_port('vout{:d}{:d}_p'.format(tidx, 2*n_didx), 'vout{:d}{:d}_p'.format(tidx, 2*n_didx),  dir='out', parent_port=True) # DAC location is 0 or 2
+            bd_inst.add_port('vout{:d}{:d}_n'.format(tidx, 2*n_didx), 'vout{:d}{:d}_n'.format(tidx, 2*n_didx),  dir='out', parent_port=True)
             # maxis ports-dual architecture rfsocs the I/Q streams are output on seperate maxis interfaces needing different rules depending on the configuration
             if d.analog_output == 'Real':
               # no difference between Real -> Real and I/Q -> Real
-              bd_inst.add_port('s{:d}{:d}_axis_tdata'.format(tidx, n_didx), '{:s}_s{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_didx), width=data_width)
-              bd_inst.add_port('s{:d}{:d}_axis_tready'.format(tidx, n_didx), "1'b1",)
-              bd_inst.add_port('s{:d}{:d}_axis_tvalid'.format(tidx, n_didx), 's{:d}{:d}_axis_tvalid'.format(tidx, n_didx))
+              bd_inst.add_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), '{:s}_s{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_didx), width=data_width)
+              bd_inst.add_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), "1'b1",)
+              bd_inst.add_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), 's{:d}{:d}_axis_tvalid'.format(tidx, n_didx))
             else: # analog mode is I/Q
               # mixer mode is 'I/Q -> I/Q'
               # enabled adcs is both [0, 1]
               if d.mixer_type != 'Off' and d.mixer_type != False: #only add the even slices for s_axis ports
-                bd_inst.add_port('s{:d}{:d}_axis_tdata'.format(tidx, n_didx), '{:s}_s{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_didx), width=data_width)
-                bd_inst.add_port('s{:d}{:d}_axis_tready'.format(tidx, n_didx), "1'b1",)
-                bd_inst.add_port('s{:d}{:d}_axis_tvalid'.format(tidx, n_didx), 's{:d}{:d}_axis_tvalid'.format(tidx, n_didx))
+                bd_inst.add_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), '{:s}_s{:d}{:d}_axis_tdata'.format(self.fullname, tidx, n_didx), width=data_width)
+                bd_inst.add_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), "1'b1",)
+                bd_inst.add_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), 's{:d}{:d}_axis_tvalid'.format(tidx, n_didx))
 
 
   def gen_constraints(self):
@@ -715,13 +847,11 @@ class rfdc(YellowBlock):
 
     # place the rfdc
     rfdc_bd_name = 'usp_rf_data_converter_0'#rfdc'
-    # TODO better handle version information, the version string was manually increasesd when testing for > Vivado 2020.2
-    # ...And then again to 2.6 for Vivado 2021.2
-    tcl_cmds['pre_synth'] += ['create_bd_cell -type ip -vlnv xilinx.com:ip:usp_rf_data_converter:2.6 {:s}'.format(rfdc_bd_name)]
+    # the '*' imports the latest version of the IP, there should only exist a single rfdc version
+    tcl_cmds['pre_synth'] += ['create_bd_cell -type ip -vlnv xilinx.com:ip:usp_rf_data_converter:* {:s}'.format(rfdc_bd_name)]
 
     # get a reference to the rfdc in the block design, currently assume that only one rfdc is in the design (decent assumption)
     tcl_cmds['pre_synth'] += ['set rfdc [get_bd_cells -filter { NAME =~ *usp_rf_data_converter*}]']
-    #tcl_cmds['pre_synth'] += ['set rfdc [get_bd_cells -filter { NAME == rfdc}]']
 
     # create bd s axi intf port
     s_axi_ifport = 'RFDC'
@@ -794,15 +924,24 @@ class rfdc(YellowBlock):
             tcl_cmds['pre_synth'] += self.build_config_cmd(a, self.adc_attr_map, tidx, 2*n_aidx+1)
 
     for tidx in self.enabled_dac_tiles:
-      t = self.tiles[tidx+4] #need to check this vor various enabled/disabled tiles
+      t = self.tiles[tidx+4] # need to check this vor various enabled/disabled tiles
       # if I remember right, .tiles has every tile, regardless of whether it's enabled, so it might just be tidx+4
       tcl_cmds['pre_synth'] += self.build_config_cmd(t, self.dac_tile_attr_map, tidx)
 
       for didx in self.enabled_dacs:
         if int(didx[0]) == tidx:
           n_didx = int(didx[1])
-          d = self.dacs[n_didx+4*int(didx[0])]
-          tcl_cmds['pre_synth'] += self.build_config_cmd(d, self.dac_attr_map, tidx, n_didx)
+          if self.dac_tile_arch == 'QT':
+            d = self.dacs[n_didx+4*int(didx[0])]
+            tcl_cmds['pre_synth'] += self.build_config_cmd(d, self.dac_attr_map, tidx, n_didx)
+          elif self.dac_tile_arch == 'DT':
+            d = self.dacs[n_didx+2*int(didx[0])]
+            tcl_cmds['pre_synth'] += self.build_config_cmd(d, self.dac_attr_map, tidx, 2*n_didx)
+            tcl_cmds['pre_synth'] += self.build_config_cmd(d, self.dac_attr_map, tidx, 2*n_didx+1)
+
+    # enable adc rts ports
+    if self.blk['ADCRTS']:
+      tcl_cmds['pre_synth'].append(vivado_cmd.format('ADC_RTS', 'true'))
 
     tcl_cmds['pre_synth'] += ['] [get_bd_cells $rfdc]']
     # create board interface ports for axis data/clk/reset pins and adc tile output clock for each enabled tile
@@ -871,10 +1010,31 @@ class rfdc(YellowBlock):
                 tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), port_dir='out', width=data_width))
                 tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), port_dir='out'))
                 tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), port_dir='in'))
+          """ adc rts ports """
+          if self.blk['ADCRTS']:
+            for p in self.adc_rts_o:
+              if self.adc_tile_arch == 'QT':
+                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='out'))
+              else:
+                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx == 0 else '23'), p), port_dir='out'))
+            for p in self.adc_rts_i:
+              if self.adc_tile_arch == 'QT':
+                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='in'))
+              else:
+                if p == "pl_event":
+                  tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='in'))
+                elif p == "clear_or" or p == "clear_ov":
+                  tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx == 0 else '23'), p), port_dir='in'))
+
+      """ gen 3 parts have an additional input/output, one per enabled tile """
+      if self.blk['ADCRTS'] and self.gen > 1 and self.enable_mts_adc:
+        tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}'.format(tidx, 'sync_out'), port_dir='out'))
+        tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}'.format(tidx, 'sysref_gate'), port_dir='in'))
+
 
     # create board interface ports for axis data/clk/reset pins and dac tile output clock for each enabled tile
     for tidx in self.enabled_dac_tiles:
-      t = self.tiles[tidx]
+      t = self.tiles[tidx] # is this wrong? shouldn't it be offset by the num of adc tiles? See line 708 (because see how the wrong tile may be used in line 798?
       # gen3 parts support clock forwarding, user provides information about provided clock to the board sources in simulink mask (e.g.,
       # current gen3 xilinx eval boards only have clocks coming to 2 adc and 2 dac tiles, requiring clocks to be forwarded)
       if self.gen > 1:
@@ -898,7 +1058,10 @@ class rfdc(YellowBlock):
       for didx in self.enabled_dacs:
         if tidx == int(didx[0]):
           n_didx = int(didx[1])
-          d = self.dacs[n_didx+4*int(didx[0])]
+          if self.dac_tile_arch == 'QT':
+            d = self.dacs[n_didx+4*int(didx[0])]
+          elif self.dac_tile_arch == 'DT':
+            d = self.dacs[n_didx+2*int(didx[0])]
           data_width = 16*d.sample_per_cycle
           if self.dac_tile_arch == 'QT':
             # vout ports
@@ -911,21 +1074,21 @@ class rfdc(YellowBlock):
               tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, n_didx), port_dir='out'))
           else: # Dual tile architecture
             # vout ports
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_n'.format(tidx, n_didx), port_dir='out'))
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_p'.format(tidx, n_didx), port_dir='out'))
+            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_n'.format(tidx, 2*n_didx), port_dir='out')) # Dual tile uses only DAC locations 0 and 2
+            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_p'.format(tidx, 2*n_didx), port_dir='out'))
             # maxis ports-dual architecture rfsocs the I/Q streams are output on seperate maxis interfaces needing different rules depending on the configuration
             if d.analog_output == 'Real': # no difference between Real -> Real and I/Q -> Real
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, n_didx), port_dir='in', width=data_width))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, n_didx), port_dir='in'))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, n_didx), port_dir='out'))
+              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), port_dir='in', width=data_width))
+              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), port_dir='in'))
+              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), port_dir='out'))
             else: # digital mode is I/Q
               # mixer mode is 'I/Q -> I/Q
               # in this case ADC 1 better be also set or we are in trouble so here we are assuming that the logic is correct and that
               # enabled adcs is both [0, 1]
               if d.mixer_type != 'Off' and d.mixer_type != False: #only add the even slices for s_axis ports
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, n_didx), port_dir='in', width=data_width))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, n_didx), port_dir='in'))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, int(didx[1])), port_dir='out'))
+                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), port_dir='in', width=data_width))
+                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), port_dir='in'))
+                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), port_dir='out'))
     # create IRQ output port
     tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('irq', port_dir='out', port_type='intr'))
 

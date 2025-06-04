@@ -33,11 +33,11 @@ function [gen, adc_tile_arch, dac_tile_arch, adc_num_tiles, dac_num_tiles, fs_ma
     case '4'
       gen = 3;
   end % generation
-  
+
   % Please Note: The architecture names "dual" and "quad" do not mean that
-  % There are 2 tiles for dual and 4 tiles for quad. Dual and quad refer 
+  % There are 2 tiles for dual and 4 tiles for quad. Dual and quad refer
   % to the number of ADCs/DACs per tile.
-  
+
   switch gen % architecture configuration
     case 1
       switch designator(2)

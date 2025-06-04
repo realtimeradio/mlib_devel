@@ -1,39 +1,11 @@
 % Known work to do and issues to fix:
 
-% TODO: the lag in opening the mask is back after triming, drawing, cleaning is
-% added because the initialization is ran every time the mask is re-opened. Need
-% to either optimize base on how the callbacks are structured or implement a
-% sort of state. Explored this with my own struct, but couldn't see how to make
-% it persistent. I see the casper_library `save_state`/`same_state` methods.
-% This might help here? May get worse as the sample rate check is now done every
-% time
-
-% TODO: make sure DT spliting data interfaces for complex doesn't mess with the
-% computed data widths from number of samples per cycle (already double checked
-% that it is right with regard to QT and since that works I recall that DT
-% should be too).
-
 % TODO: Sanitize and validate NCO freq range for fine mixer mode
 
 % TODO: there is only a specific range of suggested tested frequencies for
 % the fbdiv parameter that is tested within the specification given on
 % DS926. These should be the ones that Vivado displays a warning when
 % selected. Extend the same warning here. Need to figure out that range.
-
-% TODO: Enabling I/Q -> I/Q and then chaning the decimation factor and axi
-% samples per clock results in an invalid axi clocking configuration. This
-% should not happen because the odd slice configuration is now dependent on
-% the even slice.
-
-% TODO: Enabling I/Q -> I/Q disables the odd slice ADC but when you hit OK and
-% bring up the rfdc mask again the field is enabled. This is a symptom of the
-% 'Enabled Checkbox being on' but not checking the even slice data mode
-% correctly. (or it does check the mode correctly, but the callback appears
-% in th wrong order).
-
-% TODO: There are decimator capability improvements between rfsoc generations.
-% Right now this yellow block only implements a common subset of the full
-% capability. [1x,2x,4x,8x]
 
 % NOTE: Only maxis_tdata field implemented. The ADC ignores tready and it is
 % reasonably accurate to assume that the data will be valid before the user
@@ -55,214 +27,175 @@ function [] = rfdc_mask(gcb,force)
   ext_demux = str2num(get_param(gcb, 'ext_demux'));
 
   adcbits = 16;
-  gw_arith_type = 'Signed';
+  gw_arith_type = 'Unsigned';
   gw_bin_pt = 0;
+
+  % gateway name for the block
+  base_gw_name = clear_name(gcb);
+  adc_gate = 1;
+  dac_gate = 0;
 
   maxis_template = 'm%d%d_axis_tdata';
   saxis_template = 's%d%d_axis_tdata';
 
-  adc_gate = 1;
-  dac_gate = 0;
-  
-% The following if statements determine the correct
-% number of slices and tiles based on the ADC and DAC 
-% tile architecture parameters that are obtained via
-% the get_rfsoc_properties function.
+  max_tiles = 8;
+  num_tiles = adc_num_tile + dac_num_tile;
+  lastTile = 224+num_tiles-1;
 
-%    if strcmp(adc_tile_arch, 'quad_four')
-%      adc_slices = 0:3;
-%      prefix = 'QT';
-%      Four_Tiles = 1;
-%    elseif strcmp(adc_tile_arch, 'quad_two')
-%      adc_slices = 0:3;
-%      prefix = 'DT';
-%      Four_Tiles = 0;
-%    elseif strcmp(adc_tile_arch, 'dual_four')
-%      adc_slices = 0:1;
-%      prefix = 'DT';
-%      Four_Tiles = 1;
-%    end
-% 
-% 
-%    if strcmp(dac_tile_arch, 'quad_four')
-%      dac_slices = 0:3;
-%      prefix = 'QT';
-%      Four_Tiles = 1;
-%    elseif strcmp(dac_tile_arch, 'quad_two')
-%      dac_slices = 0:3;
-%      prefix = 'DT';
-%      Four_Tiles = 0;
-%    elseif strcmp(dac_tile_arch, 'dual_four')
-%      dac_slices = 0:1;
-%      prefix = 'DT';
-%      Four_Tiles = 1;
-%    end
-
-% ADC tile/slices configuration
+  % ADC tile/slices configuration
   if strcmp(adc_tile_arch, 'quad')
-    prefix = 'QT';
-    adc_slices = 0:3;
+    adc_prefix = 'QT';
+    num_adc_slices = 4;
+    adc_slices = zeros(adc_num_tile, 4);
   elseif strcmp(adc_tile_arch, 'dual')
-    prefix = 'DT';
-    adc_slices = 0:1;
-  end
-  
-% DAC tiles/slices configuration
-  if strcmp(dac_tile_arch, 'quad')
-    %prefix = 'QT';
-    dac_slices = 0:3;
-    if (dac_num_tile == 4)
-        Four_Tiles = 1;
-    elseif (dac_num_tile == 2)
-        Four_Tiles = 0;
-    end
-  elseif strcmp(dac_tile_arch, 'dual')
-    %prefix = 'DT';
-    dac_slices = 0:3;
-    if (dac_num_tile == 4)
-        Four_Tiles = 1;
-    elseif (dac_num_tile == 2)
-        Four_Tiles = 0;
-    end
-  end
-  
-  %for each tile check tile number and change visibility
-  %get both enabled tiles and disabled tiles
-  %tiles represents all 8 tiles in order, 1 is on, 0 is off
-  tiles = zeros(8,1);
-  %DT config only has 2 DAC tiles
-  if Four_Tiles
-    lastTile = 231;
-  else
-    lastTile = 229;
+    adc_prefix = 'DT';
+    num_adc_slices = 2;
+    adc_slices = zeros(adc_num_tile, 2);
   end
 
+  % DAC tiles/slices configuration
+  if strcmp(dac_tile_arch, 'quad')
+    dac_prefix = 'QT';
+    num_dac_slices = 4;
+    dac_slices = zeros(dac_num_tile, 4);
+  elseif strcmp(dac_tile_arch, 'dual')
+    dac_prefix = 'DT';
+    num_dac_slices = 2;
+    dac_slices = zeros(dac_num_tile, 2);
+  end
+
+  % check which tiles are enabled
+  %`tiles` represents all `max_tiles` in order; 1 is 'enabled', 0 is 'disabled'
+  tiles = zeros(max_tiles, 1);
   for t = 224:lastTile % Xilinx tile mapping PG269 (v2.4, pg.11)
     if chk_mask_param(msk, ['Tile', num2str(t), '_enable'], 'on')
       tiles(t-223) = 1;
     end
   end
 
-  % check that we have at least one Tile
+  % enforce that at least one tile is enabled
   if (max(tiles) == 0)
     error('At least one ADC or DAC tile must be enabled');
     return
   end
 
-  % check that every enabled tile has at least one slice enabled
-  % map of enabled slices, rows are tiles, columns are slice numbers
-  % 0 indicates off, 1 indicates enabled
-  slices = zeros(8, length(dac_slices));
-  % this will leave zeros in extra places for DT configs, due to the lack of
-  % Tile-Slice symmetry between DT DACs (2 tiles 4 slices each) and ADCs (4
-  % tiles 2 slices each)
+  % check which slices in a tile are enabeld: 1 is 'enabled', 0 is disabled `slices` 
   for t = 224:lastTile
-    if t > 227
-      num_slices = dac_slices;
-      slicetype = '_dac';
-    else
-      num_slices = adc_slices;
-      slicetype = '_adc';
-    end
-      for a = num_slices
-          if chk_mask_param(msk, ['t',num2str(t),'_', prefix, slicetype, num2str(a), '_enable'], 'on')
-              slices(t-223, a+1) = 1;
-          end
+    % check adc slices
+    if t < 228
+      for a = 0:(num_adc_slices-1)
+        if chk_mask_param(msk, ['t', num2str(t), '_', adc_prefix, '_adc', num2str(a), '_enable'], 'on')
+          adc_slices(t-223, a+1) = 1;
+        end
       end
-      if (tiles(t-223) == 1) && (max(slices(t-223,:)) == 0)
-          error('At least one ADC or DAC must be enabled on each enabled tile');
-          return
+      % enforce that a slice is enabled if the tile is
+      if (tiles(t-223) == 1) && (max(adc_slices(t-223,:)) == 0)
+        error('At least one ADC slice must be enabled on each enabled ADC tile');
+        return
       end
+
+    else % check dac slices
+      for d = 0:(num_dac_slices-1)
+        if chk_mask_param(msk, ['t', num2str(t), '_', dac_prefix, '_dac', num2str(d), '_enable'], 'on')
+          dac_slices(t-227, d+1) = 1;
+        end
+      end
+      % enforce that a slice is enabled if the tile is
+      if (tiles(t-223) == 1) && (max(dac_slices(t-227,:)) == 0)
+        error('At least one DAC slice must be enabled on each enabled DAC tile');
+        return
+      end
+    end % t < 228
+  end % t = 224:lastTile
+
+  if chk_param(gcb, 'ADCRTS', 'on')
+    rts_ports = 1;
+  else
+    rts_ports = 0;
   end
 
-  % check if the state has changed
-  if ~same_state(gcb,'Tiles',tiles,'Slices',slices,'ADCTileArch',adc_tile_arch,'DACTileArch',dac_tile_arch) || force
+  % check if the mask state has changed
+  if ~same_state(gcb,'RTSPorts',rts_ports,'Tiles',tiles,'ADCSlices',adc_slices,'DACSlices',dac_slices,'ADCTileArch',adc_tile_arch,'DACTileArch',dac_tile_arch,'ModelName',base_gw_name) || force
     for tile = 224:231
-      QTConf = msk.getDialogControl(sprintf('t%d_QuadTileConfig',tile));
-      DTConf = msk.getDialogControl(sprintf('t%d_DualTileConfig',tile));
-      SystemClocking = msk.getDialogControl('SystemClocking');
-      if strcmp(adc_tile_arch, 'quad')
-        QTConf.Visible = 'on';
-        DTConf.Visible = 'off';
-      else
-        QTConf.Visible = 'off';
-        DTConf.Visible = 'on';
-      end
-      if gen > 1
-          SystemClocking.Visible = 'on';
-      else
-          SystemClocking.Visible = 'off';
-      end
-      if tile > 227
-          DacDTConf = msk.getDialogControl(sprintf('t%d_DACPair23_DT', tile));
-          if strcmp(dac_tile_arch, 'dual')
-              DacDTConf.Visible = 'on'; % Don't think this is right
-          else
-              DacDTConf.Visible = 'on';
-          end
-      end
-      if tile > 229
-        FourDACtile = msk.getDialogControl(sprintf('Tile%d_container',tile));
-        if Four_Tiles
-          %turn on tiles 230 and 231
-          FourDACtile.Visible = 'on';
+      QTConf = msk.getDialogControl(sprintf('t%d_QuadTileConfig', tile));
+      DTConf = msk.getDialogControl(sprintf('t%d_DualTileConfig', tile));
+      if tile < 228 % adc
+        if strcmp(adc_tile_arch, 'quad')
+          QTConf.Visible = 'on';
+          DTConf.Visible = 'off';
         else
-          %turn off tiles 230 and 231
-          FourDACtile.Visible = 'off';
+          QTConf.Visible = 'off';
+          DTConf.Visible = 'on';
+        end
+      else % dac
+        if strcmp(dac_tile_arch, 'quad')
+          QTConf.Visible = 'on';
+          DTConf.Visible = 'off';
+        else
+          QTConf.Visible = 'off';
+          DTConf.Visible = 'on';
         end
       end
+
+      % disable/enable tile configuration tabs in mask
+      tileContainer = msk.getDialogControl(sprintf('Tile%d_container', tile));
+      if tile > lastTile
+        tileContainer.Visible = 'off';
+      else
+        tileContainer.Visible = 'on';
+      end
+    end % tile = 224:231
+
+    % enable 'System Clocking' configuration tab for gen3 silicon
+    SystemClocking = msk.getDialogControl('SystemClocking');
+    if gen > 1
+        SystemClocking.Visible = 'on';
+    else
+        SystemClocking.Visible = 'off';
     end
-    % validate use of MTS for each tile
-    % adc tiles
-    mts_adc = zeros(4,1);
+
+    % validate MTS for adc tiles
+    mts_adc = zeros(adc_num_tile,1);
     for t = 224:227
       mts_adc(t-223) = chk_mask_param(msk, ['t',num2str(t),'_enable_mts'], 'on');
-      if mts_adc(t-223)
-        if (~mts_adc(1) && ~tiles(1))
-          error('Tile 224 must be enabled with Multi-Tile Synchronization on when using MTS on ADC tiles');
-          return
-        end
-      end
     end
-    % dac tiles
-    mts_dac = zeros(4,1);
+    if (mts_adc(1) && ~tiles(1))
+      error('Tile 224 must be enabled with Multi-Tile Synchronization on when using MTS on ADC tiles');
+      return
+    end
+    mts_adc_enabled = mts_adc(1);
+
+    % validate MTS for dac tile
+    mts_dac = zeros(dac_num_tile,1);
     for t = 228:lastTile
       mts_dac(t-227) = chk_mask_param(msk, ['t',num2str(t),'_enable_mts'], 'on');
-      if mts_dac(t-227)
-        if (~mts_dac(1) && ~tiles(5))
-          error('Tile 228 must be enabled with Multi-Tile Synchronization on when using MTS on DAC tiles');
-          return
-        end
-      end
     end
-    
-    % initial position drawing offsets
+    if (mts_dac(1) && ~tiles(5))
+      error('Tile 228 must be enabled with Multi-Tile Synchronization on when using MTS on DAC tiles');
+      return
+    end
+    mts_dac_enabled = mts_dac(1);
+
+    % initial position offsets for drawing
     xpos = 0;
     ypos = 40;
+    ypos_rts = 40;
     port_num = 1;
 
     % trim lines to begin to reuse or delete blocks
     delete_lines(gcb);
-    % gateway name for the block
-    base_gw_name = clear_name(gcb);
-    % interface name mXY_axis: X-Tile index, Y-ADC index TODO can possibly explain
-    % Dual tile interface here instead of marked in todo block below
-    % update interfaces for selected tiles
 
-    % update ADC tiles
+    % update ADC tile interfaces for enabled tiles, interface name mXY_axis: X-Tile index, Y-ADC index
     for t = 224:227
-      if tiles(t-223) %check if the tile is on
-        %for a = adc_slices %[0,1,2,3] % 4 ADCs per tile
-        for a = 0:length(slices(1,:))-1 % only need to go over the adcs activated now
-          if slices(t-223,a+1) %check if the slice is on
-            samples_per_cycle = get_param(gcb, ['t', num2str(t), '_', prefix, '_adc', num2str(a), '_sample_per_cycle']);
+      if tiles(t-223) % check if the tile is enabled
+        for a = 0:(num_adc_slices-1)
+          if adc_slices(t-223,a+1) % check if the slice is on
+            samples_per_cycle = get_param(gcb, ['t', num2str(t), '_', adc_prefix, '_adc', num2str(a), '_sample_per_cycle']);
             n_bits = str2double(samples_per_cycle)*adcbits;
-            %maxis = ['m', num2str(t), num2str(a), '_axis_tdata'];
-            %if chk_mask_param(msk, [prefix, '_adc', num2str(a), '_enable'], 'on') - looping only enabled adcs now
 
             if strcmp(adc_tile_arch, 'quad')
               %only draw the gw if this is not an odd tile configured in IQ->IQ mode
-              mixertype = get_param(gcb, ['t', num2str(t), '_', prefix, '_adc', num2str(a), '_mixer_type']);
+              mixertype = get_param(gcb, ['t', num2str(t), '_', adc_prefix, '_adc', num2str(a), '_mixer_type']);
               if ~strcmp(mixertype,'Off')
                 maxis = sprintf(maxis_template, t-224, a);
                 [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate);
@@ -270,8 +203,8 @@ function [] = rfdc_mask(gcb,force)
             else
               % If not a quad tile we need to look at the mixer/digital output to determine what ports to activate.
               % The quad tile outputs IQ on the same stream. The Dual tile uses the alternate adc path
-              digital_mode_param = ['t', num2str(t), '_', prefix, '_adc', num2str(a), '_digital_output'];
-              mixer_mode_param   = ['t', num2str(t), '_', prefix, '_adc', num2str(a), '_mixer_mode'];
+              digital_mode_param = ['t', num2str(t), '_', adc_prefix, '_adc', num2str(a), '_digital_output'];
+              mixer_mode_param   = ['t', num2str(t), '_', adc_prefix, '_adc', num2str(a), '_mixer_mode'];
               if chk_param(gcb, digital_mode_param, 'Real')
                 maxis = sprintf(maxis_template, t-224, 2*a);
                 [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, adc_gate, ext_demux);
@@ -293,7 +226,7 @@ function [] = rfdc_mask(gcb,force)
 
                 else
                   if mod(a,2) %if odd slice, might have mixer mode mode 'off'
-                    if chk_param(gcb, ['t', num2str(t), '_', prefix, '_adc', num2str(a-1), '_mixer_mode'], 'I/Q -> I/Q')
+                    if chk_param(gcb, ['t', num2str(t), '_', adc_prefix, '_adc', num2str(a-1), '_mixer_mode'], 'I/Q -> I/Q')
                         %good to go, don't need to make a gw for this
                     else
                       errstr = 'Unexpected value %s for Odd Slice Mixer Mode detected when ADC Ditital Ouput is I/Q mode, this is a bug';
@@ -305,52 +238,60 @@ function [] = rfdc_mask(gcb,force)
                   end
                 end
               end
-            end % Four_Tiles: add gw's/draw ports
+            end % strcmp(adc_tile_arc, 'qaud')
           end
+          dec_interp_opts(gcb, t, a);
         end % a = adcs
       end
     end % t = tiles
 
+    if rts_ports
+      % rts ports ground the simulation inputs; do not update the global `port_num` to not have ghost input ports
+      add_rts_ports(gcb, gen, mts_adc_enabled, adc_tile_arch, num_adc_slices, tiles, adc_slices, port_num);
+    end
+
     % update DAC tiles
     for t = 228:lastTile
-      if tiles(t-223) %check if the tile is on
-        for a = 0:length(slices(1,:))-1 % only need to go over the dacs activated now
-          if slices(t-223,a+1) %check if the slice is on
-            samples_per_cycle = msk.getParameter(['t', num2str(t), '_', prefix, '_dac', num2str(a), '_sample_per_cycle']).Value;
+      if tiles(t-223) % check if the tile is on
+        for a = 0:(num_dac_slices-1)
+          if dac_slices(t-227,a+1) % check if the slice is on
+            samples_per_cycle = get_param(gcb, ['t', num2str(t), '_', dac_prefix, '_dac', num2str(a), '_sample_per_cycle']);
             n_bits = str2double(samples_per_cycle)*adcbits;
-            %maxis = ['m', num2str(t), num2str(a), '_axis_tdata'];
-            %if chk_mask_param(msk, [prefix, '_adc', num2str(a), '_enable'], 'on') - looping only enabled adcs now
 
             if strcmp(dac_tile_arch, 'quad')
               % only make port if this is not a odd slice used in IQ->IQ
-              mixertype = get_param(gcb, ['t', num2str(t), '_', prefix, '_dac', num2str(a), '_mixer_type']);
+              mixertype = get_param(gcb, ['t', num2str(t), '_', dac_prefix, '_dac', num2str(a), '_mixer_type']);
               if ~strcmp(mixertype,'Off')
                 maxis = sprintf(saxis_template, t-228, a);
                 [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate, ext_demux);
               end
-            else %dual tile stuff
 
-              analog_mode_param = ['t', num2str(t), '_', prefix, '_dac', num2str(a), '_analog_output'];
-              mixer_mode_param   = ['t', num2str(t), '_', prefix, '_dac', num2str(a), '_mixer_mode'];
+            else % dac dual-tile stuff
+              analog_mode_param = ['t', num2str(t), '_', dac_prefix, '_dac', num2str(a), '_analog_output'];
+              mixer_mode_param   = ['t', num2str(t), '_', dac_prefix, '_dac', num2str(a), '_mixer_mode'];
               if chk_param(gcb, analog_mode_param, 'Real')
                 maxis = sprintf(saxis_template, t-228, a);
                 [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate, ext_demux);
 
-              else % analog mode is I/Q
-                %only the base slice (0 or 2) gets created
+              else % dac analog mode is I/Q
+                % only the base slice (0 or 2) gets created
                 if (a == 0 || a == 2)
                   maxis = sprintf(saxis_template, t-228, a);
                   [ypos, port_num] = add_gw(gcb, base_gw_name, gw_arith_type, n_bits, gw_bin_pt, maxis, port_num, xpos, ypos, dac_gate, ext_demux);
                 end
               end
-            end % Four_Tiles: add gw's/draw ports
+            end % strcmp(dac_tile_arch, 'quad')
           end
-        end % a = adcs
+          dec_interp_opts(gcb, t, a)
+        end % a = dacs
       end
     end % t = tiles
 
-    % save 'tiles' and 'slices' as a state to compare against later
-    save_state(gcb,'Tiles',tiles,'Slices',slices,'ADCTileArch',adc_tile_arch,'DACTileArch',dac_tile_arch);
+    % setup system clocking tab based on platform info
+    rfdc_system_clocking_config(gcb);
+
+    % save state to compare against on next call to the mask
+    save_state(gcb,'RTSPorts',rts_ports,'Tiles',tiles,'ADCSlices',adc_slices,'DACSlices',dac_slices,'ADCTileArch',adc_tile_arch,'DACTileArch',dac_tile_arch,'ModelName',base_gw_name);
 
     % delete interfaces for disabled tiles
     clean_blocks(gcb);
