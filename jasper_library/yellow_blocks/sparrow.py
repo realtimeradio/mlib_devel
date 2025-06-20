@@ -35,6 +35,15 @@ class sparrow(YellowBlock):
         else:
             self.use_pll_ctrl = False
 
+        if self.use_sfp_ethernet:
+            if self.another_sfp:
+                self.bd = 'sparrow_bd_sfp3_eth.tcl'
+            else:
+                self.bd = 'sparrow_bd_sfp0_eth.tcl'
+        else:
+            self.bd = 'sparrow_bd.tcl'
+        
+
     def modify_top(self,top):
         inst = top.get_instance('sparrow_bd', 'sparrow_bd_inst')
         inst.add_port('axil_aclk',    'axil_clk')
@@ -133,8 +142,22 @@ class sparrow(YellowBlock):
             add_port('sfp_0_rxn', 'in')
             add_port('sfp_0_txp', 'out')
             add_port('sfp_0_txn', 'out')
-            add_port('gtrefclk_in_0_clk_p', 'in')
-            add_port('gtrefclk_in_0_clk_n', 'in')
+            if not self.another_sfp:
+                add_port('gtrefclk_in_0_clk_p', 'in')
+                add_port('gtrefclk_in_0_clk_n', 'in')
+            else:
+                # These ports connect to shared infrastructure from the other 1G core
+                # So the naming conventions must match!
+                inst.add_port('mmcm_locked_0', 'gbe_mmcm_locked_out')
+                inst.add_port('pma_reset_0', 'gbe_pma_reset_out')
+                inst.add_port('rxuserclk2_0', 'gbe_rx_userclk2_out')
+                inst.add_port('rxuserclk_0', 'gbe_rxuserclk_out')
+                inst.add_port('gt0_qplloutclk_in_0', 'gbe_gt0_qplloutclk_out')
+                inst.add_port('gt0_qplloutrefclk_in_0', 'gbe_gt0_qplloutrefclk_out')
+                inst.add_port('gtrefclk_0', 'gbe_mgt_clk')
+                inst.add_port('gtrefclk_bufg_0', 'gbe_mgt_clk_bufg')
+                inst.add_port('userclk2_0', 'gbe_userclk2_out')
+                inst.add_port('userclk_0', 'gbe_userclk_out')
   
         # USB stuff which we're not using for now
         inst.add_port('USBIND_0_port_indctl', '', width=2, dir='out')
@@ -192,12 +215,13 @@ class sparrow(YellowBlock):
         # will generate these for us.
         cons.append(PortConstraint('wr_osc_en', 'wr_osc_en'))
         if self.use_sfp_ethernet:
-            cons.append(PortConstraint('wr_osc_en', 'wr_osc_en'))
-            cons.append(PortConstraint('sfp_0_rxp', 'mgt_rx_p', iogroup_index=0))
-            cons.append(PortConstraint('sfp_0_txp', 'mgt_tx_p', iogroup_index=0))
-            cons.append(PortConstraint('gtrefclk_in_0_clk_p', 'eth_clk_125_p', iogroup_index=0))
-            cons.append(ClockConstraint('gtrefclk_in_0_clk_p','eth_clk_125', period=8.0, waveform_min=0.0, waveform_max=4.0))
-            cons.append(ClockGroupConstraint('-include_generated_clocks eth_clk_125', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous'))
+            sfp_port = 3
+            cons.append(PortConstraint('sfp_0_rxp', 'mgt_rx_p', iogroup_index=sfp_port))
+            cons.append(PortConstraint('sfp_0_txp', 'mgt_tx_p', iogroup_index=sfp_port))
+            if not self.another_sfp:
+                cons.append(PortConstraint('gtrefclk_in_0_clk_p', 'eth_clk_125_p', iogroup_index=0))
+                cons.append(ClockConstraint('gtrefclk_in_0_clk_p','eth_clk_125', period=8.0, waveform_min=0.0, waveform_max=4.0))
+                cons.append(ClockGroupConstraint('-include_generated_clocks eth_clk_125', '-include_generated_clocks -of_objects [get_nets sys_clk]', 'asynchronous'))
 
 
         if self.use_pll_ctrl:
@@ -219,10 +243,7 @@ class sparrow(YellowBlock):
         tcl_cmds = {}
         tcl_cmds['pre_synth'] = []
         tcl_cmds['promgen'] = []
-        if not self.use_sfp_ethernet:
-            tcl_cmds['pre_synth'] += ['source {}'.format(self.hdl_root + '/infrastructure/sparrow_bd.tcl')]
-        else:
-            tcl_cmds['pre_synth'] += ['source {}'.format(self.hdl_root + '/infrastructure/sparrow_bd_sfp0_eth.tcl')]
+        tcl_cmds['pre_synth'] += ['source {}'.format(self.hdl_root + '/infrastructure/' + self.bd)]
         #force byte swap
         tcl_cmds['promgen'] += ['write_cfgmem -force -format bin -interface SMAPx32 -disablebitswap -loadbit "up 0x0 $bit_file" $bin_file']
         return tcl_cmds
