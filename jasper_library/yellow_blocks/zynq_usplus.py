@@ -223,7 +223,7 @@ class zynq_ultra_ps_e(zynq_usplus):
 
     # assign address spaces
     # TODO hard coded information needs to be dynamic
-    bd.assign_address('mpsoc/Data', 'M_AXI/Reg', '0xA0000000', '0x00100000')
+    bd.assign_address('mpsoc/Data', 'M_AXI/Reg', '0xA0000000', '0x01000000')
 
 
   def gen_children(self):

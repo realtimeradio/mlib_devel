@@ -159,4 +159,4 @@ class axi_smartconnect(YellowBlock):
           wb_pins = ['DAT_I', 'ACK_I', 'RST_O', 'DAT_O', 'ADR_O', 'CYC_O', 'SEL_O', 'STB_O', 'WE_O']
           for pin in wb_pins:
               bd.add_raw_cmd(f'make_bd_pins_external [get_bd_pins {a2w_instname}/{pin}]')
-          bd.assign_address('mpsoc/Data', f'{a2w_instname}/S_AXI/reg0', '0xA0100000', '0x00100000')
+          bd.assign_address('mpsoc/Data', f'{a2w_instname}/S_AXI/reg0', '0xA1000000', '0x00100000')
