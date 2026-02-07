@@ -961,7 +961,8 @@ class Toolflow(object):
 
         Obtained from: https://bitbucket.org/ricch/xml2vhdl/src/master/
         """
-        from xml2vhdl.xml2vhdl import Xml2VhdlGenerate, helper
+        from xml2vhdl.xml2vhdl import Xml2VhdlGenerate
+        from xml2vhdl.arguments import Arguments
         # make input and output directories
         if not os.path.exists(self.xml_source_dir):
             os.makedirs(self.xml_source_dir)
@@ -977,7 +978,7 @@ class Toolflow(object):
 
         try:
             # Xml2VhdlGenerate takes arguments as attributes of an args class
-            args = helper.arguments.Arguments()
+            args = Arguments()
             # see the help of the xml2vhdl.py script
             args.input_folder  = [self.xml_source_dir] # Needs to be a list (can be multiple directories)
             args.vhdl_output   = self.hdl_output_dir
