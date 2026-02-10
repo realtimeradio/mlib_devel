@@ -68,6 +68,8 @@ architecture axi4lite_slave_logic_a of axi4lite_slave_logic is
    type fsm_enum is (idle,reading,read_wait,writing,write_wait);
    signal fsm: fsm_enum;
    signal ipb_mosi_int : t_ipb_mosi;
+   signal aw_pending : std_logic;
+   signal aw_addr_saved : std_logic_vector(c_axi4lite_addr_w - 1 downto 0);
     
 begin
    
@@ -79,7 +81,16 @@ begin
             when idle =>
                axi4lite_miso.arready <= '1';
                axi4lite_miso.awready <= '1';
-               if axi4lite_mosi.arvalid = '1' then
+               if axi4lite_mosi.arvalid = '1' and axi4lite_mosi.awvalid = '1' then
+                  -- BOTH arrive: take read, park write
+                  axi4lite_miso.arready <= '0';
+                  axi4lite_miso.awready <= '0';
+                  ipb_mosi_int.addr     <= axi4lite_mosi.araddr;
+                  ipb_mosi_int.rreq     <= '1';
+                  aw_pending            <= '1';
+                  aw_addr_saved         <= axi4lite_mosi.awaddr;
+                  fsm                   <= reading;
+               elsif axi4lite_mosi.arvalid = '1' then
                   axi4lite_miso.arready <= '0';
                   axi4lite_miso.awready <= '0';
                   ipb_mosi_int.addr <= axi4lite_mosi.araddr;
@@ -102,9 +113,16 @@ begin
                if axi4lite_mosi.rready = '1' then
                   axi4lite_miso.rvalid <= '0';
                   axi4lite_miso.rdata <= (others=>'0');
-                  axi4lite_miso.arready <= '1';
-                  axi4lite_miso.awready <= '1';
-                  fsm <= idle;
+                  -- if we have a write parked, do it now rather than returning to idle
+                  if aw_pending = '1' then
+                     aw_pending        <= '0';
+                     ipb_mosi_int.addr <= aw_addr_saved;
+                     fsm               <= writing;
+                  else
+                     axi4lite_miso.arready <= '1';
+                     axi4lite_miso.awready <= '1';
+                     fsm                   <= idle;
+                  end if;
                end if;
             when writing =>
                ipb_mosi_int.wreq <= axi4lite_mosi.wvalid;
@@ -134,6 +152,8 @@ begin
          axi4lite_miso.bvalid <= '0';
          ipb_mosi_int.rreq <= '0';
          ipb_mosi_int.wreq <= '0';
+         aw_pending <= '0';
+         aw_addr_saved <= (others => '0');
          fsm <= idle;
       end if;
    end process; 
