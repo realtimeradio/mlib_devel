@@ -15,7 +15,7 @@ class bram(YellowBlock):
             self.requirements = ['axil_clk']
             self.requirements = ['sys_clk']
             self.depth = 2**self.addr_width
-            self.n_registers = int(self.reg_prim_output) + int(self.reg_core_output)
+            self.n_pipeline_reg = int(self.reg_prim_output) + int(self.reg_core_output)
             
         else:
             self.typecode = TYPECODE_SWREG
@@ -23,7 +23,7 @@ class bram(YellowBlock):
             self.requirements = ['wb_clk']
             self.add_source('wb_bram')
             self.depth = 2**self.addr_width
-            self.n_registers = int(self.reg_prim_output) + int(self.reg_core_output)
+            self.n_pipeline_reg = int(self.reg_prim_output) + int(self.reg_core_output)
             # parameters from the simulink block which currently don't do anything
             # self.optimisation
         
@@ -33,7 +33,8 @@ class bram(YellowBlock):
             top.add_axi4lite_interface(regname=self.unique_name,
                                 mode='rw', nbytes=self.depth*self.data_width//8,
                                 typecode=self.typecode,
-                                data_width=self.data_width) #width is in bits
+                                data_width=self.data_width, #width is in bits
+                                n_pipeline_reg=self.n_pipeline_reg)
 
             top.add_signal(self.unique_name + '_' + self.unique_name + '_addr', width=self.addr_width)
             top.add_signal(self.unique_name + '_' + self.unique_name + '_data_in', width=self.data_width)
@@ -62,5 +63,5 @@ class bram(YellowBlock):
             inst.add_port('user_dout', signal='%s_data_out'%self.fullname, width=self.data_width)
             inst.add_parameter('LOG_USER_WIDTH', int(log(self.data_width,2)))
             inst.add_parameter('USER_ADDR_BITS', self.addr_width)
-            inst.add_parameter('N_REGISTERS', self.n_registers)
+            inst.add_parameter('N_REGISTERS', self.n_pipeline_reg)
         

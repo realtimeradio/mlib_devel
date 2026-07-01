@@ -1497,7 +1497,8 @@ class VerilogModule(object):
     def add_axi4lite_interface(self, regname, mode, nbytes=4,
                                default_val=0, suffix='',
                                candr_suffix='', memory_map=[],
-                               typecode=0xff, data_width=32, axi4lite_mode=''):
+                               typecode=0xff, data_width=32, axi4lite_mode='',
+                               n_pipeline_reg=0):
         """
         Add the ports necessary for a AXI4-Lite slave interface.
 
@@ -1526,6 +1527,8 @@ class VerilogModule(object):
         :type data_width: Integer
         :param axi4lite_mode: Mode of the axi4lite interface. Eg. axi4lite_mode = 'raw', instantiates a raw axi4lite device.
         :type axi4lite_mode: String
+        :param n_pipeline_reg: Number of pipeline (output) registers on the RAM read path. The generated XML read latency is set to n_pipeline_reg+1.
+        :type n_pipeline_reg: Integer
 
         """
 
@@ -1537,7 +1540,8 @@ class VerilogModule(object):
                 memory_map = [Register(regname, nbytes=nbytes, offset=0, mode=mode,
                                         default_val=default_val, data_width=data_width, axi4lite_mode=axi4lite_mode,
                                         ram_size=nbytes if typecode==4 else -1,
-                                        ram=True if typecode==4 else False)]
+                                        ram=True if typecode==4 else False,
+                                        n_pipeline_reg=n_pipeline_reg)]
             axi4lite_device = AXI4LiteDevice(regname, nbytes=nbytes, mode=mode,
                                             hdl_suffix=suffix, hdl_candr_suffix=candr_suffix,
                                             memory_map=memory_map, typecode=typecode,

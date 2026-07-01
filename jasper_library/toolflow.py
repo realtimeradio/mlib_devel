@@ -915,6 +915,14 @@ class Toolflow(object):
                     # - Reading from xml2slave.py - need the key 'hw_dp_ram_width'
                     node.set('hw_dp_ram_width', str(reg.data_width))
 
+                    # Set the RAM read latency from the number of pipeline
+                    # (output) registers on the read path: latency = n_pipeline_reg + 1.
+                    # NB: xml2vhdl only supports a latency of 1 or 2, so a value
+                    # >2 (n_pipeline_reg>1) will cause the downstream compile to fail.
+                    ram_lat = getattr(reg, 'n_pipeline_reg', 0) + 1
+                    node.set('hw_dp_ram_bus_lat', str(ram_lat))
+                    node.set('hw_dp_ram_logic_lat', str(ram_lat))
+
             # output xml file describing memory map as input for xml2vhdl
             myxml = xml.dom.minidom.parseString(ET.tostring(xml_root))
             xml_base_name = interface + "_memory_map.xml"
