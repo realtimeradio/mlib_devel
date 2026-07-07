@@ -843,73 +843,73 @@ class rfdc(YellowBlock):
     tcl_cmds['init'] = []
     #tcl_cmds['pre_impl'] = [f'set_clock_groups -asynchronous -group [get_clocks sys_clk] -group [get_clocks -include_generated_clocks user_clk_{self.ext_demux}x_mmcm1]']
 
-    tcl_cmds['pre_synth'] = []
+    tcl_cmds['bd'] = []
 
     # place the rfdc
     rfdc_bd_name = 'usp_rf_data_converter_0'#rfdc'
     # the '*' imports the latest version of the IP, there should only exist a single rfdc version
-    tcl_cmds['pre_synth'] += ['create_bd_cell -type ip -vlnv xilinx.com:ip:usp_rf_data_converter:* {:s}'.format(rfdc_bd_name)]
+    tcl_cmds['bd'] += ['create_bd_cell -type ip -vlnv xilinx.com:ip:usp_rf_data_converter:* {:s}'.format(rfdc_bd_name)]
 
     # get a reference to the rfdc in the block design, currently assume that only one rfdc is in the design (decent assumption)
-    tcl_cmds['pre_synth'] += ['set rfdc [get_bd_cells -filter { NAME =~ *usp_rf_data_converter*}]']
+    tcl_cmds['bd'] += ['set rfdc [get_bd_cells -filter { NAME =~ *usp_rf_data_converter*}]']
 
     # create bd s axi intf port
     s_axi_ifport = 'RFDC'
-    tcl_cmds['pre_synth'] += ['create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 {:s}'.format(s_axi_ifport)]
+    tcl_cmds['bd'] += ['create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 {:s}'.format(s_axi_ifport)]
 
     # configures the interface port, will auto inherit everything from the rfdc connection
-    tcl_cmds['pre_synth'] += ['set_property -dict [list \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.PROTOCOL [get_property CONFIG.PROTOCOL [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.ADDR_WIDTH [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.HAS_BURST [get_property CONFIG.HAS_BURST [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.HAS_LOCK [get_property CONFIG.HAS_LOCK [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.HAS_PROT [get_property CONFIG.HAS_PROT [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.HAS_CACHE [get_property CONFIG.HAS_CACHE [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.HAS_QOS [get_property CONFIG.HAS_QOS [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.HAS_REGION [get_property CONFIG.HAS_REGION [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.SUPPORTS_NARROW_BURST [get_property CONFIG.SUPPORTS_NARROW_BURST [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.MAX_BURST_LENGTH [get_property CONFIG.MAX_BURST_LENGTH [get_bd_intf_pins $rfdc/s_axi]] \\']
-    tcl_cmds['pre_synth'] += ['] [get_bd_intf_ports RFDC]']
+    tcl_cmds['bd'] += ['set_property -dict [list \\']
+    tcl_cmds['bd'] += ['CONFIG.PROTOCOL [get_property CONFIG.PROTOCOL [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.ADDR_WIDTH [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.HAS_BURST [get_property CONFIG.HAS_BURST [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.HAS_LOCK [get_property CONFIG.HAS_LOCK [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.HAS_PROT [get_property CONFIG.HAS_PROT [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.HAS_CACHE [get_property CONFIG.HAS_CACHE [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.HAS_QOS [get_property CONFIG.HAS_QOS [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.HAS_REGION [get_property CONFIG.HAS_REGION [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.SUPPORTS_NARROW_BURST [get_property CONFIG.SUPPORTS_NARROW_BURST [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['CONFIG.MAX_BURST_LENGTH [get_property CONFIG.MAX_BURST_LENGTH [get_bd_intf_pins $rfdc/s_axi]] \\']
+    tcl_cmds['bd'] += ['] [get_bd_intf_ports RFDC]']
 
     # but, we need to override the address width so we can assign an address in the range of the HMP0
-    tcl_cmds['pre_synth'] += ['set_property -dict [list CONFIG.ADDR_WIDTH {{40}}] [get_bd_intf_ports {:s}]'.format(s_axi_ifport)]
+    tcl_cmds['bd'] += ['set_property -dict [list CONFIG.ADDR_WIDTH {{40}}] [get_bd_intf_ports {:s}]'.format(s_axi_ifport)]
     # set the stupid clock requirment
-    tcl_cmds['pre_synth'] += ['set_property -dict [list CONFIG.FREQ_HZ {{99990001}}] [get_bd_intf_ports {:s}]'.format(s_axi_ifport)]
+    tcl_cmds['bd'] += ['set_property -dict [list CONFIG.FREQ_HZ {{99990001}}] [get_bd_intf_ports {:s}]'.format(s_axi_ifport)]
 
     # connect the rfdc up to the external port
-    tcl_cmds['pre_synth'] += ['connect_bd_intf_net [get_bd_intf_pins $rfdc/s_axi] [get_bd_intf_ports {:s}]'.format(s_axi_ifport)]
+    tcl_cmds['bd'] += ['connect_bd_intf_net [get_bd_intf_pins $rfdc/s_axi] [get_bd_intf_ports {:s}]'.format(s_axi_ifport)]
 
     # add bd ports and connect for s axi clk/rst
-    tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s_axi_aclk', port_dir='in', port_type='clk', clk_freq_hz=99990001))
-    tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s_axi_aresetn', port_dir='in', port_type='rst'))
+    tcl_cmds['bd'].append(self.add_tcl_bd_port('s_axi_aclk', port_dir='in', port_type='clk', clk_freq_hz=99990001))
+    tcl_cmds['bd'].append(self.add_tcl_bd_port('s_axi_aresetn', port_dir='in', port_type='rst'))
 
     # probably the better way to assign the address
-    tcl_cmds['pre_synth'] += ['assign_bd_address -offset 0xA0000000 -range 256K [get_bd_addr_segs $rfdc/s_axi/Reg]']
+    tcl_cmds['bd'] += ['assign_bd_address -offset 0xA0000000 -range 256K [get_bd_addr_segs $rfdc/s_axi/Reg]']
 
     # rfdc block design instance  defaults with tile 224 and ADC 0 enabled -- disable everything as a starting point
     # TODO: how necessary is this, what may be causing some of my observed funny behavior may be casued by tile 0 being disabled. From PG269
     # and some testing disabling the cores does not have the expected behaviour as disabling the tile is not synonymous with "tile powerdown
     # per the UG" instead, power down is implemented as part of the software driver.
-    tcl_cmds['pre_synth'] += ['set_property -dict [list \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.ADC224_En {false} \\']
-    tcl_cmds['pre_synth'] += ['CONFIG.ADC_Slice00_Enable {false} \\']
-    tcl_cmds['pre_synth'] += ['] [get_bd_cells $rfdc]']
+    tcl_cmds['bd'] += ['set_property -dict [list \\']
+    tcl_cmds['bd'] += ['CONFIG.ADC224_En {false} \\']
+    tcl_cmds['bd'] += ['CONFIG.ADC_Slice00_Enable {false} \\']
+    tcl_cmds['bd'] += ['] [get_bd_cells $rfdc]']
 
     # begin to apply user configuration
-    tcl_cmds['pre_synth'] += ['set_property -dict [list \\']
+    tcl_cmds['bd'] += ['set_property -dict [list \\']
 
     # enable/disable tiles
     for tidx in range(0, 4):
       vivado_cmd = 'CONFIG.{:s} {{{}}} \\'
-      tcl_cmds['pre_synth'].append(vivado_cmd.format('ADC{:d}_En'.format(tidx+224), 'true' if (tidx in self.enabled_adc_tiles) else 'false'))
-      tcl_cmds['pre_synth'].append(vivado_cmd.format('ADC{:d}_Enable'.format(tidx), (1     if (tidx in self.enabled_adc_tiles) else 0)))
-      tcl_cmds['pre_synth'].append(vivado_cmd.format('DAC{:d}_En'.format(tidx+228), 'true' if (tidx in self.enabled_dac_tiles) else 'false'))
-      tcl_cmds['pre_synth'].append(vivado_cmd.format('DAC{:d}_Enable'.format(tidx), (1     if (tidx in self.enabled_dac_tiles) else 0)))
+      tcl_cmds['bd'].append(vivado_cmd.format('ADC{:d}_En'.format(tidx+224), 'true' if (tidx in self.enabled_adc_tiles) else 'false'))
+      tcl_cmds['bd'].append(vivado_cmd.format('ADC{:d}_Enable'.format(tidx), (1     if (tidx in self.enabled_adc_tiles) else 0)))
+      tcl_cmds['bd'].append(vivado_cmd.format('DAC{:d}_En'.format(tidx+228), 'true' if (tidx in self.enabled_dac_tiles) else 'false'))
+      tcl_cmds['bd'].append(vivado_cmd.format('DAC{:d}_Enable'.format(tidx), (1     if (tidx in self.enabled_dac_tiles) else 0)))
 
     # add configuration parameters for enabled tiles and adcs
     for tidx in self.enabled_adc_tiles:
       t = self.tiles[tidx]
-      tcl_cmds['pre_synth'] += self.build_config_cmd(t, self.adc_tile_attr_map, tidx)
+      tcl_cmds['bd'] += self.build_config_cmd(t, self.adc_tile_attr_map, tidx)
 
       for aidx in self.enabled_adcs:
         if int(aidx[0]) == tidx:
@@ -917,33 +917,33 @@ class rfdc(YellowBlock):
           n_aidx = int(aidx[1])
           if self.adc_tile_arch == 'QT':
             a = self.adcs[n_aidx+4*int(aidx[0])]
-            tcl_cmds['pre_synth'] += self.build_config_cmd(a, self.adc_attr_map, tidx, n_aidx)
+            tcl_cmds['bd'] += self.build_config_cmd(a, self.adc_attr_map, tidx, n_aidx)
           elif self.adc_tile_arch == 'DT':
             a = self.adcs[n_aidx+2*int(aidx[0])]
-            tcl_cmds['pre_synth'] += self.build_config_cmd(a, self.adc_attr_map, tidx, 2*n_aidx)
-            tcl_cmds['pre_synth'] += self.build_config_cmd(a, self.adc_attr_map, tidx, 2*n_aidx+1)
+            tcl_cmds['bd'] += self.build_config_cmd(a, self.adc_attr_map, tidx, 2*n_aidx)
+            tcl_cmds['bd'] += self.build_config_cmd(a, self.adc_attr_map, tidx, 2*n_aidx+1)
 
     for tidx in self.enabled_dac_tiles:
       t = self.tiles[tidx+4] # need to check this vor various enabled/disabled tiles
       # if I remember right, .tiles has every tile, regardless of whether it's enabled, so it might just be tidx+4
-      tcl_cmds['pre_synth'] += self.build_config_cmd(t, self.dac_tile_attr_map, tidx)
+      tcl_cmds['bd'] += self.build_config_cmd(t, self.dac_tile_attr_map, tidx)
 
       for didx in self.enabled_dacs:
         if int(didx[0]) == tidx:
           n_didx = int(didx[1])
           if self.dac_tile_arch == 'QT':
             d = self.dacs[n_didx+4*int(didx[0])]
-            tcl_cmds['pre_synth'] += self.build_config_cmd(d, self.dac_attr_map, tidx, n_didx)
+            tcl_cmds['bd'] += self.build_config_cmd(d, self.dac_attr_map, tidx, n_didx)
           elif self.dac_tile_arch == 'DT':
             d = self.dacs[n_didx+2*int(didx[0])]
-            tcl_cmds['pre_synth'] += self.build_config_cmd(d, self.dac_attr_map, tidx, 2*n_didx)
-            tcl_cmds['pre_synth'] += self.build_config_cmd(d, self.dac_attr_map, tidx, 2*n_didx+1)
+            tcl_cmds['bd'] += self.build_config_cmd(d, self.dac_attr_map, tidx, 2*n_didx)
+            tcl_cmds['bd'] += self.build_config_cmd(d, self.dac_attr_map, tidx, 2*n_didx+1)
 
     # enable adc rts ports
     if self.blk['ADCRTS']:
-      tcl_cmds['pre_synth'].append(vivado_cmd.format('ADC_RTS', 'true'))
+      tcl_cmds['bd'].append(vivado_cmd.format('ADC_RTS', 'true'))
 
-    tcl_cmds['pre_synth'] += ['] [get_bd_cells $rfdc]']
+    tcl_cmds['bd'] += ['] [get_bd_cells $rfdc]']
     # create board interface ports for axis data/clk/reset pins and adc tile output clock for each enabled tile
     clk_out_mhz = 1 # Default
     for tidx in self.enabled_adc_tiles:
@@ -953,20 +953,20 @@ class rfdc(YellowBlock):
       if self.gen > 1:
         if (self.blk['t{:d}_adc_clk_src'.format(tidx+224)]-224 == tidx):
           # create port for input sample clock
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
       else:
         if (self.rfdc_conf['tile{:d}'.format(tidx+224)]['adc_clk_src'] == tidx):
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
 
       # create board design output ports for the enabled tile clocks
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('clk_adc{:d}'.format(tidx), port_dir='out', port_type='clk'))
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('clk_adc{:d}'.format(tidx), port_dir='out', port_type='clk'))
       # create port for m_axis_aclk for each tile enabled
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}_axis_aclk'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.clk_out*1e6)) # clk out is mhz
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}_axis_aclk'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.clk_out*1e6)) # clk out is mhz
       clk_out_mhz = t.clk_out # Use this for FIFO settings
       # create port for m_axis_aresetn for each tile enabled
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}_axis_aresetn'.format(tidx), port_dir='in', port_type='rst'))
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}_axis_aresetn'.format(tidx), port_dir='in', port_type='rst'))
       # create port vin and m_axis ports for each tile enable
       for aidx in self.enabled_adcs:
         if tidx == int(aidx[0]):
@@ -978,58 +978,58 @@ class rfdc(YellowBlock):
           data_width = 16*a.sample_per_cycle
           if self.adc_tile_arch == 'QT':
             # vin ports
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vin{:d}{:d}_n'.format(tidx, n_aidx), port_dir='in'))
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vin{:d}{:d}_p'.format(tidx, n_aidx), port_dir='in'))
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vin{:d}{:d}_n'.format(tidx, n_aidx), port_dir='in'))
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vin{:d}{:d}_p'.format(tidx, n_aidx), port_dir='in'))
             # maxis
             if a.mixer_type != 'Off' and a.mixer_type != False: #only add slices that aren't odd and in a IQ->IQ config
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), port_dir='out', width=data_width))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), port_dir='out'))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), port_dir='in'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), port_dir='out', width=data_width))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), port_dir='out'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), port_dir='in'))
           else: # Dual tile architecture
             # vin ports
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vin{:d}_{:d}{:d}_n'.format(tidx, 2*n_aidx, 2*n_aidx+1), port_dir='in'))
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vin{:d}_{:d}{:d}_p'.format(tidx, 2*n_aidx, 2*n_aidx+1), port_dir='in'))
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vin{:d}_{:d}{:d}_n'.format(tidx, 2*n_aidx, 2*n_aidx+1), port_dir='in'))
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vin{:d}_{:d}{:d}_p'.format(tidx, 2*n_aidx, 2*n_aidx+1), port_dir='in'))
             # maxis ports-dual architecture rfsocs the I/Q streams are output on seperate maxis interfaces needing different rules depending on the configuration
             if a.digital_output == 'Real':
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx), port_dir='out', width=data_width))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), port_dir='out'))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), port_dir='in'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx), port_dir='out', width=data_width))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), port_dir='out'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), port_dir='in'))
             else: # digital mode is I/Q
               if a.mixer_mode == 'Real -> I/Q':
               # I data
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx), port_dir='out', width=data_width))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), port_dir='out'))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), port_dir='in'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx), port_dir='out', width=data_width))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx), port_dir='out'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx), port_dir='in'))
                 # Q data
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx+1), port_dir='out', width=data_width))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx+1), port_dir='out'))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx+1), port_dir='in'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, 2*n_aidx+1), port_dir='out', width=data_width))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, 2*n_aidx+1), port_dir='out'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, 2*n_aidx+1), port_dir='in'))
               else: # mixer mode is 'I/Q -> I/Q
                 # in this case ADC 1 better be also set or we are in trouble so here we are assuming that the logic is correct and that
                 # enabled adcs is both [0, 1]
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), port_dir='out', width=data_width))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), port_dir='out'))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), port_dir='in'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tdata'.format(tidx, n_aidx), port_dir='out', width=data_width))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tvalid'.format(tidx, n_aidx), port_dir='out'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('m{:d}{:d}_axis_tready'.format(tidx, n_aidx), port_dir='in'))
           """ adc rts ports """
           if self.blk['ADCRTS']:
             for p in self.adc_rts_o:
               if self.adc_tile_arch == 'QT':
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='out'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='out'))
               else:
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx == 0 else '23'), p), port_dir='out'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx == 0 else '23'), p), port_dir='out'))
             for p in self.adc_rts_i:
               if self.adc_tile_arch == 'QT':
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='in'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='in'))
               else:
                 if p == "pl_event":
-                  tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='in'))
+                  tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}{:d}_{:s}'.format(tidx, n_aidx, p), port_dir='in'))
                 elif p == "clear_or" or p == "clear_ov":
-                  tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx == 0 else '23'), p), port_dir='in'))
+                  tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_{:s}_{:s}'.format(tidx, ('01' if n_aidx == 0 else '23'), p), port_dir='in'))
 
       """ gen 3 parts have an additional input/output, one per enabled tile """
       if self.blk['ADCRTS'] and self.gen > 1 and self.enable_mts_adc:
-        tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}'.format(tidx, 'sync_out'), port_dir='out'))
-        tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('adc{:d}_{:s}'.format(tidx, 'sysref_gate'), port_dir='in'))
+        tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_{:s}'.format(tidx, 'sync_out'), port_dir='out'))
+        tcl_cmds['bd'].append(self.add_tcl_bd_port('adc{:d}_{:s}'.format(tidx, 'sysref_gate'), port_dir='in'))
 
 
     # create board interface ports for axis data/clk/reset pins and dac tile output clock for each enabled tile
@@ -1040,20 +1040,20 @@ class rfdc(YellowBlock):
       if self.gen > 1:
         if (self.blk['t{:d}_dac_clk_src'.format(tidx+228)]-224 == tidx+4):
           # create port for input sample clock
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('dac{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('dac{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('dac{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('dac{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
       else:
         if (self.rfdc_conf['tile{:d}'.format(tidx+228)]['dac_clk_src'] == tidx+4):
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('dac{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
-          tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('dac{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('dac{:d}_clk_n'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
+          tcl_cmds['bd'].append(self.add_tcl_bd_port('dac{:d}_clk_p'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.ref_clk*1e6))
 
       # create board design output ports for the enabled tile clocks
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('clk_dac{:d}'.format(tidx), port_dir='out', port_type='clk'))
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('clk_dac{:d}'.format(tidx), port_dir='out', port_type='clk'))
       # create port for m_axis_aclk for each tile enabled
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}_axis_aclk'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.clk_out*1e6)) # clk out is mhz
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}_axis_aclk'.format(tidx), port_dir='in', port_type='clk', clk_freq_hz=t.clk_out*1e6)) # clk out is mhz
       clk_out_mhz = t.clk_out # Use this for FIFO settings
       # create port for m_axis_aresetn for each tile enabled
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}_axis_aresetn'.format(tidx), port_dir='in', port_type='rst'))
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}_axis_aresetn'.format(tidx), port_dir='in', port_type='rst'))
       # create port vout and m_axis ports for each tile enable
       for didx in self.enabled_dacs:
         if tidx == int(didx[0]):
@@ -1065,41 +1065,41 @@ class rfdc(YellowBlock):
           data_width = 16*d.sample_per_cycle
           if self.dac_tile_arch == 'QT':
             # vout ports
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_n'.format(tidx, n_didx), port_dir='out'))
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_p'.format(tidx, n_didx), port_dir='out'))
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vout{:d}{:d}_n'.format(tidx, n_didx), port_dir='out'))
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vout{:d}{:d}_p'.format(tidx, n_didx), port_dir='out'))
             # maxis
             if d.mixer_type != 'Off' and d.mixer_type != False: #only add slices that aren't odd and in a IQ->IQ config
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, n_didx), port_dir='in', width=data_width))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, n_didx), port_dir='in'))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, n_didx), port_dir='out'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, n_didx), port_dir='in', width=data_width))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, n_didx), port_dir='in'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, n_didx), port_dir='out'))
           else: # Dual tile architecture
             # vout ports
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_n'.format(tidx, 2*n_didx), port_dir='out')) # Dual tile uses only DAC locations 0 and 2
-            tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('vout{:d}{:d}_p'.format(tidx, 2*n_didx), port_dir='out'))
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vout{:d}{:d}_n'.format(tidx, 2*n_didx), port_dir='out')) # Dual tile uses only DAC locations 0 and 2
+            tcl_cmds['bd'].append(self.add_tcl_bd_port('vout{:d}{:d}_p'.format(tidx, 2*n_didx), port_dir='out'))
             # maxis ports-dual architecture rfsocs the I/Q streams are output on seperate maxis interfaces needing different rules depending on the configuration
             if d.analog_output == 'Real': # no difference between Real -> Real and I/Q -> Real
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), port_dir='in', width=data_width))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), port_dir='in'))
-              tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), port_dir='out'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), port_dir='in', width=data_width))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), port_dir='in'))
+              tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), port_dir='out'))
             else: # digital mode is I/Q
               # mixer mode is 'I/Q -> I/Q
               # in this case ADC 1 better be also set or we are in trouble so here we are assuming that the logic is correct and that
               # enabled adcs is both [0, 1]
               if d.mixer_type != 'Off' and d.mixer_type != False: #only add the even slices for s_axis ports
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), port_dir='in', width=data_width))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), port_dir='in'))
-                tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), port_dir='out'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tdata'.format(tidx, 2*n_didx), port_dir='in', width=data_width))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tvalid'.format(tidx, 2*n_didx), port_dir='in'))
+                tcl_cmds['bd'].append(self.add_tcl_bd_port('s{:d}{:d}_axis_tready'.format(tidx, 2*n_didx), port_dir='out'))
     # create IRQ output port
-    tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('irq', port_dir='out', port_type='intr'))
+    tcl_cmds['bd'].append(self.add_tcl_bd_port('irq', port_dir='out', port_type='intr'))
 
-    tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('sysref_in_p', port_dir='in'))
-    tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('sysref_in_n', port_dir='in'))
+    tcl_cmds['bd'].append(self.add_tcl_bd_port('sysref_in_p', port_dir='in'))
+    tcl_cmds['bd'].append(self.add_tcl_bd_port('sysref_in_n', port_dir='in'))
 
     if self.enable_mts_adc:
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('user_sysref_adc', port_dir='in'))
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('user_sysref_adc', port_dir='in'))
 
     if self.enable_mts_dac:
-      tcl_cmds['pre_synth'].append(self.add_tcl_bd_port('user_sysref_dac', port_dir='in'))
+      tcl_cmds['bd'].append(self.add_tcl_bd_port('user_sysref_dac', port_dir='in'))
 
     # If necessary build appropriate demux FIFO
     if self.ext_demux != 1:
@@ -1155,14 +1155,14 @@ class rfdc(YellowBlock):
         "Enable_Safety_Circuit": "true",
       }
 
-      tcl_cmds['pre_synth'].append(
+      tcl_cmds['bd'].append(
               'create_ip -name fifo_generator -vendor xilinx.com -library ip -version 13.2 -module_name %s' % DEMUX_FIFO_NAME
               )
 
-      tcl_cmds['pre_synth'].append('set_property -dict [list \\')
+      tcl_cmds['bd'].append('set_property -dict [list \\')
       for k,v in fifo_config.items():
-        tcl_cmds['pre_synth'].append('CONFIG.%s {%s} \\' % (k,v))
-      tcl_cmds['pre_synth'].append('] [get_ips %s]' % DEMUX_FIFO_NAME)
+        tcl_cmds['bd'].append('CONFIG.%s {%s} \\' % (k,v))
+      tcl_cmds['bd'].append('] [get_ips %s]' % DEMUX_FIFO_NAME)
 
     return tcl_cmds
 

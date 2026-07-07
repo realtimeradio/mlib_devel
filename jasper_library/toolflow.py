@@ -1681,6 +1681,7 @@ class VivadoBackend(ToolflowBackend):
             'init'        : '',
             'post_init'   : '',
             'create_bd'   : '',
+            'bd'          : '',
             'pre_synth'   : '',
             'synth'       : '',
             'post_synth'  : '',
@@ -1939,6 +1940,8 @@ proc puts_red {s} {
         s += self.tcl_cmds['post_init']
         s += '# CREATE_BD COMMANDS\n'
         s += self.tcl_cmds['create_bd']
+        s += '# BD COMMANDS\n'
+        s += self.tcl_cmds['bd']
         s += '# PRE_SYNTH COMMANDS\n'
         s += self.tcl_cmds['pre_synth']
         s += '# SYNTH COMMANDS\n'
