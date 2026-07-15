@@ -68,15 +68,12 @@ class axi4_bram(YellowBlock):
                                design must agree (they share one HPM port
                                and crossbar).
       * ``reg_prim_output`` -- register the BRAM primitive outputs (adds 1
-                               cycle of read latency, on both ports; the AXI
-                               controller's READ_LATENCY is set to match)
+                               cycle of read latency, on the fabric port
+                               only; the AXI-side port is NEVER registered --
+                               see the note at the BMG configuration in
+                               ``gen_tcl_cmds`` for why it must not be)
       * ``reg_core_output`` -- register the BRAM core outputs (adds 1 cycle,
-                               likewise on both ports)
-                               NB: enabling either register option forfeits
-                               the controller's read-command optimization
-                               (back-to-back read pipelining, useful to DMA
-                               masters), which the core only supports at
-                               READ_LATENCY=1.
+                               likewise fabric-side only)
       * ``base_addr``       -- (optional) fixed AXI address of the RAM. Must be
                                aligned to the RAM size (min 4KiB). Defaults to
                                0xB0000000 + 16MiB * instance number, safely
@@ -306,8 +303,6 @@ class axi4_bram(YellowBlock):
         reg_core = bool(int(getattr(self, 'reg_core_output', 0)))
         prim = 'true' if reg_prim else 'false'
         core = 'true' if reg_core else 'false'
-        # RAM read latency, on both ports: 1 + one cycle per output register
-        read_latency = 1 + int(reg_prim) + int(reg_core)
         ps = '%s_ps' % self.unique_name  # tcl variable holding the PS cell
         # All instances have been constructed by the time this runs, so the
         # class instance counter gives the design-wide instance count
@@ -351,16 +346,14 @@ class axi4_bram(YellowBlock):
                 cmds.append('connect_bd_net [get_bd_pins axil_arst_n] [get_bd_pins %s/aresetn]' % self.xbar_name)
                 cmds.append('connect_bd_intf_net [get_bd_intf_pins ${%s}/M_AXI_HPM1_FPD] [get_bd_intf_pins %s/S00_AXI]' % (ps, self.xbar_name))
         # AXI4 (burst-capable) BRAM controller, using only BRAM port A so
-        # port B is free for the fabric. READ_LATENCY must match the RAM's
-        # actual port A read latency (1 + output registers) or CPU reads
-        # return stale data. RD_CMD_OPTIMIZATION pipelines back-to-back read
-        # commands -- irrelevant for serialised CPU reads but it helps any
-        # future DMA master. The core only supports it at READ_LATENCY=1
-        # (the parameter is disabled and ignored at higher latencies), so
-        # enabling the mask's output-register options forfeits it.
-        rd_opt = ' CONFIG.RD_CMD_OPTIMIZATION {1}' if read_latency == 1 else ''
+        # port B is free for the fabric. Port A is never registered (see the
+        # note at the BMG configuration below), so READ_LATENCY is fixed at
+        # 1, which also permits RD_CMD_OPTIMIZATION (back-to-back read
+        # command pipelining -- irrelevant for serialised CPU reads but it
+        # helps any future DMA master; the core only supports it at
+        # READ_LATENCY=1).
         cmds.append('create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:* %s' % self.ctrl_name)
-        cmds.append('set_property -dict [list CONFIG.SINGLE_PORT_BRAM {1} CONFIG.DATA_WIDTH {%d} CONFIG.READ_LATENCY {%d}%s] [get_bd_cells %s]' % (self.axi_data_width, read_latency, rd_opt, self.ctrl_name))
+        cmds.append('set_property -dict [list CONFIG.SINGLE_PORT_BRAM {1} CONFIG.DATA_WIDTH {%d} CONFIG.READ_LATENCY {1} CONFIG.RD_CMD_OPTIMIZATION {1}] [get_bd_cells %s]' % (self.axi_data_width, self.ctrl_name))
         if n_inst > 1:
             cmds.append('connect_bd_intf_net [get_bd_intf_pins %s/M%02d_AXI] [get_bd_intf_pins %s/S_AXI]' % (self.xbar_name, self.inst_id, self.ctrl_name))
         else:
@@ -377,14 +370,25 @@ class axi4_bram(YellowBlock):
         # write enables (so port A's wea matches the controller's per-byte
         # strobes -- required for narrow CPU accesses on a wide port),
         # port B always enabled.
-        # The mask's register settings apply identically to both ports, so
-        # read latency everywhere = 1 + reg_prim_output + reg_core_output
-        # (the standard shared bram convention on the fabric side, matched by
-        # the controller's READ_LATENCY on the AXI side). Both ports' register
-        # settings must always be set explicitly: reconfiguring the BMG
-        # geometry silently flips the primitive registers on by default, and
-        # any mismatch between real port A latency and the controller's
-        # READ_LATENCY corrupts all CPU reads.
+        # The mask's register settings apply to the fabric port (B) only,
+        # whose read latency is then 1 + reg_prim_output + reg_core_output
+        # (the standard shared bram convention). Port A's (AXI-side) output
+        # registers are forced off, ALWAYS. They cannot safely be enabled:
+        # a stand-alone BMG has no REGCEA pin, and without one the output
+        # register's clock enable is gated by ENA (blk_mem_gen_v8_4
+        # output_stage: regce_i = C_HAS_REGCE==0 && (C_HAS_EN==0 || EN)),
+        # while axi_bram_ctrl merely pulses bram_en_a once per transaction
+        # and assumes READ_LATENCY is a free-running pipeline delay. The
+        # registered data thus only reaches douta on the NEXT transaction's
+        # en pulse, so every AXI read returns the RAM word addressed by the
+        # PREVIOUS transaction. (Write-then-readback of the same address
+        # still passes -- the write's en pulse leaves that word in the
+        # primitive latch -- so simple write/read tests don't catch it.)
+        # Port B is immune: Always_Enabled means C_HAS_EN=0, so its output
+        # registers free-run (and in the URAM variant, top.v ties the en pin
+        # high). Both ports' register settings must still always be set
+        # explicitly: reconfiguring the BMG geometry silently flips the
+        # primitive registers on by default.
         if self.ram_primitive == 'ultra':
             # URAM is a single-clock primitive: the BMG forces
             # Assume_Synchronous_Clk and an ENB pin, and requires symmetric
@@ -411,8 +415,8 @@ class axi4_bram(YellowBlock):
                     ' CONFIG.Write_Width_B {%d}'
                     ' CONFIG.Read_Width_B {%d}'
                     ' CONFIG.Enable_A {Use_ENA_Pin}'
-                    ' CONFIG.Register_PortA_Output_of_Memory_Primitives {%s}'
-                    ' CONFIG.Register_PortA_Output_of_Memory_Core {%s}'
+                    ' CONFIG.Register_PortA_Output_of_Memory_Primitives {false}'
+                    ' CONFIG.Register_PortA_Output_of_Memory_Core {false}'
                     ' CONFIG.Register_PortB_Output_of_Memory_Primitives {%s}'
                     ' CONFIG.Register_PortB_Output_of_Memory_Core {%s}'
                     '] [get_bd_cells %s]'
@@ -420,7 +424,7 @@ class axi4_bram(YellowBlock):
                        self.axi_data_width, self.axi_data_width,
                        self.nbytes // self.axi_lane_bytes,
                        self.data_width, self.data_width,
-                       prim, core, prim, core, self.ram_name))
+                       prim, core, self.ram_name))
         cmds.append('create_bd_cell -type ip -vlnv xilinx.com:ip:xlslice:* %s' % self.slice_name)
         cmds.append('set_property -dict [list CONFIG.DIN_WIDTH {%d} CONFIG.DIN_FROM {%d} CONFIG.DIN_TO {%d} CONFIG.DOUT_WIDTH {%d}] [get_bd_cells %s]'
                     % (ctrl_addr_width, slice_from, lane_bits, addra_width, self.slice_name))
