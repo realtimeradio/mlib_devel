@@ -188,7 +188,7 @@ function Update(block)
     % put the read value in the fifo and pop the oldest one off
     latency = block.DialogPrm(2).Data - 1;
     new_val = block.Dwork(1).Data(addr);
-    if latency > 1
+    if latency >= 1
         read_val = block.Dwork(2).Data(end);
         last_bit = block.Dwork(2).Data(1:end-1).';
         tmp =  [new_val, last_bit];
