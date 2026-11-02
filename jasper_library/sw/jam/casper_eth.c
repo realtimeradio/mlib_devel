@@ -560,11 +560,14 @@ casper_rx_packet()
 #define JAM_LWIP_CHECK_TIMEOUTS_INTERVAL_MS 10
 #endif
 
+#define JAM_LWIP_CHECK_TIMEOUTS_INTERVAL_CYCLES \
+  ((uint64_t)JAM_LWIP_CHECK_TIMEOUTS_INTERVAL_MS * TMRCTR_CYCLES_PER_MS)
+
 void
 casper_lwip_handler()
 {
-  static uint32_t next_timeout_check_ms = JAM_LWIP_CHECK_TIMEOUTS_INTERVAL_MS;
-  uint32_t curr_ms;
+  static uint64_t next_timeout_check = JAM_LWIP_CHECK_TIMEOUTS_INTERVAL_CYCLES;
+  uint64_t curr_cycles;
 
   // Monitor links (TODO handle more than one link)
   casper_monitor_links();
@@ -572,10 +575,12 @@ casper_lwip_handler()
   // Receive newly arrive packet, if any
   casper_rx_packet();
 
-  // Only call timeout check every so often (10 ms by default).
-  curr_ms = ms_tmrctr();
-  if(next_timeout_check_ms <= curr_ms) {
-    next_timeout_check_ms = curr_ms + JAM_LWIP_CHECK_TIMEOUTS_INTERVAL_MS;
+  // Only call timeout check every so often (10 ms by default).  This uses the
+  // 64 bit cycle counter, which will not roll over for thousands of years, so
+  // the comparison is safe and no division is needed on every loop.
+  curr_cycles = read_tmrctr();
+  if(next_timeout_check <= curr_cycles) {
+    next_timeout_check = curr_cycles + JAM_LWIP_CHECK_TIMEOUTS_INTERVAL_CYCLES;
 
     // Cyclic LwIP timers check
     sys_check_timeouts();

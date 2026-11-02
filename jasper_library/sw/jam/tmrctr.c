@@ -27,6 +27,19 @@ init_tmrctr()
   // Write the higher 32-bit timer/counter load register (TLR1).
   XTmrCtr_SetLoadReg(XPAR_TMRCTR_0_BASEADDR, 1, 0);
 
+#ifdef JAM_TMRCTR_START
+  // Load the counter registers (TCR0 and TCR1) with the start value, then
+  // restore the load registers to 0 so that any reload behaves as before.
+  XTmrCtr_SetLoadReg(XPAR_TMRCTR_0_BASEADDR, 0, (u32)(JAM_TMRCTR_START));
+  XTmrCtr_SetLoadReg(XPAR_TMRCTR_0_BASEADDR, 1, (u32)((JAM_TMRCTR_START) >> 32));
+  XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 0, XTC_CSR_LOAD_MASK);
+  XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1, XTC_CSR_LOAD_MASK);
+  XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 0, csr);
+  XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 1, csr);
+  XTmrCtr_SetLoadReg(XPAR_TMRCTR_0_BASEADDR, 0, 0);
+  XTmrCtr_SetLoadReg(XPAR_TMRCTR_0_BASEADDR, 1, 0);
+#endif // JAM_TMRCTR_START
+
   // Set the CASC bit in Control register TCSR0.
   csr |= XTC_CSR_CASC_MASK;
   XTmrCtr_SetControlStatusReg(XPAR_TMRCTR_0_BASEADDR, 0, csr);
@@ -75,7 +88,10 @@ tick_tmrctr()
 u32
 ms_tmrctr()
 {
-  return tick_tmrctr() / 3;
+  // Divide the full 64 bit count (rather than the 32 bit tick count) so that
+  // the result rolls over at 2^32.  A result that rolls over early makes
+  // sys_now() jump backwards, which stops LwIP's timers.
+  return (u32)(read_tmrctr() / TMRCTR_CYCLES_PER_MS);
 }
 
 // Dump contents of TmrCtr registers

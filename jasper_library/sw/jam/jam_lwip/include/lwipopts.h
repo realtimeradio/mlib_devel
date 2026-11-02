@@ -141,6 +141,17 @@
 #define MEMP_NUM_ARP_QUEUE             16
 
 /**
+ * MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active timeouts.
+ * The default number of timeouts is calculated here for all enabled modules.
+ * The formula expects settings to be either '0' or '1'.
+ */
+// The default only counts LwIP's own cyclic timers (ARP, 2x DHCP, AutoIP), so
+// the pool is always full and the TFTP server's timer can never be scheduled.
+// Without that timer a stalled TFTP transfer is never closed, and all later
+// requests are refused.  Allow for the TFTP timer plus some headroom.
+#define MEMP_NUM_SYS_TIMEOUT            8
+
+/**
  * MEMP_NUM_IGMP_GROUP: The number of multicast groups whose network interfaces
  * can be members at the same time (one per netif - allsystems group -, plus one
  * per netif membership).

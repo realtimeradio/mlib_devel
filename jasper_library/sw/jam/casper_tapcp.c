@@ -1011,7 +1011,7 @@ casper_tapcp_write_progdev(
   uint8_t *p;
   int len = 0;
   static uint32_t word;
-  uint32_t curr_ms, next_ms = 0;
+  uint32_t curr_ms, next_ms;
 
   if(!state->binary) {
     return -1; // Ascii mode not implemented
@@ -1036,10 +1036,11 @@ casper_tapcp_write_progdev(
   // Reboot the FPGA using the received value as the target address
   xil_printf("Reboot from addr: %08x\n", word);
   // Sleep here, or the print will never make it out the UART
+  // (Unsigned difference so that this works across ms_tmrctr() rollover.)
   curr_ms = ms_tmrctr();
-  while(next_ms <= (curr_ms + 1000)) {
+  do {
       next_ms = ms_tmrctr();
-  }
+  } while((uint32_t)(next_ms - curr_ms) <= 1000);
   icap_reprog_from_flash(word);
   // We'll never get here...
   return len;
