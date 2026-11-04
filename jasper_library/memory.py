@@ -1,7 +1,7 @@
 class Register(object):
     def __init__(self, name, nbytes=4, offset=0, mode='r',
                 default_val=0, ram=False, ram_size=-1, data_width=32, axi4lite_mode='',
-                n_pipeline_reg=0):
+                n_pipeline_reg=0, hw_we=False):
         """
         A class to encapsulate a register's parameters. This is used when
         instantiating a device with a large address space, but it is desirable
@@ -52,6 +52,9 @@ class Register(object):
         :type axi4lite_mode: String
         :param n_pipeline_reg: Number of pipeline (output) registers on the RAM read path. The generated XML read latency is set to n_pipeline_reg+1.
         :type n_pipeline_reg: Integer
+        :param hw_we: For fabric-driven read-only AXI4-Lite registers: if True, the register only loads
+            from the fabric when its ``<name>_in_we`` signal is high. If False, it loads every cycle.
+        :type hw_we: Boolean
         """
         self.name = name
         self.nbytes = nbytes
@@ -85,3 +88,4 @@ class Register(object):
         # toolflow.py:generate_xml_memory_map to set the xml2vhdl read latency
         # (hw_dp_ram_bus_lat / hw_dp_ram_logic_lat) to n_pipeline_reg+1.
         self.n_pipeline_reg = n_pipeline_reg
+        self.hw_we = hw_we

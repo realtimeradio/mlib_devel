@@ -17,22 +17,25 @@ class sw_reg(YellowBlock):
             self.init_val = 0
         if self.blk['io_dir'] == 'To Processor':
             self.add_source('wb_register_simulink2ppc')
+            self.add_source('utils/cdc_bus_handshake.vhd')
         elif self.blk['io_dir'] == 'From Processor':
             self.add_source('wb_register_ppc2simulink')
 
     def modify_top(self,top):
         if self.blk['io_dir'] == 'To Processor':
             if self.platform.mmbus_architecture[0] == 'AXI4-Lite':
-                # Inst a module that sits on clock crossing boundary
-                module = 'cdc_synchroniser'
-                top.add_axi4lite_interface(regname=self.unique_name, mode='r', nbytes=4, typecode=self.typecode)
+                # Handshake the whole word across the clock boundary. The AXI
+                # register only loads when OP_BUS_WE is high, so software
+                # never sees a mix of bits from different source cycles.
+                module = 'cdc_bus_handshake'
+                top.add_axi4lite_interface(regname=self.unique_name, mode='r', nbytes=4, typecode=self.typecode, hw_we=True)
                 inst = top.get_instance(entity=module, name=self.fullname)
                 inst.add_parameter('G_BUS_WIDTH', value=32)
-                inst.add_port('IP_CLK',       signal='axil_clk', parent_sig=False)
-                inst.add_port('IP_RESET',     signal='axil_rst', parent_sig=False)                
-                inst.add_port('IP_BUS_VALID', signal='1\'b1', parent_sig=False)
+                inst.add_port('IP_SRC_CLK',   signal='user_clk', parent_sig=False)
                 inst.add_port('IP_BUS',       signal='%s_user_data_in'%self.fullname, width=32, parent_sig=True)
+                inst.add_port('IP_DST_CLK',   signal='axil_clk', parent_sig=False)
                 inst.add_port('OP_BUS',       signal='%s_%s_in' % (self.blocktype, self.unique_name), width=32, parent_sig=True)
+                inst.add_port('OP_BUS_WE',    signal='%s_%s_in_we' % (self.blocktype, self.unique_name), width=1, parent_sig=True)
             else:
                 module = 'wb_register_simulink2ppc'
                 inst = top.get_instance(entity=module, name=self.fullname)

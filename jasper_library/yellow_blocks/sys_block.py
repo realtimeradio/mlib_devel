@@ -7,6 +7,7 @@ class sys_block(YellowBlock):
     def initialize(self):
         self.typecode = TYPECODE_SYSBLOCK
         self.add_source('sys_block')
+        self.add_source('utils/cdc_bus_handshake.vhd')
         if not hasattr(self, 'scratchpad'): self.scratchpad = 0
         # the internal memory_map
         self.memory_map = [
@@ -14,7 +15,7 @@ class sys_block(YellowBlock):
             Register('rev',        mode='r',  offset=0x4, default_val=str((int(self.rev_maj) << 16) + int(self.rev_min))),
             Register('rev_rcs',    mode='r',  offset=0xc, default_val=self.rev_rcs),
             Register('scratchpad', mode='rw', offset=0x10, default_val=self.scratchpad),
-            Register('clkcounter', mode='r',  offset=0x14),
+            Register('clkcounter', mode='r',  offset=0x14, hw_we=True),
         ]
     def modify_top(self,top):
         if 'wishbone' not in self.platform.mmbus_architecture:
@@ -28,13 +29,13 @@ class sys_block(YellowBlock):
             inst.add_port('count_out', signal='%s_clkcounter_cdc'%'sys', dir='out', width=32)
             top.add_axi4lite_interface('sys', mode='r', nbytes=32, memory_map=self.memory_map, typecode=self.typecode)
 
-            inst = top.get_instance(entity='cdc_synchroniser', name='sys_block_counter_cdc_inst')
+            inst = top.get_instance(entity='cdc_bus_handshake', name='sys_block_counter_cdc_inst')
             inst.add_parameter('G_BUS_WIDTH', value=32)
-            inst.add_port('IP_CLK',       signal='axil_clk', parent_sig=False)
-            inst.add_port('IP_RESET',     signal='axil_rst', parent_sig=False)                
-            inst.add_port('IP_BUS_VALID', signal='1\'b1', parent_sig=False)
+            inst.add_port('IP_SRC_CLK',   signal='user_clk', parent_sig=False)
             inst.add_port('IP_BUS',       signal='%s_clkcounter_cdc'% 'sys', width=32, parent_sig=True)
+            inst.add_port('IP_DST_CLK',   signal='axil_clk', parent_sig=False)
             inst.add_port('OP_BUS',       signal='%s_clkcounter_in'% 'sys',  width=32, parent_sig=True)
+            inst.add_port('OP_BUS_WE',    signal='%s_clkcounter_in_we'% 'sys', width=1, parent_sig=True)
 
         else:
             inst = top.get_instance('sys_block', 'sys_block_inst')

@@ -896,11 +896,12 @@ class Toolflow(object):
                        node.set('hw_rst', reg.default_val)
                     else:
                        # "Normal" read-only registers get written to from the
-                       # fabric every cycle.
+                       # fabric every cycle, or only when <reg>_in_we is high
+                       # if the register requests a hardware write enable.
                        # To get to this clause it is important that simulink read-only
                        # software registers aren't given a default value. (Which wouldn't
                        # make sense)
-                       node.set('hw_permission', 'w')
+                       node.set('hw_permission', 'we' if getattr(reg, 'hw_we', False) else 'w')
                 else:
                     # Only for a From Processor register (control)
                     node.set('hw_rst', reg.default_val)

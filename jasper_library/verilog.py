@@ -1498,7 +1498,7 @@ class VerilogModule(object):
                                default_val=0, suffix='',
                                candr_suffix='', memory_map=[],
                                typecode=0xff, data_width=32, axi4lite_mode='',
-                               n_pipeline_reg=0):
+                               n_pipeline_reg=0, hw_we=False):
         """
         Add the ports necessary for a AXI4-Lite slave interface.
 
@@ -1529,6 +1529,9 @@ class VerilogModule(object):
         :type axi4lite_mode: String
         :param n_pipeline_reg: Number of pipeline (output) registers on the RAM read path. The generated XML read latency is set to n_pipeline_reg+1.
         :type n_pipeline_reg: Integer
+        :param hw_we: For a read-only register (with no memory_map given): load from the fabric only when
+            ``<regname>_in_we`` is high, rather than every cycle.
+        :type hw_we: Boolean
 
         """
 
@@ -1541,7 +1544,7 @@ class VerilogModule(object):
                                         default_val=default_val, data_width=data_width, axi4lite_mode=axi4lite_mode,
                                         ram_size=nbytes if typecode==4 else -1,
                                         ram=True if typecode==4 else False,
-                                        n_pipeline_reg=n_pipeline_reg)]
+                                        n_pipeline_reg=n_pipeline_reg, hw_we=hw_we)]
             axi4lite_device = AXI4LiteDevice(regname, nbytes=nbytes, mode=mode,
                                             hdl_suffix=suffix, hdl_candr_suffix=candr_suffix,
                                             memory_map=memory_map, typecode=typecode,
